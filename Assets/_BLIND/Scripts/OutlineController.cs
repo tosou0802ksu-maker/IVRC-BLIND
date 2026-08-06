@@ -17,15 +17,12 @@ public class OutlineController : UdonSharpBehaviour
     [SerializeField] private float onOutlineWidth = 0.02f;
     [SerializeField] private Color onOutlineColor = Color.white;
 
-    // 消灯時は幅0・アルファ0で統一
-    private static readonly float OffOutlineWidth = 0f;
-    private static readonly Color OffOutlineColor = new Color(0f, 0f, 0f, 0f);
+    private readonly float offOutlineWidth = 0f;
+    private readonly Color offOutlineColor = new Color(0f, 0f, 0f, 0f);
 
     [UdonSynced] private bool syncedOutlineState;
 
     private MaterialPropertyBlock propertyBlock;
-    private int outlineWidthPropertyId;
-    private int outlineColorPropertyId;
     private bool hasWidthProperty;
     private bool hasColorProperty;
 
@@ -41,22 +38,9 @@ public class OutlineController : UdonSharpBehaviour
         hasWidthProperty = !string.IsNullOrEmpty(outlineWidthPropertyName);
         hasColorProperty = !string.IsNullOrEmpty(outlineColorPropertyName);
 
-        if (hasWidthProperty)
-        {
-            outlineWidthPropertyId = Shader.PropertyToID(outlineWidthPropertyName);
-        }
-        if (hasColorProperty)
-        {
-            outlineColorPropertyId = Shader.PropertyToID(outlineColorPropertyName);
-        }
-
         ApplyOutlineState();
     }
 
-    /// <summary>
-    /// 外部スクリプト/イベントから呼び出す。呼び出したプレイヤーがOwnerでなければ
-    /// Ownerを取得した上で状態を変更・全体に同期する。
-    /// </summary>
     public void SetOutlineState(bool state)
     {
         if (!Networking.IsOwner(gameObject))
@@ -81,16 +65,15 @@ public class OutlineController : UdonSharpBehaviour
             return;
         }
 
-        // 既存の値を保持したまま対象プロパティだけ上書きするため、まず現在のブロックを取得
         targetRenderer.GetPropertyBlock(propertyBlock);
 
         if (hasWidthProperty)
         {
-            propertyBlock.SetFloat(outlineWidthPropertyId, syncedOutlineState ? onOutlineWidth : OffOutlineWidth);
+            propertyBlock.SetFloat(outlineWidthPropertyName, syncedOutlineState ? onOutlineWidth : offOutlineWidth);
         }
         if (hasColorProperty)
         {
-            propertyBlock.SetColor(outlineColorPropertyId, syncedOutlineState ? onOutlineColor : OffOutlineColor);
+            propertyBlock.SetColor(outlineColorPropertyName, syncedOutlineState ? onOutlineColor : offOutlineColor);
         }
 
         targetRenderer.SetPropertyBlock(propertyBlock);
