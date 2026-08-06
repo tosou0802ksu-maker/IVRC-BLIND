@@ -1,87 +1,31 @@
-Shader "Custom/VRChat/OutlineController"
+Shader "Custom/UdonOutline"
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "white" {}
+        // UdonSharpから制御するプロパティ名。以前と同じなのでスクリプト修正不要
+        _OutlineColor ("Outline Color", Color) = (1,1,1,1)
+        _OutlineWidth ("Outline Width", Range (0.0, 0.1)) = 0.01
+
+        // 元のモデルを描画するためのメインテクスチャと色
+        _MainTex ("Base (RGB)", 2D) = "white" {}
         _Color ("Base Color", Color) = (1,1,1,1)
-        _OutlineColor ("Outline Color", Color) = (1,1,0,1)
-        _OutlineWidth ("Outline Width", Float) = 0.0
     }
 
     SubShader
     {
-        Tags { "RenderType"="Opaque" "Queue"="Geometry" }
+        Tags { "RenderType"="Opaque" }
         LOD 100
 
-        // ---- Pass 1: Base（本体描画） ----
-        Pass
-        {
-            Name "BASE"
-            Tags { "LightMode"="ForwardBase" }
-            Cull Back
-            ZWrite On
-
-            CGPROGRAM
-            #pragma vertex vert
-            #pragma fragment frag
-            #pragma multi_compile_fwdbase
-            #include "UnityCG.cginc"
-            #include "Lighting.cginc"
-            #include "AutoLight.cginc"
-
-            struct appdata
-            {
-                float4 vertex : POSITION;
-                float3 normal : NORMAL;
-                float2 uv     : TEXCOORD0;
-            };
-
-            struct v2f
-            {
-                float4 pos         : SV_POSITION;
-                float2 uv          : TEXCOORD0;
-                float3 worldNormal : TEXCOORD1;
-                UNITY_LIGHTING_COORDS(2, 3)
-            };
-
-            sampler2D _MainTex;
-            float4 _MainTex_ST;
-            fixed4 _Color;
-
-            v2f vert(appdata v)
-            {
-                v2f o;
-                o.pos = UnityObjectToClipPos(v.vertex);
-                o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-                o.worldNormal = UnityObjectToWorldNormal(v.normal);
-                UNITY_TRANSFER_LIGHTING(o, v.uv);
-                return o;
-            }
-
-            fixed4 frag(v2f i) : SV_Target
-            {
-                fixed4 tex = tex2D(_MainTex, i.uv);
-                fixed4 col = tex * _Color;
-
-                float3 normal = normalize(i.worldNormal);
-                float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
-                fixed atten = UNITY_LIGHT_ATTENUATION(i, i, float3(0,0,0));
-                float ndotl = max(0.0, dot(normal, lightDir));
-
-                fixed3 lighting = _LightColor0.rgb * ndotl * atten + UNITY_LIGHTMODEL_AMBIENT.rgb;
-                col.rgb *= lighting;
-
-                return col;
-            }
-            ENDCG
-        }
-
-        // ---- Pass 2: Outline（輪郭描画） ----
+        // ========================================================
+        // PASS 1: アウトラインの描画 (前のシェーダーとほぼ同じ)
+        // ========================================================
         Pass
         {
             Name "OUTLINE"
-            Cull Front
+            Tags { "LightMode" = "Always" }
+            Cull Front // 前面をカリング（裏面だけ描画）して、中身が見えるようにする
             ZWrite On
+            ColorMask RGB
 
             CGPROGRAM
             #pragma vertex vert
@@ -97,29 +41,78 @@ Shader "Custom/VRChat/OutlineController"
             struct v2f
             {
                 float4 pos : SV_POSITION;
+                float4 color : COLOR;
             };
 
-            float _OutlineWidth;
-            fixed4 _OutlineColor;
+            uniform float _OutlineWidth;
+            uniform float4 _OutlineColor;
 
             v2f vert(appdata v)
             {
                 v2f o;
-                // 頂点を法線方向へ _OutlineWidth 分だけ押し出す
-                float3 offsetPos = v.vertex.xyz + normalize(v.normal) * _OutlineWidth;
-                o.pos = UnityObjectToClipPos(float4(offsetPos, 1.0));
+                
+                // 頂点を法線方向に少し拡大する（アウトラインの仕組み）
+                float4 pos = v.vertex;
+                pos.xyz += v.normal * _OutlineWidth;
+                
+                o.pos = UnityObjectToClipPos(pos);
+                o.color = _OutlineColor;
                 return o;
             }
 
             fixed4 frag(v2f i) : SV_Target
             {
-                // 幅が実質0のときはピクセルを破棄して輪郭を非表示にする
-                clip(_OutlineWidth - 0.0001);
-                return _OutlineColor;
+                // アウトラインの色だけを返す
+                return i.color;
+            }
+            ENDCG
+        }
+
+        // ========================================================
+        // PASS 2: 元のモデルの描画 (通常通り描画)
+        // ========================================================
+        Pass
+        {
+            Name "BASE"
+            Cull Back // 通常通り前面を描画（裏面をカリング）
+
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #include "UnityCG.cginc"
+
+            struct appdata
+            {
+                float4 vertex : POSITION;
+                float2 uv : TEXCOORD0;
+            };
+
+            struct v2f
+            {
+                float2 uv : TEXCOORD0;
+                float4 vertex : SV_POSITION;
+            };
+
+            sampler2D _MainTex;
+            float4 _MainTex_ST;
+            fixed4 _Color;
+
+            v2f vert (appdata v)
+            {
+                v2f o;
+                o.vertex = UnityObjectToClipPos(v.vertex);
+                o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+                return o;
+            }
+
+            fixed4 frag (v2f i) : SV_Target
+            {
+                // テクスチャの色に、インスペクターで設定した色を乗算
+                fixed4 col = tex2D(_MainTex, i.uv) * _Color;
+                return col;
             }
             ENDCG
         }
     }
-
     FallBack "Diffuse"
 }
