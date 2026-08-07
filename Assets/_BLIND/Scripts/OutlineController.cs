@@ -4,78 +4,42 @@ using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
 
+[UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class OutlineController : UdonSharpBehaviour
 {
-    [Header("対象Renderer（未設定なら自身のRendererを使用）")]
-    [SerializeField] private Renderer targetRenderer;
+    [SerializeField]
+    private Renderer[] targetRenderers;
 
-    [Header("シェーダープロパティ名")]
-    [SerializeField] private string outlineWidthPropertyName = "_OutlineWidth";
-    [SerializeField] private string outlineColorPropertyName = "_OutlineColor";
-
-    [Header("点灯時の値")]
-    [SerializeField] private float onOutlineWidth = 0.02f;
-    [SerializeField] private Color onOutlineColor = Color.white;
-
-    private readonly float offOutlineWidth = 0f;
-    private readonly Color offOutlineColor = new Color(0f, 0f, 0f, 0f);
-
-    [UdonSynced] private bool syncedOutlineState;
+    private const string HighlightActiveProperty = "_HighlightActive";
 
     private MaterialPropertyBlock propertyBlock;
-    private bool hasWidthProperty;
-    private bool hasColorProperty;
 
-    private void Start()
+    void Start()
     {
-        if (targetRenderer == null)
-        {
-            targetRenderer = GetComponent<Renderer>();
-        }
-
         propertyBlock = new MaterialPropertyBlock();
-
-        hasWidthProperty = !string.IsNullOrEmpty(outlineWidthPropertyName);
-        hasColorProperty = !string.IsNullOrEmpty(outlineColorPropertyName);
-
-        ApplyOutlineState();
     }
 
-    public void SetOutlineState(bool state)
+    // Entry point for other gimmicks to turn the red edge highlight on/off.
+    public void SetHighlight(bool flag)
     {
-        if (!Networking.IsOwner(gameObject))
+        if (propertyBlock == null)
         {
-            Networking.SetOwner(Networking.LocalPlayer, gameObject);
+            propertyBlock = new MaterialPropertyBlock();
         }
 
-        syncedOutlineState = state;
-        ApplyOutlineState();
-        RequestSerialization();
-    }
+        float value = flag ? 1f : 0f;
 
-    public override void OnDeserialization()
-    {
-        ApplyOutlineState();
-    }
-
-    private void ApplyOutlineState()
-    {
-        if (targetRenderer == null || propertyBlock == null)
+        for (int i = 0; i < targetRenderers.Length; i++)
         {
-            return;
-        }
+            Renderer target = targetRenderers[i];
+            if (target == null)
+            {
+                continue;
+            }
 
-        targetRenderer.GetPropertyBlock(propertyBlock);
-
-        if (hasWidthProperty)
-        {
-            propertyBlock.SetFloat(outlineWidthPropertyName, syncedOutlineState ? onOutlineWidth : offOutlineWidth);
+            target.GetPropertyBlock(propertyBlock);
+            propertyBlock.SetFloat(HighlightActiveProperty, value);
+            target.SetPropertyBlock(propertyBlock);
         }
-        if (hasColorProperty)
-        {
-            propertyBlock.SetColor(outlineColorPropertyName, syncedOutlineState ? onOutlineColor : offOutlineColor);
-        }
-
-        targetRenderer.SetPropertyBlock(propertyBlock);
     }
 }
