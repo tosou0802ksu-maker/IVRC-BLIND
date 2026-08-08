@@ -10,21 +10,29 @@ public class OutlineSwitch : UdonSharpBehaviour
     [SerializeField]
     private OutlineController targetController;
 
-    // 現在のオン/オフ状態
     private bool isOn = false;
 
-    // プレイヤーがオブジェクトをクリック（Interact）した時に呼ばれる
     public override void Interact()
     {
-        if (targetController == null)
+        ToggleSwitch();
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.T))
         {
-            return;
+            ToggleSwitch();
         }
+    }
 
-        // 押すたびに ON / OFF を反転させる
+    [ContextMenu("Test Toggle Switch")]
+    public void ToggleSwitch()
+    {
+        Debug.Log("ToggleSwitch called, targetController=" + targetController);
+        if (targetController == null) return;
+
         isOn = !isOn;
-
-        // OutlineController に flag を送信する
+        Debug.Log("isOn=" + isOn);
         targetController.SetHighlight(isOn);
     }
 }
