@@ -44,25 +44,31 @@ Shader "BLIND/ThermalHeat"
                 return o;
             }
 
-            // 熱量(0〜1)をFLIR風のカラーグラデーションにマッピング
-            // 0.0:青 -> 0.25:水色/緑 -> 0.5:黄 -> 0.75:赤 -> 1.0:白
+            // 熱量(0〜1)を実機のハンディサーマルカメラ風のカラーグラデーションにマッピング
+            // 0.0:紫 -> 1/6:青 -> 2/6:水色 -> 3/6:緑 -> 4/6:黄 -> 5/6:橙 -> 1.0:赤
             fixed3 thermalRamp(float heat)
             {
-                fixed3 blue   = fixed3(0.0, 0.05, 0.6);
-                fixed3 cyan   = fixed3(0.0, 0.8, 0.6);
+                fixed3 purple = fixed3(0.35, 0.0, 0.55);
+                fixed3 blue   = fixed3(0.0, 0.1, 0.9);
+                fixed3 cyan   = fixed3(0.0, 0.8, 0.9);
+                fixed3 green  = fixed3(0.0, 0.85, 0.1);
                 fixed3 yellow = fixed3(1.0, 0.95, 0.0);
-                fixed3 red    = fixed3(1.0, 0.1, 0.0);
-                fixed3 white  = fixed3(1.0, 1.0, 1.0);
+                fixed3 orange = fixed3(1.0, 0.5, 0.0);
+                fixed3 red    = fixed3(0.9, 0.0, 0.0);
 
-                float t1 = smoothstep(0.0, 0.25, heat);
-                float t2 = smoothstep(0.25, 0.5, heat);
-                float t3 = smoothstep(0.5, 0.75, heat);
-                float t4 = smoothstep(0.75, 1.0, heat);
+                float t1 = smoothstep(0.0 / 6.0, 1.0 / 6.0, heat);
+                float t2 = smoothstep(1.0 / 6.0, 2.0 / 6.0, heat);
+                float t3 = smoothstep(2.0 / 6.0, 3.0 / 6.0, heat);
+                float t4 = smoothstep(3.0 / 6.0, 4.0 / 6.0, heat);
+                float t5 = smoothstep(4.0 / 6.0, 5.0 / 6.0, heat);
+                float t6 = smoothstep(5.0 / 6.0, 6.0 / 6.0, heat);
 
-                fixed3 col = lerp(blue, cyan, t1);
-                col = lerp(col, yellow, t2);
-                col = lerp(col, red, t3);
-                col = lerp(col, white, t4);
+                fixed3 col = lerp(purple, blue, t1);
+                col = lerp(col, cyan, t2);
+                col = lerp(col, green, t3);
+                col = lerp(col, yellow, t4);
+                col = lerp(col, orange, t5);
+                col = lerp(col, red, t6);
 
                 return col;
             }
