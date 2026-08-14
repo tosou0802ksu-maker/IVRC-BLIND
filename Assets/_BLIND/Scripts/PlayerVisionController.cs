@@ -10,6 +10,10 @@ public class PlayerVisionController : UdonSharpBehaviour
     [SerializeField] private LayerMask thermalCullingMask;
     [SerializeField] private LayerMask echoCullingMask;
 
+    [Header("ローカルカメラ参照")]
+    [Tooltip("Camera.mainはUdonSharpから呼び出せないため、シーン上のメインカメラをここに割り当ててください。")]
+    [SerializeField] private Camera localCamera;
+
     private bool isThermalRole;
 
     public void SetRole(bool isThermal)
@@ -25,7 +29,6 @@ public class PlayerVisionController : UdonSharpBehaviour
             return;
         }
 
-        Camera localCamera = Camera.main;
         if (localCamera == null)
         {
             return;
