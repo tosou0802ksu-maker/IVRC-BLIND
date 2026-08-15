@@ -5,15 +5,17 @@ using VRC.SDKBase;
 using VRC.Udon;
 using VRC.Udon.Common.Interfaces;
 
-// 「複数ボタン鍵ドア」の進行管理。
+/// <summary>
+/// 「複数ボタン鍵ドア」の進行管理。
 //
-// 役割ごとの情報分担:
-//   エコロケ  : 部屋とボタンの「形」だけ見える  -> ボタンの位置を伝える担当
-//   サーモ    : ランプのon/offだけ見える        -> 今どこまで消えたかを伝える担当
-//   過去の人  : on/off以外(看板・ランプの色)    -> 正しい順番を読み解く担当
-//
-// 正しい順番でボタンを押すとランプが1つずつ消え、全部消えるとドアが開く。
-// 順番を間違えると全ランプが点き直る(= 総当たりで解けないようにする)。
+/// 役割ごとの情報分担:
+///   エコロケ  : 部屋とボタンの「形」だけ見える  -> ボタンの位置を伝える担当
+///   サーモ    : ランプのon/offだけ見える        -> 今どこまで消えたかを伝える担当
+///   過去の人  : on/off以外(看板・ランプの色)    -> 正しい順番を読み解く担当
+///
+/// 正しい順番でボタンを押すとランプが1つずつ消え、全部消えるとドアが開く。
+/// 順番を間違えると全ランプが点き直る(= 総当たりで解けないようにする)。
+/// </summary>
 public class LampPuzzleManager : UdonSharpBehaviour
 {
     [Header("ランプ(消える順に並べる)")]
@@ -28,9 +30,8 @@ public class LampPuzzleManager : UdonSharpBehaviour
     [Header("解除時に有効化する演出(任意)")]
     [SerializeField] private GameObject solvedEffect;
 
-    // 何番目まで正解したか
-    [UdonSynced] private int progressIndex;
-    [UdonSynced] private bool isSolved;
+    [UdonSynced] public int progressIndex;
+    [UdonSynced] public bool isSolved;
 
     void Start()
     {
