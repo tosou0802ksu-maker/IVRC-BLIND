@@ -11,6 +11,9 @@ public class EchoEmitter : UdonSharpBehaviour
     [SerializeField] private float pulseAngle = 45f;
     [SerializeField] private float pulseInterval = 3f;
 
+    [Header("遅延設定")]
+    [SerializeField] private float delayPerMeter = 0.1f;
+
     [Header("エディタテスト用")]
     [SerializeField] private Transform editorCamera;
 
@@ -21,20 +24,34 @@ public class EchoEmitter : UdonSharpBehaviour
     private VRCPlayerApi localPlayer;
 
     void Start()
+{
+    localPlayer = Networking.LocalPlayer;
+    
+    // ClientSimのHeadを自動で探す
+    GameObject head = GameObject.Find("Head");
+    if (head != null)
     {
-        localPlayer = Networking.LocalPlayer;
+        editorCamera = head.transform;
+        Debug.Log("Headを見つけた: " + head.name);
     }
+}
 
     void Update()
     {
-        // スペースキーでエディタテスト発射
-        if (Input.GetKeyDown(KeyCode.Space))
+    Debug.Log("Update動いてる");
+    if (Input.GetKeyDown(KeyCode.T))
+    {
+        Debug.Log("Tキー検知");
+        EmitFromEditorCamera();
+        return;
+    }
+    // 以降は既存のコード
+        if (Input.GetKeyDown(KeyCode.T))
         {
             EmitFromEditorCamera();
-            return;
-        }
+        return;
+    }
 
-        // VRChat上では自動でパルス発射
         if (localPlayer == null) return;
         timer += Time.deltaTime;
         if (timer >= pulseInterval)
@@ -62,23 +79,27 @@ public class EchoEmitter : UdonSharpBehaviour
     }
 
     private void EmitPulse(Vector3 origin, Vector3 direction)
+{
+    Debug.Log("EmitPulse呼ばれた receivers=" + receivers.Length);
+    if (receivers == null || receivers.Length == 0) return;
+
+    for (int i = 0; i < receivers.Length; i++)
     {
-        if (receivers == null || receivers.Length == 0) return;
+        EchoReceiver receiver = receivers[i];
+        if (receiver == null) continue;
 
-        for (int i = 0; i < receivers.Length; i++)
-        {
-            EchoReceiver receiver = receivers[i];
-            if (receiver == null) continue;
+        Vector3 toReceiver = receiver.transform.position - origin;
+        float distance = toReceiver.magnitude;
+        float angle = Vector3.Angle(direction, toReceiver.normalized);
 
-            Vector3 toReceiver = receiver.transform.position - origin;
-            float distance = toReceiver.magnitude;
+        Debug.Log("receiver=" + receiver.name + " distance=" + distance + " angle=" + angle);
 
-            if (distance > pulseRange) continue;
-
-            float angle = Vector3.Angle(direction, toReceiver.normalized);
-            if (angle > pulseAngle) continue;
-
-            receiver.TriggerGlow();
-        }
+        if (distance > pulseRange) continue;
+        if (angle > pulseAngle) continue;
+        
+        float delay = distance * delayPerMeter;
+        Debug.Log("TriggerGlowWithDelay呼ぶ delay=" + delay);
+        receiver.TriggerGlowWithDelay(distance * delayPerMeter);
     }
+}
 }

@@ -7,13 +7,13 @@ using VRC.Udon;
 public class EchoReceiver : UdonSharpBehaviour
 {
     [SerializeField] private Renderer[] targetRenderers;
-
-    // 光っている時間
     [SerializeField] private float glowDuration = 1.5f;
 
     private MaterialPropertyBlock propertyBlock;
     private float glowTimer = 0f;
+    private float delayTimer = 0f;
     private bool isGlowing = false;
+    private bool isWaiting = false;
 
     void Start()
     {
@@ -22,11 +22,21 @@ public class EchoReceiver : UdonSharpBehaviour
 
     void Update()
     {
+        // 遅延待機中
+        if (isWaiting)
+        {
+            delayTimer -= Time.deltaTime;
+            if (delayTimer <= 0f)
+            {
+                isWaiting = false;
+                StartGlow();
+            }
+            return;
+        }
+
         if (!isGlowing) return;
 
         glowTimer -= Time.deltaTime;
-
-        // 残り時間に応じてフェードアウト
         float intensity = Mathf.Clamp01(glowTimer / glowDuration);
         SetGlow(intensity);
 
@@ -37,8 +47,16 @@ public class EchoReceiver : UdonSharpBehaviour
         }
     }
 
-    // EchoEmitterから呼ばれる
-    public void TriggerGlow()
+    // EchoEmitterから距離を受け取って遅延付きで発光
+    public void TriggerGlowWithDelay(float delay)
+    {
+        Debug.Log("TriggerGlowWithDelay呼ばれた delay=" + delay);
+        delayTimer = delay;
+        isWaiting = true;
+        isGlowing = false;
+    }
+
+    private void StartGlow()
     {
         glowTimer = glowDuration;
         isGlowing = true;

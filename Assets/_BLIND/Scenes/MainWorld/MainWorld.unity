@@ -375,7 +375,7 @@ Transform:
   m_GameObject: {fileID: 1593338751}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -6.861004, y: 2.93, z: 2.22}
+  m_LocalPosition: {x: -6.861004, y: 3.08, z: 2.23}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -508,6 +508,7 @@ MonoBehaviour:
   pulseRange: 10
   pulseAngle: 45
   pulseInterval: 3
+  delayPerMeter: 10
   editorCamera: {fileID: 1593338752}
   receivers:
   - {fileID: 340083782}
@@ -740,7 +741,7 @@ MonoBehaviour:
   spawnRadius: 0.2
   spawnOrder: 2
   spawnOrientation: 0
-  ReferenceCamera: {fileID: 0}
+  ReferenceCamera: {fileID: 1593338751}
   RespawnHeightY: -100
   ObjectBehaviourAtRespawnHeight: 0
   ForbidUserPortals: 0
