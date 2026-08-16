@@ -2,6 +2,7 @@
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
+using VRC.SDK3.Rendering;
 using VRC.Udon;
 
 public enum ViewRole
@@ -11,6 +12,12 @@ public enum ViewRole
     Memory
 }
 
+// 3視点(エコロケ/サーモ/過去の人)の「見えるもの」をカリングマスクで切り替える。
+//
+// VRChat実機ではシーンに置いたCameraではなくプレイヤーカメラが使われるため、
+// VRCCameraSettings.ScreenCamera.CullingMask を書き換える必要がある。
+// (シーンのCameraを触っても実機では何も起きない)
+// localCamera はClientSim/エディタ確認用のフォールバック。
 public class PlayerVisionController : UdonSharpBehaviour
 {
     [Header("カリングマスク設定")]
@@ -18,11 +25,23 @@ public class PlayerVisionController : UdonSharpBehaviour
     [SerializeField] private LayerMask thermalCullingMask;
     [SerializeField] private LayerMask memoryCullingMask;
 
-    [Header("ローカルカメラ参照")]
-    [Tooltip("Camera.mainはUdonSharpから呼び出せないため、シーン上のメインカメラをここに割り当ててください。")]
+    [Header("エディタ確認用のフォールバック(任意)")]
+    [Tooltip("実機ではVRCCameraSettingsを使うため未設定でも構わない。")]
     [SerializeField] private Camera localCamera;
 
     private ViewRole currentRole;
+
+    void Start()
+    {
+        ApplyVisionMask();
+    }
+
+    // VRChat側がカメラ設定を作り直した時に呼ばれる。
+    // ここで再適用しないとマスクが元に戻ってしまう。
+    public override void OnVRCCameraSettingsChanged(VRCCameraSettings cameraSettings)
+    {
+        ApplyVisionMask();
+    }
 
     public void SetRole(ViewRole role)
     {
@@ -37,27 +56,26 @@ public class PlayerVisionController : UdonSharpBehaviour
 
     private void ApplyVisionMask()
     {
-        if (Networking.LocalPlayer == null)
-        {
-            return;
-        }
-
-        if (localCamera == null)
-        {
-            return;
-        }
+        LayerMask mask = echoCullingMask;
 
         if (currentRole == ViewRole.Thermal)
         {
-            localCamera.cullingMask = thermalCullingMask;
+            mask = thermalCullingMask;
         }
         else if (currentRole == ViewRole.Memory)
         {
-            localCamera.cullingMask = memoryCullingMask;
+            mask = memoryCullingMask;
         }
-        else
+
+        VRCCameraSettings screen = VRCCameraSettings.ScreenCamera;
+        if (screen != null)
         {
-            localCamera.cullingMask = echoCullingMask;
+            screen.CullingMask = mask;
+        }
+
+        if (localCamera != null)
+        {
+            localCamera.cullingMask = mask;
         }
     }
 }

@@ -15,6 +15,9 @@ public class ShuffleSequenceManager : UdonSharpBehaviour
     [Header("視点シャッフルを実行する対象")]
     [SerializeField] private ViewpointShuffleManager shuffleManager;
 
+    [Header("セーブポイント管理(ボタン=セーブポイント兼、扉の開閉トリガー)")]
+    [SerializeField] private CheckpointManager checkpointManager;
+
     [Header("正解の順番(赤=0, 青=1, 緑=2)")]
     [SerializeField] private int[] correctOrder = new int[] { 0, 1, 2 };
 
@@ -43,6 +46,13 @@ public class ShuffleSequenceManager : UdonSharpBehaviour
             }
 
             RequestSerialization();
+
+            // ボタン = セーブポイント。ここで扉(ToggleDoor)の開閉も切り替わる。
+            // 赤=0 → セーブポイント1, 青=1 → 2, 緑=2 → 3
+            if (checkpointManager != null)
+            {
+                checkpointManager.SetCheckpoint(buttonId + 1);
+            }
 
             // 正しいボタンを押すたびに毎回シャッフル
             if (shuffleManager != null)

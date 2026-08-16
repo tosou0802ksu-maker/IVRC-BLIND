@@ -11,10 +11,13 @@ using VRC.Udon;
 // hazardKind で GameManager のどちらの死亡処理を呼ぶかを切り替える。
 public class HazardZone : UdonSharpBehaviour
 {
-    [Header("接続先")]
+    [Header("接続先(こちらを優先。誰か1人が触れたら全員がセーブポイントへ)")]
+    [SerializeField] private CheckpointManager checkpointManager;
+
+    [Header("旧方式のフォールバック(checkpointManager未設定の時だけ使う)")]
     [SerializeField] private GameManager gameManager;
 
-    [Header("種類: 0 = 落とし穴系(その部屋の頭に戻る) / 1 = サーマル系(スタートに戻る)")]
+    [Header("旧方式の種類: 0 = 落とし穴系 / 1 = サーマル系")]
     [SerializeField] private int hazardKind;
 
     [Header("警告表現(任意)")]
@@ -85,6 +88,12 @@ public class HazardZone : UdonSharpBehaviour
 
         if (!isActive)
         {
+            return;
+        }
+
+        if (checkpointManager != null)
+        {
+            checkpointManager.TriggerDeath();
             return;
         }
 
