@@ -6,6 +6,10 @@ using VRC.Udon;
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class EchoEmitter : UdonSharpBehaviour
 {
+    [Header("役割判定")]
+    [Tooltip("エコロケ役の時だけパルスを発するためのローカル視点コントローラ参照。")]
+    [SerializeField] private PlayerVisionController localVisionController;
+
     [Header("パルス設定")]
     [SerializeField] private float pulseRange = 10f;
     [SerializeField] private float pulseAngle = 45f;
@@ -28,8 +32,17 @@ public class EchoEmitter : UdonSharpBehaviour
         localPlayer = Networking.LocalPlayer;
     }
 
+    private bool IsEchoRole()
+    {
+        // 参照未設定の場合は従来通り誰でも発動できるようにしておく(エディタ単体テスト等)
+        if (localVisionController == null) return true;
+        return localVisionController.GetRole() == ViewRole.Echo;
+    }
+
     void Update()
     {
+        if (!IsEchoRole()) return;
+
         if (Input.GetKeyDown(KeyCode.T))
         {
             Debug.Log("Tキー検知");

@@ -212,6 +212,7 @@ GameObject:
   - component: {fileID: 1022011673}
   - component: {fileID: 1022011672}
   - component: {fileID: 1022011671}
+  - component: {fileID: 1022011674}
   m_Layer: 0
   m_Name: Main_Camera
   m_TagString: Untagged
@@ -293,6 +294,38 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: -176.916, z: 0}
+--- !u!114 &1022011674
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1022011670}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18f0a7faaf7514ff28ab9b24534c1727, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  _udonSharpBackingUdonBehaviour: {fileID: 0}
+  echoCullingMask:
+    serializedVersion: 2
+    m_Bits: 8388609
+  thermalCullingMask:
+    serializedVersion: 2
+    m_Bits: 4194305
+  memoryCullingMask:
+    serializedVersion: 2
+    m_Bits: 1
+  localCamera: {fileID: 1022011672}
 --- !u!1 &1163570873
 GameObject:
   m_ObjectHideFlags: 0
@@ -307,7 +340,7 @@ GameObject:
   - component: {fileID: 1163570877}
   - component: {fileID: 1163570874}
   - component: {fileID: 1163570876}
-  m_Layer: 0
+  m_Layer: 23
   m_Name: Echo_Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -515,6 +548,7 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes: []
   _udonSharpBackingUdonBehaviour: {fileID: 1468709891}
+  localVisionController: {fileID: 1022011674}
   pulseRange: 10
   pulseAngle: 45
   pulseInterval: 3
@@ -646,7 +680,7 @@ GameObject:
   - component: {fileID: 2093157478}
   - component: {fileID: 2093157475}
   - component: {fileID: 2093157477}
-  m_Layer: 0
+  m_Layer: 23
   m_Name: Echo_Cylinder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
