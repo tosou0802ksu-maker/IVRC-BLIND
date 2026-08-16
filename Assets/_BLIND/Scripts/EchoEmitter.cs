@@ -2,7 +2,7 @@
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
-// 光らせるやつにつける発信機
+
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class EchoEmitter : UdonSharpBehaviour
 {
@@ -24,33 +24,18 @@ public class EchoEmitter : UdonSharpBehaviour
     private VRCPlayerApi localPlayer;
 
     void Start()
-{
-    localPlayer = Networking.LocalPlayer;
-    
-    // ClientSimのHeadを自動で探す
-    GameObject head = GameObject.Find("Head");
-    if (head != null)
     {
-        editorCamera = head.transform;
-        Debug.Log("Headを見つけた: " + head.name);
+        localPlayer = Networking.LocalPlayer;
     }
-}
 
     void Update()
     {
-    Debug.Log("Update動いてる");
-    if (Input.GetKeyDown(KeyCode.T))
-    {
-        Debug.Log("Tキー検知");
-        EmitFromEditorCamera();
-        return;
-    }
-    // 以降は既存のコード
         if (Input.GetKeyDown(KeyCode.T))
         {
+            Debug.Log("Tキー検知");
             EmitFromEditorCamera();
-        return;
-    }
+            return;
+        }
 
         if (localPlayer == null) return;
         timer += Time.deltaTime;
@@ -63,6 +48,16 @@ public class EchoEmitter : UdonSharpBehaviour
 
     private void EmitFromEditorCamera()
     {
+        // localPlayerがいればHeadの骨から位置と向きを取得
+        if (localPlayer != null)
+        {
+            Vector3 headPos = localPlayer.GetBonePosition(HumanBodyBones.Head);
+            Quaternion headRot = localPlayer.GetBoneRotation(HumanBodyBones.Head);
+            EmitPulse(headPos, headRot * Vector3.forward);
+            return;
+        }
+
+        // localPlayerがnullならeditorCameraを使う
         if (editorCamera == null) return;
         EmitPulse(editorCamera.position, editorCamera.forward);
     }
@@ -80,25 +75,23 @@ public class EchoEmitter : UdonSharpBehaviour
 
     private void EmitPulse(Vector3 origin, Vector3 direction)
     {
-    if (receivers == null || receivers.Length == 0) return;
+        if (receivers == null || receivers.Length == 0) return;
 
-    for (int i = 0; i < receivers.Length; i++) {
-        EchoReceiver receiver = receivers[i];
-        if (receiver == null) continue;
+        for (int i = 0; i < receivers.Length; i++)
+        {
+            EchoReceiver receiver = receivers[i];
+            if (receiver == null) continue;
 
-        Vector3 toReceiver = receiver.transform.position - origin;
-        float distance = toReceiver.magnitude;
-        float angle = Vector3.Angle(direction, toReceiver.normalized);
+            Vector3 toReceiver = receiver.transform.position - origin;
+            float distance = toReceiver.magnitude;
+            float angle = Vector3.Angle(direction, toReceiver.normalized);
 
-        if (distance > pulseRange) continue;
-        if (angle > pulseAngle) continue;
+            if (distance > pulseRange) continue;
+            if (angle > pulseAngle) continue;
 
-        // 点灯遅延：近い順に光る
-        float startDelay = distance * delayPerMeter;
-        // 消灯遅延：近い順に消える（点灯遅延と同じ間隔）
-        float fadeStartDelay = distance * delayPerMeter;
-
-        receiver.TriggerGlowWithDelay(startDelay, fadeStartDelay);
+            float startDelay = distance * delayPerMeter;
+            float fadeStartDelay = distance * delayPerMeter;
+            receiver.TriggerGlowWithDelay(startDelay, fadeStartDelay);
         }
     }
 }
