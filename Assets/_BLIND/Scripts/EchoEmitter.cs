@@ -79,12 +79,10 @@ public class EchoEmitter : UdonSharpBehaviour
     }
 
     private void EmitPulse(Vector3 origin, Vector3 direction)
-{
-    Debug.Log("EmitPulse呼ばれた receivers=" + receivers.Length);
+    {
     if (receivers == null || receivers.Length == 0) return;
 
-    for (int i = 0; i < receivers.Length; i++)
-    {
+    for (int i = 0; i < receivers.Length; i++) {
         EchoReceiver receiver = receivers[i];
         if (receiver == null) continue;
 
@@ -92,14 +90,15 @@ public class EchoEmitter : UdonSharpBehaviour
         float distance = toReceiver.magnitude;
         float angle = Vector3.Angle(direction, toReceiver.normalized);
 
-        Debug.Log("receiver=" + receiver.name + " distance=" + distance + " angle=" + angle);
-
         if (distance > pulseRange) continue;
         if (angle > pulseAngle) continue;
-        
-        float delay = distance * delayPerMeter;
-        Debug.Log("TriggerGlowWithDelay呼ぶ delay=" + delay);
-        receiver.TriggerGlowWithDelay(distance * delayPerMeter);
+
+        // 点灯遅延：近い順に光る
+        float startDelay = distance * delayPerMeter;
+        // 消灯遅延：近い順に消える（点灯遅延と同じ間隔）
+        float fadeStartDelay = distance * delayPerMeter;
+
+        receiver.TriggerGlowWithDelay(startDelay, fadeStartDelay);
+        }
     }
-}
 }

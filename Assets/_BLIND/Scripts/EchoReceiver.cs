@@ -12,8 +12,11 @@ public class EchoReceiver : UdonSharpBehaviour
     private MaterialPropertyBlock propertyBlock;
     private float glowTimer = 0f;
     private float delayTimer = 0f;
+    private float fadeDelay = 0f;
+    private float fadeDelayTimer = 0f;
     private bool isGlowing = false;
     private bool isWaiting = false;
+    private bool isFadeWaiting = false;
 
     void Start()
     {
@@ -22,7 +25,7 @@ public class EchoReceiver : UdonSharpBehaviour
 
     void Update()
     {
-        // 遅延待機中
+        // 点灯の遅延待機中
         if (isWaiting)
         {
             delayTimer -= Time.deltaTime;
@@ -30,6 +33,19 @@ public class EchoReceiver : UdonSharpBehaviour
             {
                 isWaiting = false;
                 StartGlow();
+            }
+            return;
+        }
+
+        // 消灯の遅延待機中
+        if (isFadeWaiting)
+        {
+            fadeDelayTimer -= Time.deltaTime;
+            if (fadeDelayTimer <= 0f)
+            {
+                isFadeWaiting = false;
+                isGlowing = true;
+                glowTimer = glowDuration;
             }
             return;
         }
@@ -47,19 +63,20 @@ public class EchoReceiver : UdonSharpBehaviour
         }
     }
 
-    // EchoEmitterから距離を受け取って遅延付きで発光
-    public void TriggerGlowWithDelay(float delay)
+    public void TriggerGlowWithDelay(float startDelay, float fadeStartDelay)
     {
-        Debug.Log("TriggerGlowWithDelay呼ばれた delay=" + delay);
-        delayTimer = delay;
+        delayTimer = startDelay;
+        fadeDelay = fadeStartDelay;
         isWaiting = true;
         isGlowing = false;
+        isFadeWaiting = false;
     }
 
     private void StartGlow()
     {
-        glowTimer = glowDuration;
-        isGlowing = true;
+        // 点灯したらフェードアウト開始までの遅延をセット
+        fadeDelayTimer = fadeDelay;
+        isFadeWaiting = true;
         SetGlow(1f);
     }
 
