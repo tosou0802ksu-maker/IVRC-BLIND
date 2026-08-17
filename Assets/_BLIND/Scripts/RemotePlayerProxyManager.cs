@@ -13,12 +13,12 @@ using VRC.Udon;
 // VRChatの仕様上、他人の実際のアバター表示をこちらのクライアントから
 // すり替えることはできないため、
 //   1) 本人のアバター(Playerレイヤー)を該当役割のカリングマスクから外す
-//   2) 代わりに主要ボーンを追従する人型プロキシ(HumanoidProxyRig)を役割専用レイヤーに出す
+//   2) 代わりに主要ボーンを追従する人型プロキシ(MannequinProxyRig)を役割専用レイヤーに出す
 // という構成を取る。1)のレイヤー設定はPlayerVisionController側のInspectorで別途必要。
 public class RemotePlayerProxyManager : UdonSharpBehaviour
 {
     [Header("他プレイヤーに追従させる人型プロキシ(最大2人分)")]
-    [SerializeField] private HumanoidProxyRig[] proxyRigs;
+    [SerializeField] private MannequinProxyRig[] proxyRigs;
 
     [Header("他プレイヤーに常時持たせる熱の強さ")]
     [SerializeField] private float remotePlayerHeat = 1.0f;
@@ -47,7 +47,7 @@ public class RemotePlayerProxyManager : UdonSharpBehaviour
                 break;
             }
 
-            HumanoidProxyRig rig = proxyRigs[slot];
+            MannequinProxyRig rig = proxyRigs[slot];
             if (rig != null)
             {
                 rig.SetVisible(true);
