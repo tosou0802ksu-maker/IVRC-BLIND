@@ -1401,7 +1401,7 @@ MonoBehaviour:
   SynchronizePosition: 0
   AllowCollisionOwnershipTransfer: 0
   Reliable: 0
-  _syncMethod: 0
+  _syncMethod: 1
   serializedProgramAsset: {fileID: 11400000, guid: 60adfb4dfe2b14d57b22df200b577d27, type: 2}
   programSource: {fileID: 11400000, guid: f9340743e90d640d3aad5340c912fd88, type: 2}
   serializedPublicVariablesBytesString: Ai8AAAAAATIAAABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgAuAFUAZABvAG4AVgBhAHIAaQBhAGIAbABlAFQAYQBiAGwAZQAsACAAVgBSAEMALgBVAGQAbwBuAC4AQwBvAG0AbQBvAG4AAAAAAAYBAAAAAAAAACcBBAAAAHQAeQBwAGUAAWgAAABTAHkAcwB0AGUAbQAuAEMAbwBsAGwAZQBjAHQAaQBvAG4AcwAuAEcAZQBuAGUAcgBpAGMALgBMAGkAcwB0AGAAMQBbAFsAVgBSAEMALgBVAGQAbwBuAC4AQwBvAG0AbQBvAG4ALgBJAG4AdABlAHIAZgBhAGMAZQBzAC4ASQBVAGQAbwBuAFYAYQByAGkAYQBiAGwAZQAsACAAVgBSAEMALgBVAGQAbwBuAC4AQwBvAG0AbQBvAG4AXQBdACwAIABtAHMAYwBvAHIAbABpAGIAAQEJAAAAVgBhAHIAaQBhAGIAbABlAHMALwEAAAABaAAAAFMAeQBzAHQAZQBtAC4AQwBvAGwAbABlAGMAdABpAG8AbgBzAC4ARwBlAG4AZQByAGkAYwAuAEwAaQBzAHQAYAAxAFsAWwBWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgAuAEkAbgB0AGUAcgBmAGEAYwBlAHMALgBJAFUAZABvAG4AVgBhAHIAaQBhAGIAbABlACwAIABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgBdAF0ALAAgAG0AcwBjAG8AcgBsAGkAYgABAAAABgEAAAAAAAAAAi8CAAAAAUkAAABWAFIAQwAuAFUAZABvAG4ALgBDAG8AbQBtAG8AbgAuAFUAZABvAG4AVgBhAHIAaQBhAGIAbABlAGAAMQBbAFsAUwB5AHMAdABlAG0ALgBJAG4AdAAzADIALAAgAG0AcwBjAG8AcgBsAGkAYgBdAF0ALAAgAFYAUgBDAC4AVQBkAG8AbgAuAEMAbwBtAG0AbwBuAAIAAAAGAgAAAAAAAAAnAQQAAAB0AHkAcABlAAEXAAAAUwB5AHMAdABlAG0ALgBTAHQAcgBpAG4AZwAsACAAbQBzAGMAbwByAGwAaQBiACcBCgAAAFMAeQBtAGIAbwBsAE4AYQBtAGUAAR8AAABfAF8AXwBVAGQAbwBuAFMAaABhAHIAcABCAGUAaABhAHYAaQBvAHUAcgBWAGUAcgBzAGkAbwBuAF8AXwBfACcBBAAAAHQAeQBwAGUAARYAAABTAHkAcwB0AGUAbQAuAEkAbgB0ADMAMgAsACAAbQBzAGMAbwByAGwAaQBiABcBBQAAAFYAYQBsAHUAZQACAAAABwUHBQcF
@@ -2070,6 +2070,11 @@ SkinnedMeshRenderer:
     m_Center: {x: -0.000104534905, y: 0.010827686, z: -0.000004759757}
     m_Extent: {x: 0.0037649411, y: 0.0045949584, z: 0.0036751772}
   m_DirtyAABB: 0
+--- !u!1 &572461723 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7064031229806753315, guid: 9bfc2549f4fe140219ae3d7098e330c7, type: 3}
+  m_PrefabInstance: {fileID: 2498858686906581131}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &574893710
 GameObject:
   m_ObjectHideFlags: 0
@@ -3910,13 +3915,17 @@ MonoBehaviour:
   _udonSharpBackingUdonBehaviour: {fileID: 1022011675}
   echoCullingMask:
     serializedVersion: 2
-    m_Bits: 8388609
+    m_Bits: 8388608
   thermalCullingMask:
     serializedVersion: 2
-    m_Bits: 4194305
+    m_Bits: 4194304
   memoryCullingMask:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 16778753
+  echoBlackout: 1
+  thermalBlackout: 1
+  memoryBlackout: 0
+  blackoutColor: {r: 0, g: 0, b: 0, a: 1}
   localCamera: {fileID: 1022011672}
 --- !u!114 &1022011675
 MonoBehaviour:
@@ -8315,6 +8324,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6687074945828874340, guid: 9bfc2549f4fe140219ae3d7098e330c7, type: 3}
+      propertyPath: _syncMethod
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7064031229806753315, guid: 9bfc2549f4fe140219ae3d7098e330c7, type: 3}
       propertyPath: m_Name
       value: Proxy_Slot0
@@ -8334,7 +8347,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3034602187312528722, guid: 9bfc2549f4fe140219ae3d7098e330c7, type: 3}
   m_PrefabInstance: {fileID: 2498858686906581131}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 572461723}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4bb79325b70fa4083aea8023ab49f08f, type: 3}
@@ -8560,6 +8573,26 @@ MonoBehaviour:
     - VRC.Udon.UdonBehaviour
   - gameObject: {fileID: 1022011670}
     ID: 14
+    SerializedTypeNames:
+    - VRC.Udon.UdonBehaviour
+  - gameObject: {fileID: 2065893703}
+    ID: 15
+    SerializedTypeNames:
+    - VRC.Udon.UdonBehaviour
+  - gameObject: {fileID: 572461723}
+    ID: 16
+    SerializedTypeNames:
+    - VRC.Udon.UdonBehaviour
+  - gameObject: {fileID: 417870730}
+    ID: 17
+    SerializedTypeNames:
+    - VRC.Udon.UdonBehaviour
+  - gameObject: {fileID: 477183135}
+    ID: 18
+    SerializedTypeNames:
+    - VRC.Udon.UdonBehaviour
+  - gameObject: {fileID: 373366157}
+    ID: 19
     SerializedTypeNames:
     - VRC.Udon.UdonBehaviour
   portraitCameraPositionOffset: {x: 0, y: 0, z: 0}
