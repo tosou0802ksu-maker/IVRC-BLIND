@@ -14,7 +14,7 @@ using VRC.Udon;
 public class HeatGeyser : UdonSharpBehaviour
 {
     [Header("接続先")]
-    [SerializeField] private GameManager gameManager;
+    [SerializeField] private CheckpointManager checkpointManager;
 
     [Header("サーモ役に見える熱表現")]
     [SerializeField] private DynamicThermalObject thermalIndicator;
@@ -103,9 +103,9 @@ public class HeatGeyser : UdonSharpBehaviour
             return;
         }
 
-        if (gameManager != null)
+        if (checkpointManager != null)
         {
-            gameManager.TriggerThermalDeath();
+            checkpointManager.TriggerDeath();
         }
     }
 }

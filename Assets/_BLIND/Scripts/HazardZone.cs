@@ -8,17 +8,11 @@ using VRC.Udon;
 // 触れると死亡判定になるゾーンの共通スクリプト。
 //
 // GameObject に IsTrigger を有効にした Collider を付けてアタッチする。
-// hazardKind で GameManager のどちらの死亡処理を呼ぶかを切り替える。
+// 誰か1人が触れると CheckpointManager 経由で全員がセーブポイントに戻る。
 public class HazardZone : UdonSharpBehaviour
 {
-    [Header("接続先(こちらを優先。誰か1人が触れたら全員がセーブポイントへ)")]
+    [Header("接続先。誰か1人が触れたら全員がセーブポイントへ")]
     [SerializeField] private CheckpointManager checkpointManager;
-
-    [Header("旧方式のフォールバック(checkpointManager未設定の時だけ使う)")]
-    [SerializeField] private GameManager gameManager;
-
-    [Header("旧方式の種類: 0 = 落とし穴系 / 1 = サーマル系")]
-    [SerializeField] private int hazardKind;
 
     [Header("警告表現(任意)")]
     [Tooltip("サーモ役に見せる熱源など。常時オンで構わない。")]
@@ -94,21 +88,6 @@ public class HazardZone : UdonSharpBehaviour
         if (checkpointManager != null)
         {
             checkpointManager.TriggerDeath();
-            return;
-        }
-
-        if (gameManager == null)
-        {
-            return;
-        }
-
-        if (hazardKind == 0)
-        {
-            gameManager.TriggerPitfallDeath();
-        }
-        else
-        {
-            gameManager.TriggerThermalDeath();
         }
     }
 }
