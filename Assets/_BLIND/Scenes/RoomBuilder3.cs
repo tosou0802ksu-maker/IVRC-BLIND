@@ -101,6 +101,9 @@ public class RoomBuilder3 : MonoBehaviour
 
     private Transform root;
 
+    // マテリアルキャッシュ（同一ソースマテリアルからは1つだけインスタンスを作る）
+    private Dictionary<Material, Material> materialCache = new Dictionary<Material, Material>();
+
     void Start()
     {
         BuildRoom();
@@ -108,11 +111,17 @@ public class RoomBuilder3 : MonoBehaviour
 
     void OnValidate()
     {
-        // Inspector変更時に自動で再ビルド（エディタ上で即反映）
-        if (root != null)
+        // OnValidate内でDestroyImmediate+オブジェクト生成するとUnityの内部状態が壊れるため、
+        // 次のフレームに遅延して再ビルドする
+#if UNITY_EDITOR
+        if (root != null && !Application.isPlaying)
         {
-            BuildRoom();
+            UnityEditor.EditorApplication.delayCall += () =>
+            {
+                if (this != null) BuildRoom();
+            };
         }
+#endif
     }
 
     // ==================== 部屋の再構築 ====================
@@ -120,12 +129,14 @@ public class RoomBuilder3 : MonoBehaviour
     [ContextMenu("Build Room")]
     public void BuildRoom()
     {
-        Transform old = transform.Find("GeneratedRoom");
-        if (old != null) DestroyImmediate(old.gameObject);
+        CleanUp();
 
         GameObject rootObj = new GameObject("GeneratedRoom");
         rootObj.transform.SetParent(transform, false);
         root = rootObj.transform;
+
+        // マテリアルキャッシュをクリア（再ビルド時に新しいインスタンスを作り直す）
+        materialCache.Clear();
 
         BuildFloor();
         BuildWalls();
@@ -134,6 +145,42 @@ public class RoomBuilder3 : MonoBehaviour
         {
             BuildCeiling();
         }
+    }
+
+    // 既存の生成物とリークしたリソースを破棄
+    void CleanUp()
+    {
+        Transform old = transform.Find("GeneratedRoom");
+        if (old != null)
+        {
+            // 子オブジェクトのメッシュを破棄（.meshアクセスで生成されたコピー）
+            foreach (var mf in old.GetComponentsInChildren<MeshFilter>())
+            {
+                if (mf.sharedMesh != null && !mf.sharedMesh.name.StartsWith("Cube"))
+                {
+                    DestroyImmediate(mf.sharedMesh);
+                }
+            }
+            // 子オブジェクトのマテリアルインスタンスを破棄
+            foreach (var r in old.GetComponentsInChildren<Renderer>())
+            {
+                foreach (var m in r.sharedMaterials)
+                {
+                    if (m != null && m.name.EndsWith("(Instance)"))
+                    {
+                        DestroyImmediate(m);
+                    }
+                }
+            }
+            DestroyImmediate(old.gameObject);
+        }
+
+        // キャッシュ内のマテリアルも念のため破棄
+        foreach (var kvp in materialCache)
+        {
+            if (kvp.Value != null) DestroyImmediate(kvp.Value);
+        }
+        materialCache.Clear();
     }
 
     // ==================== 床 ====================
@@ -260,7 +307,7 @@ public class RoomBuilder3 : MonoBehaviour
                 SurfaceType.NorthSouth);
         }
 
-        // ドアフレーム（問題1: 床 + 問題2: 断面隠し）
+        // ドアフレーム
         if (doorSpan > 0f)
         {
             CreateDoorFrameZ(parent, x, doorStart, doorEnd, cfg.doorHeight);
@@ -313,7 +360,7 @@ public class RoomBuilder3 : MonoBehaviour
                 SurfaceType.EastWest);
         }
 
-        // ドアフレーム（問題1: 床 + 問題2: 断面隠し）
+        // ドアフレーム
         if (doorSpan > 0f)
         {
             CreateDoorFrameX(parent, z, doorStart, doorEnd, cfg.doorHeight);
@@ -411,13 +458,13 @@ public class RoomBuilder3 : MonoBehaviour
         piece.transform.localPosition = localPos;
         if (sourceMat != null)
         {
-            piece.GetComponent<Renderer>().material = CreateMaterialInstance(sourceMat);
+            piece.GetComponent<Renderer>().sharedMaterial = GetCachedMaterial(sourceMat);
         }
     }
 
     // ==================== マテリアル適用 ====================
 
-    // ワールド座標ベースでメッシュUVを直接書き換え、マテリアルを適用
+    // ワールド座標ベースでメッシュUVを直接書き換え、キャッシュ済みマテリアルを適用
     void ApplyMaterial(GameObject obj, Material sourceMat, Vector3 scale, Vector3 localPos, SurfaceType surfaceType)
     {
         if (sourceMat == null) return;
@@ -425,18 +472,43 @@ public class RoomBuilder3 : MonoBehaviour
         // 全頂点のUVをワールド座標に基づいて設定
         SetWorldSpaceUVs(obj, scale, localPos, surfaceType);
 
-        // マテリアルインスタンスを作成して適用
-        Material mat = CreateMaterialInstance(sourceMat);
+        // キャッシュ済みマテリアルをsharedMaterialで適用（インスタンス生成を回避）
+        obj.GetComponent<Renderer>().sharedMaterial = GetCachedMaterial(sourceMat);
+    }
+
+    // 同一ソースマテリアルからは1つだけインスタンスを作り、以降はキャッシュから返す
+    Material GetCachedMaterial(Material sourceMat)
+    {
+        if (materialCache.TryGetValue(sourceMat, out Material cached) && cached != null)
+        {
+            return cached;
+        }
+
+        Material mat;
+        if (useUnlitShader)
+        {
+            mat = new Material(Shader.Find("Unlit/Texture"));
+            if (sourceMat.mainTexture != null)
+                mat.mainTexture = sourceMat.mainTexture;
+        }
+        else
+        {
+            mat = new Material(sourceMat);
+        }
+        mat.color = Color.white;
         mat.mainTextureScale = Vector2.one;
         mat.mainTextureOffset = Vector2.zero;
-        obj.GetComponent<Renderer>().material = mat;
+
+        materialCache[sourceMat] = mat;
+        return mat;
     }
 
     // Cubeメッシュの全頂点UVをワールド座標で設定
     // 全オブジェクトが同一のワールド座標系を参照するため、タイル目地が自動で揃う
     void SetWorldSpaceUVs(GameObject obj, Vector3 scale, Vector3 localPos, SurfaceType surfaceType)
     {
-        Mesh mesh = obj.GetComponent<MeshFilter>().mesh;
+        MeshFilter mf = obj.GetComponent<MeshFilter>();
+        Mesh mesh = mf.mesh; // コピーが作られるが、CleanUpで破棄される
         Vector3[] verts = mesh.vertices;
         Vector2[] uvs = new Vector2[verts.Length];
 
@@ -462,24 +534,6 @@ public class RoomBuilder3 : MonoBehaviour
         }
 
         mesh.uv = uvs;
-    }
-
-    // マテリアルインスタンスを作成（Unlit対応・色の暗転防止）
-    Material CreateMaterialInstance(Material sourceMat)
-    {
-        Material mat;
-        if (useUnlitShader)
-        {
-            mat = new Material(Shader.Find("Unlit/Texture"));
-            if (sourceMat.mainTexture != null)
-                mat.mainTexture = sourceMat.mainTexture;
-        }
-        else
-        {
-            mat = new Material(sourceMat);
-        }
-        mat.color = Color.white;
-        return mat;
     }
 
     // ==================== 天井 ====================
