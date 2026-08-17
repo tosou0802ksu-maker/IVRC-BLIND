@@ -15,6 +15,7 @@ public class RoomBuilder3 : MonoBehaviour
     // 壁の方角。North = +X側の壁, South = -X側, East = +Z側, West = -Z側
     // (コンパスの方角そのものではなく、説明のための便宜的な呼び名です)
     public enum WallSide { North, South, East, West }
+    public enum SurfaceType { NorthSouth, EastWest, Floor }
 
     [System.Serializable]
     public class WallConfig
@@ -88,11 +89,30 @@ public class RoomBuilder3 : MonoBehaviour
     public Material wallMaterial;
     public Material ceilingMaterial;
 
+    [Header("ドアフレーム設定")]
+    [Tooltip("ドアフレームの太さ")]
+    public float doorFrameThickness = 0.05f;
+    [Tooltip("ドアフレームのマテリアル(未指定時は壁マテリアルを使用)")]
+    public Material doorFrameMaterial;
+
+    [Header("レンダリング設定")]
+    [Tooltip("Unlitシェーダーを使用（ライティングの影響を受けず、継ぎ目のアーティファクトを防止）")]
+    public bool useUnlitShader = false;
+
     private Transform root;
 
     void Start()
     {
         BuildRoom();
+    }
+
+    void OnValidate()
+    {
+        // Inspector変更時に自動で再ビルド（エディタ上で即反映）
+        if (root != null)
+        {
+            BuildRoom();
+        }
     }
 
     // ==================== 部屋の再構築 ====================
@@ -169,10 +189,11 @@ public class RoomBuilder3 : MonoBehaviour
         GameObject tile = GameObject.CreatePrimitive(PrimitiveType.Cube);
         tile.name = "FloorTile";
         tile.transform.SetParent(parent, false);
-        tile.transform.localScale = new Vector3(w, tileThickness, d);
-        tile.transform.localPosition = new Vector3(min.x + w / 2f, -tileThickness / 2f, min.y + d / 2f);
-        if (floorMaterial != null)
-            tile.GetComponent<Renderer>().sharedMaterial = floorMaterial;
+        Vector3 scale = new Vector3(w, tileThickness, d);
+        tile.transform.localScale = scale;
+        Vector3 pos = new Vector3(min.x + w / 2f, -tileThickness / 2f, min.y + d / 2f);
+        tile.transform.localPosition = pos;
+        ApplyMaterial(tile, floorMaterial, scale, pos, SurfaceType.Floor);
     }
 
     // ==================== 壁 ====================
@@ -201,7 +222,8 @@ public class RoomBuilder3 : MonoBehaviour
         {
             CreateWallSegment(parent,
                 new Vector3(x, wallHeightY / 2f, wallLength / 2f),
-                new Vector3(wallThickness, wallHeightY, wallLength + wallThickness));
+                new Vector3(wallThickness, wallHeightY, wallLength + wallThickness),
+                SurfaceType.NorthSouth);
             return;
         }
 
@@ -214,14 +236,16 @@ public class RoomBuilder3 : MonoBehaviour
         {
             CreateWallSegment(parent,
                 new Vector3(x, wallHeightY / 2f, doorStart / 2f),
-                new Vector3(wallThickness, wallHeightY, doorStart));
+                new Vector3(wallThickness, wallHeightY, doorStart),
+                SurfaceType.NorthSouth);
         }
         if (doorEnd < wallLength)
         {
             float segLen = wallLength - doorEnd;
             CreateWallSegment(parent,
                 new Vector3(x, wallHeightY / 2f, doorEnd + segLen / 2f),
-                new Vector3(wallThickness, wallHeightY, segLen));
+                new Vector3(wallThickness, wallHeightY, segLen),
+                SurfaceType.NorthSouth);
         }
 
         // 入り口の上部(まぐさ)。doorHeightが壁の高さより低い場合のみ生成し、
@@ -232,7 +256,14 @@ public class RoomBuilder3 : MonoBehaviour
             float topHeight = wallHeightY - cfg.doorHeight;
             CreateWallSegment(parent,
                 new Vector3(x, cfg.doorHeight + topHeight / 2f, (doorStart + doorEnd) / 2f),
-                new Vector3(wallThickness, topHeight, doorSpan));
+                new Vector3(wallThickness, topHeight, doorSpan),
+                SurfaceType.NorthSouth);
+        }
+
+        // ドアフレーム（問題1: 床 + 問題2: 断面隠し）
+        if (doorSpan > 0f)
+        {
+            CreateDoorFrameZ(parent, x, doorStart, doorEnd, cfg.doorHeight);
         }
     }
 
@@ -245,7 +276,8 @@ public class RoomBuilder3 : MonoBehaviour
         {
             CreateWallSegment(parent,
                 new Vector3(wallLength / 2f, wallHeightY / 2f, z),
-                new Vector3(wallLength + wallThickness, wallHeightY, wallThickness));
+                new Vector3(wallLength + wallThickness, wallHeightY, wallThickness),
+                SurfaceType.EastWest);
             return;
         }
 
@@ -258,14 +290,16 @@ public class RoomBuilder3 : MonoBehaviour
         {
             CreateWallSegment(parent,
                 new Vector3(doorStart / 2f, wallHeightY / 2f, z),
-                new Vector3(doorStart, wallHeightY, wallThickness));
+                new Vector3(doorStart, wallHeightY, wallThickness),
+                SurfaceType.EastWest);
         }
         if (doorEnd < wallLength)
         {
             float segLen = wallLength - doorEnd;
             CreateWallSegment(parent,
                 new Vector3(doorEnd + segLen / 2f, wallHeightY / 2f, z),
-                new Vector3(segLen, wallHeightY, wallThickness));
+                new Vector3(segLen, wallHeightY, wallThickness),
+                SurfaceType.EastWest);
         }
 
         // 入り口の上部(まぐさ)
@@ -275,19 +309,177 @@ public class RoomBuilder3 : MonoBehaviour
             float topHeight = wallHeightY - cfg.doorHeight;
             CreateWallSegment(parent,
                 new Vector3((doorStart + doorEnd) / 2f, cfg.doorHeight + topHeight / 2f, z),
-                new Vector3(doorSpan, topHeight, wallThickness));
+                new Vector3(doorSpan, topHeight, wallThickness),
+                SurfaceType.EastWest);
+        }
+
+        // ドアフレーム（問題1: 床 + 問題2: 断面隠し）
+        if (doorSpan > 0f)
+        {
+            CreateDoorFrameX(parent, z, doorStart, doorEnd, cfg.doorHeight);
         }
     }
 
-    void CreateWallSegment(Transform parent, Vector3 localPos, Vector3 scale)
+    void CreateWallSegment(Transform parent, Vector3 localPos, Vector3 scale, SurfaceType surfaceType)
     {
         GameObject wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
         wall.name = "WallSegment";
         wall.transform.SetParent(parent, false);
         wall.transform.localScale = scale;
         wall.transform.localPosition = localPos;
-        if (wallMaterial != null)
-            wall.GetComponent<Renderer>().sharedMaterial = wallMaterial;
+        ApplyMaterial(wall, wallMaterial, scale, localPos, surfaceType);
+    }
+
+    // ==================== ドアフレーム ====================
+
+    // Z方向の壁(North/South)用ドアフレーム ― 全て開口部の内側に配置
+    void CreateDoorFrameZ(Transform parent, float x, float doorStart, float doorEnd, float doorHeight)
+    {
+        float doorSpan = doorEnd - doorStart;
+        float ft = doorFrameThickness;
+        float innerSpan = doorSpan - 2f * ft; // 柱の間の幅
+        Material frameMat = doorFrameMaterial != null ? doorFrameMaterial : wallMaterial;
+
+        GameObject frame = new GameObject("DoorFrame");
+        frame.transform.SetParent(parent, false);
+
+        // 左柱（開口部内側: doorStart ~ doorStart+ft）
+        CreateFramePiece(frame.transform, frameMat,
+            new Vector3(x, doorHeight / 2f, doorStart + ft / 2f),
+            new Vector3(wallThickness, doorHeight, ft));
+
+        // 右柱（開口部内側: doorEnd-ft ~ doorEnd）
+        CreateFramePiece(frame.transform, frameMat,
+            new Vector3(x, doorHeight / 2f, doorEnd - ft / 2f),
+            new Vector3(wallThickness, doorHeight, ft));
+
+        // 上枠（開口部内側: doorHeight-ft ~ doorHeight、柱の間にフィット）
+        if (innerSpan > 0f)
+        {
+            CreateFramePiece(frame.transform, frameMat,
+                new Vector3(x, doorHeight - ft / 2f, (doorStart + doorEnd) / 2f),
+                new Vector3(wallThickness, ft, innerSpan));
+        }
+
+        // 下枠（床の上に配置: Y = 0 ~ ft、床との干渉を防止）
+        CreateFramePiece(frame.transform, frameMat,
+            new Vector3(x, ft / 2f, (doorStart + doorEnd) / 2f),
+            new Vector3(wallThickness, ft, doorSpan));
+    }
+
+    // X方向の壁(East/West)用ドアフレーム ― 全て開口部の内側に配置
+    void CreateDoorFrameX(Transform parent, float z, float doorStart, float doorEnd, float doorHeight)
+    {
+        float doorSpan = doorEnd - doorStart;
+        float ft = doorFrameThickness;
+        float innerSpan = doorSpan - 2f * ft; // 柱の間の幅
+        Material frameMat = doorFrameMaterial != null ? doorFrameMaterial : wallMaterial;
+
+        GameObject frame = new GameObject("DoorFrame");
+        frame.transform.SetParent(parent, false);
+
+        // 左柱（開口部内側: doorStart ~ doorStart+ft）
+        CreateFramePiece(frame.transform, frameMat,
+            new Vector3(doorStart + ft / 2f, doorHeight / 2f, z),
+            new Vector3(ft, doorHeight, wallThickness));
+
+        // 右柱（開口部内側: doorEnd-ft ~ doorEnd）
+        CreateFramePiece(frame.transform, frameMat,
+            new Vector3(doorEnd - ft / 2f, doorHeight / 2f, z),
+            new Vector3(ft, doorHeight, wallThickness));
+
+        // 上枠（開口部内側: doorHeight-ft ~ doorHeight、柱の間にフィット）
+        if (innerSpan > 0f)
+        {
+            CreateFramePiece(frame.transform, frameMat,
+                new Vector3((doorStart + doorEnd) / 2f, doorHeight - ft / 2f, z),
+                new Vector3(innerSpan, ft, wallThickness));
+        }
+
+        // 下枠（床の上に配置: Y = 0 ~ ft、床との干渉を防止）
+        CreateFramePiece(frame.transform, frameMat,
+            new Vector3((doorStart + doorEnd) / 2f, ft / 2f, z),
+            new Vector3(doorSpan, ft, wallThickness));
+    }
+
+    void CreateFramePiece(Transform parent, Material sourceMat, Vector3 localPos, Vector3 scale)
+    {
+        GameObject piece = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        piece.name = "FramePiece";
+        piece.transform.SetParent(parent, false);
+        piece.transform.localScale = scale;
+        piece.transform.localPosition = localPos;
+        if (sourceMat != null)
+        {
+            piece.GetComponent<Renderer>().material = CreateMaterialInstance(sourceMat);
+        }
+    }
+
+    // ==================== マテリアル適用 ====================
+
+    // ワールド座標ベースでメッシュUVを直接書き換え、マテリアルを適用
+    void ApplyMaterial(GameObject obj, Material sourceMat, Vector3 scale, Vector3 localPos, SurfaceType surfaceType)
+    {
+        if (sourceMat == null) return;
+
+        // 全頂点のUVをワールド座標に基づいて設定
+        SetWorldSpaceUVs(obj, scale, localPos, surfaceType);
+
+        // マテリアルインスタンスを作成して適用
+        Material mat = CreateMaterialInstance(sourceMat);
+        mat.mainTextureScale = Vector2.one;
+        mat.mainTextureOffset = Vector2.zero;
+        obj.GetComponent<Renderer>().material = mat;
+    }
+
+    // Cubeメッシュの全頂点UVをワールド座標で設定
+    // 全オブジェクトが同一のワールド座標系を参照するため、タイル目地が自動で揃う
+    void SetWorldSpaceUVs(GameObject obj, Vector3 scale, Vector3 localPos, SurfaceType surfaceType)
+    {
+        Mesh mesh = obj.GetComponent<MeshFilter>().mesh;
+        Vector3[] verts = mesh.vertices;
+        Vector2[] uvs = new Vector2[verts.Length];
+
+        for (int i = 0; i < verts.Length; i++)
+        {
+            // Cube頂点(±0.5)からワールド座標を算出
+            float wx = localPos.x + verts[i].x * scale.x;
+            float wy = localPos.y + verts[i].y * scale.y;
+            float wz = localPos.z + verts[i].z * scale.z;
+
+            switch (surfaceType)
+            {
+                case SurfaceType.NorthSouth: // N/S壁: U=Y, V=Z（床のV=Zと一致）
+                    uvs[i] = new Vector2(wy, wz);
+                    break;
+                case SurfaceType.EastWest: // E/W壁: U=X, V=Y
+                    uvs[i] = new Vector2(wx, wy);
+                    break;
+                default: // 床・天井: U=X, V=Z
+                    uvs[i] = new Vector2(wx, wz);
+                    break;
+            }
+        }
+
+        mesh.uv = uvs;
+    }
+
+    // マテリアルインスタンスを作成（Unlit対応・色の暗転防止）
+    Material CreateMaterialInstance(Material sourceMat)
+    {
+        Material mat;
+        if (useUnlitShader)
+        {
+            mat = new Material(Shader.Find("Unlit/Texture"));
+            if (sourceMat.mainTexture != null)
+                mat.mainTexture = sourceMat.mainTexture;
+        }
+        else
+        {
+            mat = new Material(sourceMat);
+        }
+        mat.color = Color.white;
+        return mat;
     }
 
     // ==================== 天井 ====================
@@ -300,10 +492,11 @@ public class RoomBuilder3 : MonoBehaviour
         GameObject ceiling = GameObject.CreatePrimitive(PrimitiveType.Cube);
         ceiling.name = "CeilingPanel";
         ceiling.transform.SetParent(ceilingRoot.transform, false);
-        ceiling.transform.localScale = new Vector3(roomDepthX + wallThickness, ceilingThickness, roomWidthZ + wallThickness);
-        ceiling.transform.localPosition = new Vector3(roomDepthX / 2f, wallHeightY + ceilingThickness / 2f, roomWidthZ / 2f);
-        if (ceilingMaterial != null)
-            ceiling.GetComponent<Renderer>().sharedMaterial = ceilingMaterial;
+        Vector3 ceilingScale = new Vector3(roomDepthX + wallThickness, ceilingThickness, roomWidthZ + wallThickness);
+        ceiling.transform.localScale = ceilingScale;
+        Vector3 ceilingPos = new Vector3(roomDepthX / 2f, wallHeightY + ceilingThickness / 2f, roomWidthZ / 2f);
+        ceiling.transform.localPosition = ceilingPos;
+        ApplyMaterial(ceiling, ceilingMaterial, ceilingScale, ceilingPos, SurfaceType.Floor);
     }
 
     /// <summary>天井の表示/非表示を切り替える</summary>
