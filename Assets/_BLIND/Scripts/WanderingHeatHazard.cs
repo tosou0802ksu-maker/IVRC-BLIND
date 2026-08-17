@@ -13,7 +13,7 @@ using VRC.Udon;
 public class WanderingHeatHazard : UdonSharpBehaviour
 {
     [Header("接続先")]
-    [SerializeField] private GameManager gameManager;
+    [SerializeField] private CheckpointManager checkpointManager;
 
     [Header("巡回ポイント(2点以上、ループする)")]
     [SerializeField] private Transform[] waypoints;
@@ -69,9 +69,9 @@ public class WanderingHeatHazard : UdonSharpBehaviour
             return;
         }
 
-        if (gameManager != null)
+        if (checkpointManager != null)
         {
-            gameManager.TriggerThermalDeath();
+            checkpointManager.TriggerDeath();
         }
     }
 }
