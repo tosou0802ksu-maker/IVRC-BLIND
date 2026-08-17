@@ -57,9 +57,28 @@ public class PlayerVisionController : UdonSharpBehaviour
 
     private ViewRole currentRole;
 
+    // スプリンクラー等で一時的に視界を完全に奪う演出用。
+    // 0より大きい間は役割に関係なくカリングマスクを0(何も見えない)にする。
+    private float forcedBlackoutTimer;
+
     void Start()
     {
         ApplyVisionMask();
+    }
+
+    void Update()
+    {
+        if (forcedBlackoutTimer <= 0f)
+        {
+            return;
+        }
+
+        forcedBlackoutTimer -= Time.deltaTime;
+        if (forcedBlackoutTimer <= 0f)
+        {
+            forcedBlackoutTimer = 0f;
+            ApplyVisionMask();
+        }
     }
 
     // VRChat側がカメラ設定を作り直した時に呼ばれる。
@@ -80,6 +99,23 @@ public class PlayerVisionController : UdonSharpBehaviour
         return currentRole;
     }
 
+    // スプリンクラーなど「エコロケ・サーモの視界を一時的に奪う」ギミック用。
+    // 過去の人(Memory)には効果がない(仕様上、視界を奪う対象ではないため)。
+    public void TriggerForcedBlackout(float duration)
+    {
+        if (currentRole == ViewRole.Memory)
+        {
+            return;
+        }
+
+        if (duration > forcedBlackoutTimer)
+        {
+            forcedBlackoutTimer = duration;
+        }
+
+        ApplyVisionMask();
+    }
+
     private void ApplyVisionMask()
     {
         LayerMask mask = echoCullingMask;
@@ -94,6 +130,13 @@ public class PlayerVisionController : UdonSharpBehaviour
         {
             mask = memoryCullingMask;
             blackout = memoryBlackout;
+        }
+
+        bool forcedBlackout = forcedBlackoutTimer > 0f;
+        if (forcedBlackout)
+        {
+            mask = 0;
+            blackout = true;
         }
 
         VRCCameraSettings screen = VRCCameraSettings.ScreenCamera;

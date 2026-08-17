@@ -76,6 +76,24 @@ public class LampPuzzleManager : UdonSharpBehaviour
         ApplyState();
     }
 
+    // 偽ボタン(PuzzleButton.isFake)から呼ばれる。間違えた時と同じくリセット。
+    public void OnFakeButtonPressed()
+    {
+        if (isSolved)
+        {
+            return;
+        }
+
+        if (!Networking.IsOwner(gameObject))
+        {
+            Networking.SetOwner(Networking.LocalPlayer, gameObject);
+        }
+
+        progressIndex = 0;
+        RequestSerialization();
+        ApplyState();
+    }
+
     // 同期された進行状況を見た目に反映する
     private void ApplyState()
     {
