@@ -18,11 +18,39 @@ public class ViewpointShuffleManager : UdonSharpBehaviour
     [Header("このクライアントのローカル視点コントローラ")]
     [SerializeField] private PlayerVisionController localVisionController;
 
+    [Header("デバッグ(1人でのエディタ確認用)")]
+    [Tooltip("オンにするとキーを押すたびに エコロケ→サーモ→過去の人 と自分の視点を切り替えられる。" +
+             "1人だと役割が固定されてしまうため、テスト時だけオンにする。")]
+    [SerializeField] private bool enableDebugRoleSwitch;
+    [SerializeField] private KeyCode debugRoleSwitchKey = KeyCode.R;
+
     [UdonSynced] public int roleOffset;
+
+    // デバッグ切り替えで上書きした役割。-1 なら未使用(通常の計算に従う)。
+    private int debugRole = -1;
 
     void Start()
     {
         ApplyRoleForLocalPlayer();
+    }
+
+    void Update()
+    {
+        if (!enableDebugRoleSwitch)
+        {
+            return;
+        }
+
+        if (Input.GetKeyDown(debugRoleSwitchKey))
+        {
+            debugRole = (debugRole + 1) % 3;
+
+            if (localVisionController != null)
+            {
+                localVisionController.SetRole((ViewRole)debugRole);
+                Debug.Log("[BLIND] デバッグ視点切り替え -> " + (ViewRole)debugRole);
+            }
+        }
     }
 
     public override void OnDeserialization()
@@ -47,6 +75,13 @@ public class ViewpointShuffleManager : UdonSharpBehaviour
     {
         if (localVisionController == null)
         {
+            return;
+        }
+
+        // デバッグで手動切り替え中は、同期由来の再計算で上書きしない
+        if (enableDebugRoleSwitch && debugRole >= 0)
+        {
+            localVisionController.SetRole((ViewRole)debugRole);
             return;
         }
 
