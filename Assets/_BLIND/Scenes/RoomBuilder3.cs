@@ -63,6 +63,12 @@ public class RoomBuilder3 : MonoBehaviour
     public WallConfig westWall = new WallConfig();
 
     [Header("床タイル設定")]
+    [Tooltip("オンにすると床をタイルに分割せず、部屋全体を覆う1枚の板として生成します。" +
+             "マテリアル側(BLIND/RoomSurface)がワールド座標でタイル模様を描くため見た目は変わらず、" +
+             "オブジェクト数が激減して軽くなります。" +
+             "落とし穴(下のTile Fill RatioやManual Holes)を使う部屋ではオフにしてください。")]
+    public bool singleSlabFloor = false;
+
     [Tooltip("タイル1枚の縦(X方向)の長さ")]
     public float tileDepthX = 0.5f;
     [Tooltip("タイル1枚の横(Z方向)の長さ")]
@@ -199,6 +205,20 @@ public class RoomBuilder3 : MonoBehaviour
         float originZ = -halfWall;
         float spanX = roomDepthX + wallThickness;
         float spanZ = roomWidthZ + wallThickness;
+
+        // 1枚板モード。
+        // 床タイルを1枚ずつ並べるとオブジェクト数が跳ね上がり、部屋を組み直すたびに重くなる
+        // (12m×7mの部屋でも数十枚、大部屋では数百枚に達する)。
+        // マテリアル(BLIND/RoomSurface)がワールド座標基準でタイル模様を描くため、
+        // 板1枚にしても見た目はタイル床のまま。目地の位置も変わらない。
+        // ※ 落とし穴(tileFillRatio や manualHoles)を使う部屋ではオフにすること。
+        if (singleSlabFloor)
+        {
+            CreateFloorTile(floorRoot.transform,
+                new Vector2(originX, originZ),
+                new Vector2(originX + spanX, originZ + spanZ));
+            return;
+        }
 
         int colsX = Mathf.CeilToInt(spanX / tileDepthX);
         int colsZ = Mathf.CeilToInt(spanZ / tileWidthZ);
