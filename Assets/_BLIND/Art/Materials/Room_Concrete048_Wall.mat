@@ -24,20 +24,21 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BumpMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 0d58ee9fc58d64196959fe26d62992cf, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 316606b452f0049469e8052f3ef89a36, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AmbientBoost: 0.35
-    - _Glossiness: 0.5
+    - _AmbientBoost: 0.28
+    - _Glossiness: 0.1
     - _Metallic: 0
-    - _NormalStrength: 1
-    - _TextureScale: 1
+    - _NormalStrength: 1.8
+    - _Saturation: 0.22
+    - _TextureScale: 2.2
     m_Colors:
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 0.78, g: 0.78, b: 0.76, a: 1}
   m_BuildTextureStacks: []
