@@ -190,8 +190,18 @@ public class RoomBuilder3 : MonoBehaviour
         GameObject floorRoot = new GameObject("Floor");
         floorRoot.transform.SetParent(root, false);
 
-        int colsX = Mathf.CeilToInt(roomDepthX / tileDepthX);
-        int colsZ = Mathf.CeilToInt(roomWidthZ / tileWidthZ);
+        // 床は壁の「外側の面」まで伸ばす。
+        // ここを部屋の内寸ぴったり(0〜roomDepthX)にすると、壁は中心線上に建つため
+        // 壁の厚みの外半分には床が存在しないことになり、
+        // 入り口をくぐる瞬間に足元が抜けて見える(=「扉の下に床が生成されない」)。
+        float halfWall = wallThickness * 0.5f;
+        float originX = -halfWall;
+        float originZ = -halfWall;
+        float spanX = roomDepthX + wallThickness;
+        float spanZ = roomWidthZ + wallThickness;
+
+        int colsX = Mathf.CeilToInt(spanX / tileDepthX);
+        int colsZ = Mathf.CeilToInt(spanZ / tileWidthZ);
 
         System.Random rng = new System.Random(randomSeed);
 
@@ -199,10 +209,10 @@ public class RoomBuilder3 : MonoBehaviour
         {
             for (int iz = 0; iz < colsZ; iz++)
             {
-                float x0 = ix * tileDepthX;
-                float z0 = iz * tileWidthZ;
-                float x1 = Mathf.Min(x0 + tileDepthX, roomDepthX);
-                float z1 = Mathf.Min(z0 + tileWidthZ, roomWidthZ);
+                float x0 = originX + ix * tileDepthX;
+                float z0 = originZ + iz * tileWidthZ;
+                float x1 = Mathf.Min(x0 + tileDepthX, originX + spanX);
+                float z1 = Mathf.Min(z0 + tileWidthZ, originZ + spanZ);
 
                 Vector2 min = new Vector2(x0, z0);
                 Vector2 max = new Vector2(x1, z1);
@@ -264,6 +274,7 @@ public class RoomBuilder3 : MonoBehaviour
     void BuildWallAlongZ(Transform parent, float x, WallConfig cfg)
     {
         float wallLength = roomWidthZ;
+        float halfWall = wallThickness * 0.5f;
 
         if (!cfg.hasDoor)
         {
@@ -279,16 +290,25 @@ public class RoomBuilder3 : MonoBehaviour
         float doorEnd = Mathf.Clamp(center + cfg.doorWidth / 2f, 0f, wallLength);
         if (doorEnd < doorStart) doorEnd = doorStart;
 
-        if (doorStart > 0f)
+        // 入り口が無い場合の壁は「wallLength + wallThickness」で角まで伸ばしているのに対し、
+        // 入り口がある場合は 0〜wallLength ちょうどで作られていたため、
+        // 部屋の四隅に壁の厚みの半分だけ隙間が空き、扉をくぐる時にそこから
+        // 隣の部屋の壁紙が覗いて見えていた(=「壁紙の境目が見える」)。
+        // 両端を角(-wallThickness/2 と wallLength+wallThickness/2)まで伸ばして塞ぐ。
+        float zMin = -halfWall;
+        float zMax = wallLength + halfWall;
+
+        if (doorStart > zMin)
         {
+            float segLen = doorStart - zMin;
             CreateWallSegment(parent,
-                new Vector3(x, wallHeightY / 2f, doorStart / 2f),
-                new Vector3(wallThickness, wallHeightY, doorStart),
+                new Vector3(x, wallHeightY / 2f, zMin + segLen / 2f),
+                new Vector3(wallThickness, wallHeightY, segLen),
                 SurfaceType.NorthSouth);
         }
-        if (doorEnd < wallLength)
+        if (doorEnd < zMax)
         {
-            float segLen = wallLength - doorEnd;
+            float segLen = zMax - doorEnd;
             CreateWallSegment(parent,
                 new Vector3(x, wallHeightY / 2f, doorEnd + segLen / 2f),
                 new Vector3(wallThickness, wallHeightY, segLen),
@@ -318,6 +338,7 @@ public class RoomBuilder3 : MonoBehaviour
     void BuildWallAlongX(Transform parent, float z, WallConfig cfg)
     {
         float wallLength = roomDepthX;
+        float halfWall = wallThickness * 0.5f;
 
         if (!cfg.hasDoor)
         {
@@ -333,16 +354,21 @@ public class RoomBuilder3 : MonoBehaviour
         float doorEnd = Mathf.Clamp(center + cfg.doorWidth / 2f, 0f, wallLength);
         if (doorEnd < doorStart) doorEnd = doorStart;
 
-        if (doorStart > 0f)
+        // BuildWallAlongZ と同じく、両端を部屋の角まで伸ばして四隅の隙間を塞ぐ
+        float xMin = -halfWall;
+        float xMax = wallLength + halfWall;
+
+        if (doorStart > xMin)
         {
+            float segLen = doorStart - xMin;
             CreateWallSegment(parent,
-                new Vector3(doorStart / 2f, wallHeightY / 2f, z),
-                new Vector3(doorStart, wallHeightY, wallThickness),
+                new Vector3(xMin + segLen / 2f, wallHeightY / 2f, z),
+                new Vector3(segLen, wallHeightY, wallThickness),
                 SurfaceType.EastWest);
         }
-        if (doorEnd < wallLength)
+        if (doorEnd < xMax)
         {
-            float segLen = wallLength - doorEnd;
+            float segLen = xMax - doorEnd;
             CreateWallSegment(parent,
                 new Vector3(doorEnd + segLen / 2f, wallHeightY / 2f, z),
                 new Vector3(segLen, wallHeightY, wallThickness),
@@ -384,34 +410,40 @@ public class RoomBuilder3 : MonoBehaviour
     {
         float doorSpan = doorEnd - doorStart;
         float ft = doorFrameThickness;
-        float innerSpan = doorSpan - 2f * ft; // 柱の間の幅
         Material frameMat = doorFrameMaterial != null ? doorFrameMaterial : wallMaterial;
 
         GameObject frame = new GameObject("DoorFrame");
         frame.transform.SetParent(parent, false);
 
-        // 左柱（開口部内側: doorStart ~ doorStart+ft）
-        CreateFramePiece(frame.transform, frameMat,
-            new Vector3(x, doorHeight / 2f, doorStart + ft / 2f),
-            new Vector3(wallThickness, doorHeight, ft));
+        // 【枠の重なり対策】
+        // 以前は柱が Y=0〜doorHeight の全高で作られていたため、
+        // 下枠(Y=0〜ft)・上枠と同じ場所を奪い合って重なり、
+        // 継ぎ目にちらつき(Zファイティング)が出ていた。
+        // 「下枠 → 柱 → 上枠」を縦に積んで、互いに一切重ならないようにする。
+        float postHeight = doorHeight - 2f * ft;
+        float postCenterY = ft + postHeight / 2f;
 
-        // 右柱（開口部内側: doorEnd-ft ~ doorEnd）
-        CreateFramePiece(frame.transform, frameMat,
-            new Vector3(x, doorHeight / 2f, doorEnd - ft / 2f),
-            new Vector3(wallThickness, doorHeight, ft));
-
-        // 上枠（開口部内側: doorHeight-ft ~ doorHeight、柱の間にフィット）
-        if (innerSpan > 0f)
-        {
-            CreateFramePiece(frame.transform, frameMat,
-                new Vector3(x, doorHeight - ft / 2f, (doorStart + doorEnd) / 2f),
-                new Vector3(wallThickness, ft, innerSpan));
-        }
-
-        // 下枠（床の上に配置: Y = 0 ~ ft、床との干渉を防止）
+        // 下枠（Y = 0 〜 ft、開口の幅いっぱい）
         CreateFramePiece(frame.transform, frameMat,
             new Vector3(x, ft / 2f, (doorStart + doorEnd) / 2f),
             new Vector3(wallThickness, ft, doorSpan));
+
+        // 上枠（Y = doorHeight-ft 〜 doorHeight、開口の幅いっぱい）
+        CreateFramePiece(frame.transform, frameMat,
+            new Vector3(x, doorHeight - ft / 2f, (doorStart + doorEnd) / 2f),
+            new Vector3(wallThickness, ft, doorSpan));
+
+        // 左右の柱（Y = ft 〜 doorHeight-ft。上下の枠の間だけを埋める）
+        if (postHeight > 0f)
+        {
+            CreateFramePiece(frame.transform, frameMat,
+                new Vector3(x, postCenterY, doorStart + ft / 2f),
+                new Vector3(wallThickness, postHeight, ft));
+
+            CreateFramePiece(frame.transform, frameMat,
+                new Vector3(x, postCenterY, doorEnd - ft / 2f),
+                new Vector3(wallThickness, postHeight, ft));
+        }
     }
 
     // X方向の壁(East/West)用ドアフレーム ― 全て開口部の内側に配置
@@ -419,34 +451,36 @@ public class RoomBuilder3 : MonoBehaviour
     {
         float doorSpan = doorEnd - doorStart;
         float ft = doorFrameThickness;
-        float innerSpan = doorSpan - 2f * ft; // 柱の間の幅
         Material frameMat = doorFrameMaterial != null ? doorFrameMaterial : wallMaterial;
 
         GameObject frame = new GameObject("DoorFrame");
         frame.transform.SetParent(parent, false);
 
-        // 左柱（開口部内側: doorStart ~ doorStart+ft）
-        CreateFramePiece(frame.transform, frameMat,
-            new Vector3(doorStart + ft / 2f, doorHeight / 2f, z),
-            new Vector3(ft, doorHeight, wallThickness));
+        // CreateDoorFrameZ と同じく「下枠 → 柱 → 上枠」を縦に積んで重なりを無くす
+        float postHeight = doorHeight - 2f * ft;
+        float postCenterY = ft + postHeight / 2f;
 
-        // 右柱（開口部内側: doorEnd-ft ~ doorEnd）
-        CreateFramePiece(frame.transform, frameMat,
-            new Vector3(doorEnd - ft / 2f, doorHeight / 2f, z),
-            new Vector3(ft, doorHeight, wallThickness));
-
-        // 上枠（開口部内側: doorHeight-ft ~ doorHeight、柱の間にフィット）
-        if (innerSpan > 0f)
-        {
-            CreateFramePiece(frame.transform, frameMat,
-                new Vector3((doorStart + doorEnd) / 2f, doorHeight - ft / 2f, z),
-                new Vector3(innerSpan, ft, wallThickness));
-        }
-
-        // 下枠（床の上に配置: Y = 0 ~ ft、床との干渉を防止）
+        // 下枠（Y = 0 〜 ft、開口の幅いっぱい）
         CreateFramePiece(frame.transform, frameMat,
             new Vector3((doorStart + doorEnd) / 2f, ft / 2f, z),
             new Vector3(doorSpan, ft, wallThickness));
+
+        // 上枠（Y = doorHeight-ft 〜 doorHeight、開口の幅いっぱい）
+        CreateFramePiece(frame.transform, frameMat,
+            new Vector3((doorStart + doorEnd) / 2f, doorHeight - ft / 2f, z),
+            new Vector3(doorSpan, ft, wallThickness));
+
+        // 左右の柱（Y = ft 〜 doorHeight-ft。上下の枠の間だけを埋める）
+        if (postHeight > 0f)
+        {
+            CreateFramePiece(frame.transform, frameMat,
+                new Vector3(doorStart + ft / 2f, postCenterY, z),
+                new Vector3(ft, postHeight, wallThickness));
+
+            CreateFramePiece(frame.transform, frameMat,
+                new Vector3(doorEnd - ft / 2f, postCenterY, z),
+                new Vector3(ft, postHeight, wallThickness));
+        }
     }
 
     void CreateFramePiece(Transform parent, Material sourceMat, Vector3 localPos, Vector3 scale)
