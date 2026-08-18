@@ -12,6 +12,7 @@ Shader "BLIND/RoomSurface"
         _Glossiness ("Smoothness", Range(0, 1)) = 0.5
         _Metallic ("Metallic", Range(0, 1)) = 0
         [Space(10)]
+        _Saturation ("Saturation (0=完全グレー)", Range(0, 1)) = 1
         _AmbientBoost ("Ambient Boost (暗くなり防止)", Range(0, 2)) = 0.35
     }
 
@@ -52,6 +53,7 @@ Shader "BLIND/RoomSurface"
         half _Metallic;
         half _AmbientBoost;
         half _NormalStrength;
+        half _Saturation;
 
         struct Input
         {
@@ -86,6 +88,13 @@ Shader "BLIND/RoomSurface"
             fixed4 c = tex2D(_MainTex, uvX) * blend.x
                      + tex2D(_MainTex, uvY) * blend.y
                      + tex2D(_MainTex, uvZ) * blend.z;
+
+            // 彩度調整。素材そのものが色付き(例: コンクリのテクスチャがベージュ寄り)でも
+            // ここでグレーに寄せられる。Tintの掛け算では元の色味が残ってしまうため、
+            // 「灰色のコンクリにしたい」といった調整はこちらで行う。
+            float lum = dot(c.rgb, float3(0.299, 0.587, 0.114));
+            c.rgb = lerp(lum.xxx, c.rgb, _Saturation);
+
             c *= _Color;
 
             float3 n = UnpackNormal(tex2D(_BumpMap, uvX)) * blend.x
