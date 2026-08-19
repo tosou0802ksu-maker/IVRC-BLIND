@@ -63,6 +63,12 @@ public class RoomBuilder3 : MonoBehaviour
     public WallConfig westWall = new WallConfig();
 
     [Header("床タイル設定")]
+    [Tooltip("オフにすると床を一切生成しません。" +
+             "プールのように床へ穴を開けた自作メッシュを敷いている部屋で使います。" +
+             "オンのままだと部屋を組み直すたびに床が再生成され、自作の床に重なって穴を塞いでしまいます。" +
+             "オフにする場合、床の当たり判定も生成されないので自作メッシュ側にColliderを付けてください。")]
+    public bool generateFloor = true;
+
     [Tooltip("オンにすると床をタイルに分割せず、部屋全体を覆う1枚の板として生成します。" +
              "マテリアル側(BLIND/RoomSurface)がワールド座標でタイル模様を描くため見た目は変わらず、" +
              "オブジェクト数が激減して軽くなります。" +
@@ -112,7 +118,17 @@ public class RoomBuilder3 : MonoBehaviour
 
     void Start()
     {
-        BuildRoom();
+        // シーンに生成済みのジオメトリが保存されていれば、実行時に作り直さない。
+        //
+        // 毎回作り直していると、部屋に後から加えた変更(マテリアルの差し替え、
+        // ベイクした結果、手で置いた小物との位置関係)が再生のたびに失われ、
+        // 「再生すると見た目が変わる」状態になる。
+        // VRChatのワールドでも、実行時生成のオブジェクトはライトマップが焼けず、
+        // 入室のたびに全部屋を組み直すことになる。
+        if (transform.Find("GeneratedRoom") == null)
+        {
+            BuildRoom();
+        }
     }
 
     void OnValidate()
@@ -193,6 +209,10 @@ public class RoomBuilder3 : MonoBehaviour
 
     void BuildFloor()
     {
+        // 床を自前のメッシュで用意している部屋(プールなど)では、
+        // ここで床を作ると自作メッシュの上に重なって穴を塞いでしまう。
+        if (!generateFloor) return;
+
         GameObject floorRoot = new GameObject("Floor");
         floorRoot.transform.SetParent(root, false);
 
@@ -530,28 +550,32 @@ public class RoomBuilder3 : MonoBehaviour
         obj.GetComponent<Renderer>().sharedMaterial = GetCachedMaterial(sourceMat);
     }
 
-    // 同一ソースマテリアルからは1つだけインスタンスを作り、以降はキャッシュから返す
+    // マテリアルはアセットをそのまま共有する。
+    //
+    // 【なぜ複製を作らないか】
+    // 以前はここで new Material(sourceMat) の複製を作っていたが、この複製は
+    // 生成物と一緒にシーンへ保存されてしまう。するとマテリアル資産を後から
+    // 編集しても複製側は古いままになり、
+    //   ・編集モード → シーンに保存された古い複製が見える（テクスチャ無しなど）
+    //   ・再生       → Startのビルドで作り直され、正しい見た目になる
+    // という食い違いが起きる。CleanUpは "(Instance)" で終わる名前しか破棄しない
+    // ため、この複製は破棄されず溜まり続けていた。
+    //
+    // また複製時に色とtiling/offsetを初期化していたが、BLIND/RoomSurface は
+    // ワールド座標でUVを決めるのでtilingは不要で、_Colorはむしろ意図した色味
+    // (壁の薄いグレー等)なので白に潰してはいけない。
     Material GetCachedMaterial(Material sourceMat)
     {
+        if (!useUnlitShader) return sourceMat;
+
         if (materialCache.TryGetValue(sourceMat, out Material cached) && cached != null)
         {
             return cached;
         }
 
-        Material mat;
-        if (useUnlitShader)
-        {
-            mat = new Material(Shader.Find("Unlit/Texture"));
-            if (sourceMat.mainTexture != null)
-                mat.mainTexture = sourceMat.mainTexture;
-        }
-        else
-        {
-            mat = new Material(sourceMat);
-        }
-        mat.color = Color.white;
-        mat.mainTextureScale = Vector2.one;
-        mat.mainTextureOffset = Vector2.zero;
+        Material mat = new Material(Shader.Find("Unlit/Texture"));
+        if (sourceMat.mainTexture != null)
+            mat.mainTexture = sourceMat.mainTexture;
 
         materialCache[sourceMat] = mat;
         return mat;

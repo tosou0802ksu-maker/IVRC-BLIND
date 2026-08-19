@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Room_Pool_LightPanel
+  m_Name: Room_Pool_LightPanel_Dim
   m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -67,7 +67,7 @@ Material:
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _GlossMapScale: 1
-    - _Glossiness: 0.2
+    - _Glossiness: 0.25
     - _GlossyReflections: 1
     - _Metallic: 0
     - _Mode: 0
@@ -80,5 +80,5 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _Color: {r: 0.93, g: 0.92, b: 0.88, a: 1}
-    - _EmissionColor: {r: 5.5, g: 5.225, b: 4.62, a: 5.5}
+    - _EmissionColor: {r: 0.902, g: 0.99, b: 0.94600004, a: 1.1}
   m_BuildTextureStacks: []
