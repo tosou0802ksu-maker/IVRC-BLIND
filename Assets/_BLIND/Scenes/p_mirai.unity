@@ -6746,6 +6746,7 @@ MonoBehaviour:
     doorWidth: 1.2
     doorOffset: -2
     doorHeight: 2.3
+  generateFloor: 1
   singleSlabFloor: 0
   tileDepthX: 2
   tileWidthZ: 2
@@ -111769,6 +111770,7 @@ MonoBehaviour:
     doorWidth: 1.2
     doorOffset: -10
     doorHeight: 2
+  generateFloor: 1
   singleSlabFloor: 0
   tileDepthX: 2
   tileWidthZ: 2
@@ -162075,6 +162077,7 @@ MonoBehaviour:
     doorWidth: 1.2
     doorOffset: 2.6
     doorHeight: 2.3
+  generateFloor: 1
   singleSlabFloor: 0
   tileDepthX: 1
   tileWidthZ: 1
@@ -175780,6 +175783,7 @@ MonoBehaviour:
     doorWidth: 4
     doorOffset: 2
     doorHeight: 3
+  generateFloor: 1
   singleSlabFloor: 0
   tileDepthX: 2
   tileWidthZ: 2
@@ -179489,6 +179493,7 @@ MonoBehaviour:
     doorWidth: 1.2
     doorOffset: 2.5
     doorHeight: 2.3
+  generateFloor: 1
   singleSlabFloor: 0
   tileDepthX: 0.5
   tileWidthZ: 0.5
@@ -183681,6 +183686,7 @@ MonoBehaviour:
     doorWidth: 1.2
     doorOffset: 2.5
     doorHeight: 2
+  generateFloor: 1
   singleSlabFloor: 0
   tileDepthX: 0.5
   tileWidthZ: 0.5
@@ -233699,6 +233705,7 @@ MonoBehaviour:
     doorWidth: 4
     doorOffset: 2
     doorHeight: 3
+  generateFloor: 1
   singleSlabFloor: 0
   tileDepthX: 0.5
   tileWidthZ: 0.5
@@ -233783,6 +233790,7 @@ MonoBehaviour:
     doorWidth: 1.2
     doorOffset: 0
     doorHeight: 2
+  generateFloor: 1
   singleSlabFloor: 0
   tileDepthX: 1
   tileWidthZ: 1
@@ -245996,6 +246004,7 @@ MonoBehaviour:
     doorWidth: 1.2
     doorOffset: 0
     doorHeight: 2.3
+  generateFloor: 1
   singleSlabFloor: 0
   tileDepthX: 0.5
   tileWidthZ: 0.5
@@ -254247,6 +254256,7 @@ MonoBehaviour:
     doorWidth: 1.2
     doorOffset: 0
     doorHeight: 2
+  generateFloor: 1
   singleSlabFloor: 0
   tileDepthX: 1
   tileWidthZ: 1
@@ -317425,6 +317435,7 @@ MonoBehaviour:
     doorWidth: 1.2
     doorOffset: 0
     doorHeight: 2.3
+  generateFloor: 1
   singleSlabFloor: 0
   tileDepthX: 1
   tileWidthZ: 1
@@ -323590,6 +323601,7 @@ MonoBehaviour:
     doorWidth: 1.2
     doorOffset: 0
     doorHeight: 2
+  generateFloor: 1
   singleSlabFloor: 0
   tileDepthX: 3
   tileWidthZ: 3
@@ -436396,6 +436408,7 @@ MonoBehaviour:
     doorWidth: 4
     doorOffset: 2
     doorHeight: 3
+  generateFloor: 1
   singleSlabFloor: 0
   tileDepthX: 2
   tileWidthZ: 2
@@ -441926,6 +441939,7 @@ MonoBehaviour:
     doorWidth: 1.2
     doorOffset: 2.5
     doorHeight: 2
+  generateFloor: 1
   singleSlabFloor: 0
   tileDepthX: 0.5
   tileWidthZ: 0.5
@@ -456031,6 +456045,75 @@ Mesh:
     offset: 0
     size: 0
     path: 
+--- !u!1001 &1505369368
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: c241dfdb705274a25aa8937e280c182a, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 300
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c241dfdb705274a25aa8937e280c182a, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 300
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c241dfdb705274a25aa8937e280c182a, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 300
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c241dfdb705274a25aa8937e280c182a, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 22.836
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c241dfdb705274a25aa8937e280c182a, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.17
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c241dfdb705274a25aa8937e280c182a, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -1.946
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c241dfdb705274a25aa8937e280c182a, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.4989234
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c241dfdb705274a25aa8937e280c182a, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.4989234
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c241dfdb705274a25aa8937e280c182a, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.5010744
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c241dfdb705274a25aa8937e280c182a, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.50107425
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c241dfdb705274a25aa8937e280c182a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -90
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c241dfdb705274a25aa8937e280c182a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c241dfdb705274a25aa8937e280c182a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: -90.246
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: c241dfdb705274a25aa8937e280c182a, type: 3}
+      propertyPath: m_Name
+      value: Meshy_AI_Weathered_Blue_Garage_0819141137_texture
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: c241dfdb705274a25aa8937e280c182a, type: 3}
 --- !u!1 &1505510796
 GameObject:
   m_ObjectHideFlags: 0
@@ -486883,6 +486966,7 @@ MonoBehaviour:
     doorWidth: 1.2
     doorOffset: 0
     doorHeight: 2
+  generateFloor: 1
   singleSlabFloor: 0
   tileDepthX: 0.5
   tileWidthZ: 0.5
@@ -498591,6 +498675,7 @@ MonoBehaviour:
     doorWidth: 1.2
     doorOffset: -10
     doorHeight: 2.3
+  generateFloor: 1
   singleSlabFloor: 0
   tileDepthX: 5
   tileWidthZ: 5
@@ -502007,6 +502092,7 @@ MonoBehaviour:
     doorWidth: 4
     doorOffset: 2.5
     doorHeight: 2.3
+  generateFloor: 1
   singleSlabFloor: 0
   tileDepthX: 0.5
   tileWidthZ: 0.5
@@ -510389,6 +510475,7 @@ MonoBehaviour:
     doorWidth: 1.2
     doorOffset: 0
     doorHeight: 2
+  generateFloor: 1
   singleSlabFloor: 0
   tileDepthX: 2
   tileWidthZ: 2
@@ -538827,6 +538914,7 @@ MonoBehaviour:
     doorWidth: 1.2
     doorOffset: 0
     doorHeight: 2
+  generateFloor: 1
   singleSlabFloor: 0
   tileDepthX: 0.5
   tileWidthZ: 0.5
@@ -538878,6 +538966,7 @@ MonoBehaviour:
     doorWidth: 1.2
     doorOffset: 0
     doorHeight: 2
+  generateFloor: 1
   singleSlabFloor: 0
   tileDepthX: 2
   tileWidthZ: 2
@@ -570649,6 +570738,7 @@ MonoBehaviour:
     doorWidth: 1.2
     doorOffset: 0
     doorHeight: 2.3
+  generateFloor: 1
   singleSlabFloor: 0
   tileDepthX: 0.5
   tileWidthZ: 0.5
@@ -655064,3 +655154,4 @@ SceneRoots:
   - {fileID: 624873615}
   - {fileID: 643055940}
   - {fileID: 1672896561}
+  - {fileID: 1505369368}
