@@ -40,6 +40,8 @@ IVRC の提出物でも「使用アセット一覧」として書いておくと
 | Wood067 | ambientCG | CC0 1.0 | `Art/Textures/Wood067/` — 壁の腰板、格天井の梁（room15の扉と共用） |
 | PaintedPlaster017 | ambientCG | CC0 1.0 | `Art/Textures/PaintedPlaster017/` — 格天井の鏡板（room15の壁と共用） |
 
+| Wooden Bookshelf Worn | Poly Haven | CC0 1.0 | `wood_bookshelf/` — 棚 |
+
 > `quatrefoil_jacquard_fabric`（Poly Haven, CC0）も取得済みだが、
 > 絨毯は自作テクスチャに差し替えたため現在は未使用。
 
@@ -48,6 +50,38 @@ IVRC の提出物でも「使用アセット一覧」として書いておくと
 | ファイル | 内容 |
 |---|---|
 | `Art/Textures/Generated/Room16_RugPattern.png` | ペルシャ絨毯風の模様。CC0でこの手の緞通が見つからなかったのでUnity内でコードから生成した |
+| `Art/Models/Room16Dolls/*.asset` | Free Doll のスキンメッシュにポーズを付けて焼き直した静的メッシュ。元データのライセンスは下記 Free Doll Character に従う |
+
+---
+
+## Unity Asset Store（Standard Unity Asset Store EULA）
+
+CC ライセンスではないので**扱いが別**。EULA 上、完成物（作品）への組み込みと配布は可、
+アセット素材そのものの再配布は不可。クレジット表記は義務ではないが載せておく。
+
+| アセット | 作者 | 使用箇所 |
+|---|---|---|
+| Free Doll Character | RamsterZ | `RamsterZ_FreeDoll/` — room16 のマネキン、天井から降りてくる巨大な腕、家具の上に載せた人形のパーツ。マテリアルは化粧を消した自作の石膏マテリアルに差し替えている |
+| Modular Sewer Props | Ata Khani | `Ata Khani/Modular Sewer Props/` — 木箱、樽、布のかかった木箱のかたまり、床の板、脚立 |
+| Mix Furniture Pack | ZNS3D | `ZNS3D/Mix_Furniture_Pack/` — 壁ぎわの本棚、引き出し、ティーテーブル |
+
+> **Mix Furniture Pack はマテリアルが HDRP 製で、そのままだとビルトインRPでマゼンタになる。**
+> このプロジェクトでは Standard シェーダに張り替えて `_MainTex` / `_BumpMap` を繋ぎ直してある
+> （`Assets/ZNS3D/Mix_Furniture_Pack/Materials/`）。再インポートすると元に戻るので注意。
+
+> **注意**：これらはソース素材そのものなので、
+> Git 公開リポジトリに置いたままにすると EULA 上グレー。提出前に扱いを決めること。
+
+---
+
+## 出所が未確認のもの（提出前に要確認）
+
+| アセット | 状況 | 使用箇所 |
+|---|---|---|
+| MannequinAsset | 付属の `READ ME.txt` に配布元・ライセンス記載なし | `Prop_ShelfDecor` — 棚の上に置いた人形のパーツ |
+
+入手元が思い出せない場合は、Free Doll のパーツ FBX
+（`KillerDollPartsArmR01` 等）に差し替えれば room16 から MannequinAsset 依存を消せる。
 
 ### それ以前から使っているもの
 
