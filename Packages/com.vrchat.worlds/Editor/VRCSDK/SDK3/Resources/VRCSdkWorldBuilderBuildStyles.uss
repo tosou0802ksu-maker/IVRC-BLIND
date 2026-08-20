@@ -1,8 +1,0 @@
-﻿#local-test-settings Toggle {
-    border-bottom-width: 0;
-    background-color: rgba(0,0,0,0);
-}
-
-#local-test-settings Toggle Label {
-    -unity-font-style: normal;
-}
