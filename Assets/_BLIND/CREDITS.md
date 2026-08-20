@@ -7,21 +7,36 @@
 
 ## 表記が必須のもの（CC BY 等）
 
-| アセット | 作者 | ライセンス | 使用箇所 |
-|---|---|---|---|
-| Skeletal Hand | Jeremy Swan | CC BY 4.0 | `Art/Models/PolyPizza/SkeletalHand_JeremySwan_CCBY.fbx` |
-| Daruma | Ramujiro (@Ramzus) | CC BY 4.0 | `Art/Models/Daruma/Daruma_Ramujiro_CCBY/` — room12 のだるま（主役） |
-| Daruma doll | Jan | CC BY 4.0 | `Art/Models/Daruma/Daruma_Jan_CCBY/` — room12 のだるま（色違い） |
-| Daruma | Adrian Crisandy | CC BY 4.0 | `Art/Models/Daruma/Daruma_AdrianCrisandy_CCBY/` — room12 の遠景用だるま |
-| neko-daruma | higan69 | CC BY 4.0 | `Art/Models/Daruma/Daruma_Neko_higan69_CCBY/` — room12 のだるま（変わり種） |
+| アセット | 作者 | ライセンス | 入手元URL | 使用箇所 |
+|---|---|---|---|---|
+| Skeletal Hand | Jeremy Swan | CC BY 4.0 | https://poly.pizza/m/3b3VmmxXZ7S | `Art/Models/PolyPizza/SkeletalHand_JeremySwan_CCBY.fbx` |
+| Daruma | Ramujiro (@Ramzus) | CC BY 4.0 | https://sketchfab.com/3d-models/daruma-deb599b14ece4825a46045be9dce3589 | `Art/Models/Daruma/Daruma_Ramujiro_CCBY/` — room12 のだるま（主役） |
+| Daruma doll | Jan | CC BY 4.0 | https://sketchfab.com/3d-models/daruma-doll-55626deb94114053b9d47183a5181413 | `Art/Models/Daruma/Daruma_Jan_CCBY/` — room12 のだるま（色違い） |
+| Daruma | Adrian Crisandy | CC BY 4.0 | https://sketchfab.com/3d-models/daruma-76b5359e330440e8901d2e1a72ef5ebf | `Art/Models/Daruma/Daruma_AdrianCrisandy_CCBY/` — room12 の遠景用だるま |
+| neko-daruma | higan69 | CC BY 4.0 | https://sketchfab.com/3d-models/neko-daruma-590562e23b3d465b93abf66135f41ea6 | `Art/Models/Daruma/Daruma_Neko_higan69_CCBY/` — room12 のだるま（変わり種） |
 
-CC BY は **作者名の明記が義務**。以下の形で記載する。
+CC BY で必要なのは **作品名・作者名・入手元・ライセンス**（頭文字を取って TASL）の4点。
+加えて **改変したなら「改変した」と書く**のが義務。下記5件はすべて改変済み
+（シェーダの張り替え、スケールの正規化など）なので `— modified` を必ず残すこと。
 
-> "Skeletal Hand" by Jeremy Swan — licensed under CC BY 4.0 (via Poly Pizza)
-> "Daruma" by Ramujiro — licensed under CC BY 4.0 (via Sketchfab)
-> "Daruma doll" by Jan — licensed under CC BY 4.0 (via Sketchfab)
-> "Daruma" by Adrian Crisandy — licensed under CC BY 4.0 (via Sketchfab)
-> "neko-daruma" by higan69 — licensed under CC BY 4.0 (via Sketchfab)
+提出物（動画エンドロール・展示パネル・README）には、以下をそのまま貼れる。
+
+```
+"Skeletal Hand" by Jeremy Swan — https://poly.pizza/m/3b3VmmxXZ7S
+Licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/) — modified
+
+"Daruma" by Ramujiro — https://sketchfab.com/3d-models/daruma-deb599b14ece4825a46045be9dce3589
+Licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/) — modified
+
+"Daruma doll" by Jan — https://sketchfab.com/3d-models/daruma-doll-55626deb94114053b9d47183a5181413
+Licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/) — modified
+
+"Daruma" by Adrian Crisandy — https://sketchfab.com/3d-models/daruma-76b5359e330440e8901d2e1a72ef5ebf
+Licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/) — modified
+
+"neko-daruma" by higan69 — https://sketchfab.com/3d-models/neko-daruma-590562e23b3d465b93abf66135f41ea6
+Licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/) — modified
+```
 
 > だるま4種はいずれも glTF で入れているため、マテリアルが glTFast のシェーダ
 > （うち2種は `glTF/Unlit` で光を受けない）になっていた。Standard に張り替え済み。
@@ -44,6 +59,31 @@ IVRC の提出物でも「使用アセット一覧」として書いておくと
 | PaintedPlaster017 | ambientCG | CC0 1.0 | `Art/Textures/PaintedPlaster017/` — 壁 |
 | Carpet016 | ambientCG | CC0 1.0 | `Art/Textures/Carpet016/` — 床のカーペット |
 | Wood067 | ambientCG | CC0 1.0 | `Art/Textures/Wood067/` — 中央の扉 |
+
+### room12（だるまの資料室）で追加したもの
+
+| アセット | 作者 / 配布元 | ライセンス | 使用箇所 |
+|---|---|---|---|
+| Metal032 | ambientCG | CC0 1.0 | `Art/Textures/Metal032/` — スチール書架・事務机・椅子の下地色 |
+| PaintedMetal001 | ambientCG | CC0 1.0 | `Art/Textures/PaintedMetal001/` — 同上のノーマル（塗装の擦り傷） |
+| Cardboard004 | ambientCG | CC0 1.0 | `Art/Textures/Cardboard004/` — 文書保存箱 |
+| Tiles110 / PaintedPlaster017 / OfficeCeiling001 | ambientCG | CC0 1.0 | 床のテラゾー、壁の塗装、吊り天井（他室と共用） |
+
+**自作（外部素材ではないのでクレジット不要）**
+
+| ファイル | 内容 |
+|---|---|
+| `Art/Models/Room12Kit/Room12_SteelRack.asset` | スチール書架。48台置くので手続き生成した（132 tri／台） |
+| `Art/Models/Room12Kit/Room12_Desk.asset` | 事務机（96 tri） |
+| `Art/Models/Room12Kit/Room12_Chair.asset` | 事務椅子（96 tri） |
+| `Art/Models/Room12Kit/Room12_ArchiveBox.asset` | 文書保存箱（24 tri） |
+| `Art/Models/Room12Daruma/*.asset` | だるま4種を「直径1.0m・底が y=0・正面が +Z」に正規化して焼き直したもの。元データのライセンスは上の CC BY 表に従う |
+
+> **Mix Furniture Pack の木製本棚は room12 では不採用。**
+> 仮置きして確認したところ、彫刻付きの洋館の書棚で、
+> テラゾー床＋蛍光灯の現代の資料室からは完全に浮いた。
+> 直線だけのスチール書架は拾ってくるより作った方が確実で、
+> ポリゴンも 1/40 で済むため手続き生成に切り替えた。
 
 ### room16（人形の間）で追加したもの
 
@@ -74,6 +114,7 @@ CC ライセンスではないので**扱いが別**。EULA 上、完成物（�
 
 | アセット | 作者 | 使用箇所 |
 |---|---|---|
+| Destroyable Retro CRT Monitor Prop | Pekdata | `Pekdata/PekdataCRTMonitor/` — room12 の机の上のCRTモニタ（無傷5台・割れ5台）。爆発演出のパーティクルとスクリプトは外し、画面メッシュの出し分けだけで無傷／破損を作っている |
 | Free Doll Character | RamsterZ | `RamsterZ_FreeDoll/` — room16 のマネキン、天井から降りてくる巨大な腕、家具の上に載せた人形のパーツ。マテリアルは化粧を消した自作の石膏マテリアルに差し替えている |
 | Modular Sewer Props | Ata Khani | `Ata Khani/Modular Sewer Props/` — 木箱、樽、布のかかった木箱のかたまり、床の板、脚立 |
 | Mix Furniture Pack | ZNS3D | `ZNS3D/Mix_Furniture_Pack/` — 壁ぎわの本棚、引き出し、ティーテーブル |
