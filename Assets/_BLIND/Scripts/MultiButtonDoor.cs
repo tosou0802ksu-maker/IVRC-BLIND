@@ -2,6 +2,7 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
+using VRC.Udon.Common.Interfaces;
 
 /// <summary>
 /// 3つのボタンが全て押されたらドア(1〜2枚)を指定位置へ移動する。

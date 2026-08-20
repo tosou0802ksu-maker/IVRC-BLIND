@@ -2,6 +2,7 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
+using VRC.Udon.Common.Interfaces;
 
 /// <summary>
 /// ボタンを押すとドア(1〜2枚)を指定位置から指定位置へ移動する。一度だけ反応。
