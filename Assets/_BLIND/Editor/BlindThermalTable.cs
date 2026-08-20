@@ -64,8 +64,10 @@ namespace BLIND.EditorTools
             new Temp("LampDim",     32.0f, 0.85f, "ちらついている・調光された照明パネル。生きてはいるが出力が落ちている"),
             new Temp("CRTOn",       47.0f, 1.00f, "通電中のCRTの筐体。ブラウン管の排熱で 45〜50℃"),
             new Temp("Lamp",        52.0f, 1.00f, "蛍光管そのもの。管壁は 40〜60℃"),
+            new Temp("Burning",     66.0f, 1.00f, "全身が燃えている人体。実際は炎と同じく振り切れるが、炎の中で" +
+                                                  "「人の形」だけは輪郭として読めてほしいので、炎より一段低く置いてある"),
             new Temp("Ballast",     68.0f, 1.00f, "照明器具の本体・安定器。蛍光灯で最も熱い部位"),
-            new Temp("Fire",        95.0f, 1.00f, "炎・強い熱源。レンジ上限で振り切れる"),
+            new Temp("Fire",        95.0f, 1.00f, "炎・強い熱源。レンジ上限で振り切れて真っ白になる"),
         };
 
         static Dictionary<string, Temp> _map;
