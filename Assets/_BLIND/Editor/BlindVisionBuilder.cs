@@ -289,6 +289,11 @@ namespace BLIND.EditorTools
                 // 既存の生成物を消す
                 foreach (var g in new[] { EchoGroup, ThermalGroup })
                 { var old = room.Find(g); if (old != null) Object.DestroyImmediate(old.gameObject); }
+                // 動く熱源の複製は元の親の下にぶら下がっているので、名前で探して消す
+                var doomedFx = new List<GameObject>();
+                foreach (var t in room.GetComponentsInChildren<Transform>(true))
+                    if (t != null && t.name.StartsWith(FxPrefix)) doomedFx.Add(t.gameObject);
+                foreach (var d in doomedFx) if (d != null) Object.DestroyImmediate(d);
 
                 // --- 元になるレンダラーを集めて分類 ---
                 var byTemp = new Dictionary<string, List<CombineInstance>>();
@@ -476,6 +481,132 @@ namespace BLIND.EditorTools
         }
 
         const string EchoBigDir = "Assets/_BLIND/Art/Materials/Echo";
+
+        /// <summary>動く熱源の複製に付ける接頭辞。作り直すときにこれで探して消す。</summary>
+        const string FxPrefix = "VisionFX_";
+
+        // -------------------------------------------------------------
+        //  動く熱源（スキンメッシュ・パーティクル）
+        // -------------------------------------------------------------
+        /// <summary>
+        /// アニメーションで動く熱源をサーモ層に出す。
+        ///
+        /// ここだけはメッシュ結合方式が使えない。room15 の「燃える男」は Animator で
+        /// 部屋を1周歩くので、焼き固めた静的メッシュでは本体と一緒に動いてくれない。
+        ///
+        /// スキンメッシュは、元と同じ bones/rootBone を参照する複製を作れば、
+        /// 追加のスクリプトなしで完全に同じ動きをする（描画はボーンの Transform だけを見ていて、
+        /// 自分がどこにぶら下がっているかは関係ないため）。
+        /// パーティクルは元と同じ親の下に複製を置いて追従させる。
+        ///
+        /// なお、この複製はエコロケ層には作らない。燃える男の位置を知っているのは
+        /// サーモ役だけ、という状態を作るため。危険を伝えられるのがサーモ役しかいない、
+        /// という場面が非対称協力のいちばん分かりやすい見せ場になる。
+        /// </summary>
+        static int BuildMovingHeat(Transform room, string rn, System.Text.StringBuilder log)
+        {
+            int n = 0;
+
+            // --- 骨で動くメッシュ（人体など） ---
+            foreach (var smr in room.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                if (smr.gameObject.layer == LayerThermal || smr.gameObject.layer == LayerEcho) continue;
+                if (smr.sharedMesh == null || smr.bones == null || smr.bones.Length == 0) continue;
+
+                var all = (smr.name + "|" + (smr.transform.parent != null ? smr.transform.parent.name : "")
+                         + "|" + (smr.transform.parent != null && smr.transform.parent.parent != null ? smr.transform.parent.parent.name : "")
+                         + "|" + (smr.sharedMaterial != null ? smr.sharedMaterial.name : "")).ToLower();
+                string key = all.Contains("burn") || all.Contains("fire") ? "Burning" : "Body";
+
+                var mat = BlindThermalTable.Mat(key);
+                if (mat == null) continue;
+
+                var go = new GameObject(FxPrefix + "T_" + smr.name);
+                go.transform.SetParent(smr.transform.parent, false);
+                go.transform.localPosition = smr.transform.localPosition;
+                go.transform.localRotation = smr.transform.localRotation;
+                go.transform.localScale = smr.transform.localScale;
+                go.layer = LayerThermal;
+
+                var c = go.AddComponent<SkinnedMeshRenderer>();
+                c.sharedMesh = smr.sharedMesh;
+                c.bones = smr.bones;          // 元のボーンをそのまま参照する＝同じ動きをする
+                c.rootBone = smr.rootBone;
+                c.localBounds = smr.localBounds;
+                c.updateWhenOffscreen = smr.updateWhenOffscreen;
+                c.quality = SkinQuality.Bone2;   // 輪郭と温度しか伝えないので2ボーンで足りる
+                var mats = new Material[Mathf.Max(smr.sharedMesh.subMeshCount, 1)];
+                for (int i = 0; i < mats.Length; i++) mats[i] = mat;
+                c.sharedMaterials = mats;
+                c.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                c.receiveShadows = false;
+                c.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
+                c.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+                log.Append("  " + smr.name + "→" + key + "(" + BlindThermalTable.Get(key).celsius.ToString("0") + "C)");
+                n++;
+            }
+
+            // --- 炎・煙のパーティクル ---
+            foreach (var ps in room.GetComponentsInChildren<ParticleSystem>(true))
+            {
+                if (ps.gameObject.layer == LayerThermal || ps.gameObject.layer == LayerEcho) continue;
+                if (ps.gameObject.name.StartsWith(FxPrefix)) continue;
+                var psr = ps.GetComponent<ParticleSystemRenderer>();
+                if (psr == null || psr.sharedMaterial == null) continue;
+
+                var mn = (psr.sharedMaterial.name + "|" + ps.gameObject.name).ToLower();
+                Color tint;
+                if (mn.Contains("fire") || mn.Contains("flame"))
+                    tint = new Color(2.2f, 2.0f, 1.7f, 1f);   // 振り切れて真っ白になる
+                else if (mn.Contains("smoke"))
+                    tint = new Color(0.9f, 0.30f, 0.05f, 1f); // 上がっていく熱気。橙で見える
+                else if (mn.Contains("steam") || mn.Contains("vapor"))
+                    tint = new Color(0.15f, 0.55f, 0.9f, 1f); // 水蒸気は気化熱で冷たい
+                else continue;                                 // 埃などの熱を持たない演出は出さない
+
+                var clone = Object.Instantiate(ps.gameObject, ps.transform.parent);
+                clone.name = FxPrefix + "T_" + ps.gameObject.name;
+                clone.transform.localPosition = ps.transform.localPosition;
+                clone.transform.localRotation = ps.transform.localRotation;
+                clone.transform.localScale = ps.transform.localScale;
+
+                // パーティクル以外は全部落とす（Animator や Light が付いていると二重に動く）
+                foreach (var comp in clone.GetComponentsInChildren<Component>(true))
+                {
+                    if (comp == null) continue;
+                    if (comp is Transform || comp is ParticleSystem || comp is ParticleSystemRenderer) continue;
+                    Object.DestroyImmediate(comp);
+                }
+                foreach (var t in clone.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = LayerThermal;
+                foreach (var r2 in clone.GetComponentsInChildren<ParticleSystemRenderer>(true))
+                    r2.sharedMaterial = FxMat(r2.sharedMaterial, tint, rn);
+
+                log.Append("  " + ps.gameObject.name + "→FX");
+                n++;
+            }
+            return n;
+        }
+
+        /// <summary>
+        /// パーティクル用のサーモ材質。元の材質（シェーダーもテクスチャも）をそのまま複製して
+        /// 色だけ差し替える。炎の形はそのままに、温度だけ塗り替えたいため。
+        /// </summary>
+        static Material FxMat(Material src, Color tint, string room)
+        {
+            if (src == null) return null;
+            if (!AssetDatabase.IsValidFolder(BlindThermalTable.MatDir))
+                AssetDatabase.CreateFolder("Assets/_BLIND/Art/Materials", "Thermal");
+            var path = BlindThermalTable.MatDir + "/ThermalFX_" + room + "_" + src.name + ".mat";
+            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m == null) { m = new Material(src); AssetDatabase.CreateAsset(m, path); }
+            m.shader = src.shader;
+            m.CopyPropertiesFromMaterial(src);
+            if (m.HasProperty("_Color")) m.SetColor("_Color", tint);
+            if (m.HasProperty("_TintColor")) m.SetColor("_TintColor", tint);
+            if (m.HasProperty("_EmissionColor")) m.SetColor("_EmissionColor", Color.black);
+            EditorUtility.SetDirty(m);
+            return m;
+        }
 
         /// <summary>
         /// 大物を「素のメッシュのまま」視覚レイヤーに1枚置く。結合はしない。
