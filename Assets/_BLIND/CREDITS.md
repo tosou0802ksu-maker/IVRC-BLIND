@@ -10,10 +10,23 @@
 | アセット | 作者 | ライセンス | 使用箇所 |
 |---|---|---|---|
 | Skeletal Hand | Jeremy Swan | CC BY 4.0 | `Art/Models/PolyPizza/SkeletalHand_JeremySwan_CCBY.fbx` |
+| Daruma | Ramujiro (@Ramzus) | CC BY 4.0 | `Art/Models/Daruma/Daruma_Ramujiro_CCBY/` — room12 のだるま（主役） |
+| Daruma doll | Jan | CC BY 4.0 | `Art/Models/Daruma/Daruma_Jan_CCBY/` — room12 のだるま（色違い） |
+| Daruma | Adrian Crisandy | CC BY 4.0 | `Art/Models/Daruma/Daruma_AdrianCrisandy_CCBY/` — room12 の遠景用だるま |
+| neko-daruma | higan69 | CC BY 4.0 | `Art/Models/Daruma/Daruma_Neko_higan69_CCBY/` — room12 のだるま（変わり種） |
 
 CC BY は **作者名の明記が義務**。以下の形で記載する。
 
 > "Skeletal Hand" by Jeremy Swan — licensed under CC BY 4.0 (via Poly Pizza)
+> "Daruma" by Ramujiro — licensed under CC BY 4.0 (via Sketchfab)
+> "Daruma doll" by Jan — licensed under CC BY 4.0 (via Sketchfab)
+> "Daruma" by Adrian Crisandy — licensed under CC BY 4.0 (via Sketchfab)
+> "neko-daruma" by higan69 — licensed under CC BY 4.0 (via Sketchfab)
+
+> だるま4種はいずれも glTF で入れているため、マテリアルが glTFast のシェーダ
+> （うち2種は `glTF/Unlit` で光を受けない）になっていた。Standard に張り替え済み。
+> 素の大きさもばらばら（1.0m / 0.05m / 1.97m / 1.79m）だったので、
+> 配置時に高さ 0.22m へ正規化している。
 
 ---
 
