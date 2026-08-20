@@ -60,6 +60,31 @@ IVRC の提出物でも「使用アセット一覧」として書いておくと
 | Carpet016 | ambientCG | CC0 1.0 | `Art/Textures/Carpet016/` — 床のカーペット |
 | Wood067 | ambientCG | CC0 1.0 | `Art/Textures/Wood067/` — 中央の扉 |
 
+### room12（だるまの資料室）で追加したもの
+
+| アセット | 作者 / 配布元 | ライセンス | 使用箇所 |
+|---|---|---|---|
+| Metal032 | ambientCG | CC0 1.0 | `Art/Textures/Metal032/` — スチール書架・事務机・椅子の下地色 |
+| PaintedMetal001 | ambientCG | CC0 1.0 | `Art/Textures/PaintedMetal001/` — 同上のノーマル（塗装の擦り傷） |
+| Cardboard004 | ambientCG | CC0 1.0 | `Art/Textures/Cardboard004/` — 文書保存箱 |
+| Tiles110 / PaintedPlaster017 / OfficeCeiling001 | ambientCG | CC0 1.0 | 床のテラゾー、壁の塗装、吊り天井（他室と共用） |
+
+**自作（外部素材ではないのでクレジット不要）**
+
+| ファイル | 内容 |
+|---|---|
+| `Art/Models/Room12Kit/Room12_SteelRack.asset` | スチール書架。48台置くので手続き生成した（132 tri／台） |
+| `Art/Models/Room12Kit/Room12_Desk.asset` | 事務机（96 tri） |
+| `Art/Models/Room12Kit/Room12_Chair.asset` | 事務椅子（96 tri） |
+| `Art/Models/Room12Kit/Room12_ArchiveBox.asset` | 文書保存箱（24 tri） |
+| `Art/Models/Room12Daruma/*.asset` | だるま4種を「直径1.0m・底が y=0・正面が +Z」に正規化して焼き直したもの。元データのライセンスは上の CC BY 表に従う |
+
+> **Mix Furniture Pack の木製本棚は room12 では不採用。**
+> 仮置きして確認したところ、彫刻付きの洋館の書棚で、
+> テラゾー床＋蛍光灯の現代の資料室からは完全に浮いた。
+> 直線だけのスチール書架は拾ってくるより作った方が確実で、
+> ポリゴンも 1/40 で済むため手続き生成に切り替えた。
+
 ### room16（人形の間）で追加したもの
 
 | アセット | 作者 / 配布元 | ライセンス | 使用箇所 |
@@ -89,6 +114,7 @@ CC ライセンスではないので**扱いが別**。EULA 上、完成物（�
 
 | アセット | 作者 | 使用箇所 |
 |---|---|---|
+| Destroyable Retro CRT Monitor Prop | Pekdata | `Pekdata/PekdataCRTMonitor/` — room12 の机の上のCRTモニタ（無傷5台・割れ5台）。爆発演出のパーティクルとスクリプトは外し、画面メッシュの出し分けだけで無傷／破損を作っている |
 | Free Doll Character | RamsterZ | `RamsterZ_FreeDoll/` — room16 のマネキン、天井から降りてくる巨大な腕、家具の上に載せた人形のパーツ。マテリアルは化粧を消した自作の石膏マテリアルに差し替えている |
 | Modular Sewer Props | Ata Khani | `Ata Khani/Modular Sewer Props/` — 木箱、樽、布のかかった木箱のかたまり、床の板、脚立 |
 | Mix Furniture Pack | ZNS3D | `ZNS3D/Mix_Furniture_Pack/` — 壁ぎわの本棚、引き出し、ティーテーブル |
