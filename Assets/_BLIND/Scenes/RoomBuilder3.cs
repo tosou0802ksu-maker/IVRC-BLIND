@@ -587,7 +587,8 @@ public class RoomBuilder3 : MonoBehaviour
     void SetWorldSpaceUVs(GameObject obj, Vector3 scale, Vector3 localPos, SurfaceType surfaceType)
     {
         MeshFilter mf = obj.GetComponent<MeshFilter>();
-        Mesh mesh = mf.mesh; // コピーが作られるが、CleanUpで破棄される
+        Mesh mesh = Instantiate(mf.sharedMesh);
+        mf.sharedMesh = mesh;
         Vector3[] verts = mesh.vertices;
         Vector2[] uvs = new Vector2[verts.Length];
 
