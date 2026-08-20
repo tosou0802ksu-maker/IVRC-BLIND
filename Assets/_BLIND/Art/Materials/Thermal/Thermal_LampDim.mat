@@ -27,6 +27,8 @@ Material:
     m_Floats:
     - _Dim: 0.85
     - _EdgeCool: 0.18
+    - _FadeFar: 200
+    - _FadeNear: 5
     - _Grain: 0.4
     - _HeatIntensity: 1
     - _Noise: 0.035

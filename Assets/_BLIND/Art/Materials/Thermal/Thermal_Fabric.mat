@@ -25,8 +25,10 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _Dim: 0.24
+    - _Dim: 0.09
     - _EdgeCool: 0.18
+    - _FadeFar: 200
+    - _FadeNear: 5
     - _Grain: 0.12
     - _HeatIntensity: 1
     - _Noise: 0.035

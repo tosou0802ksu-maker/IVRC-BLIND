@@ -24,6 +24,8 @@ Shader "BLIND/ThermalSurface"
         _Noise        ("Sensor Noise", Range(0.0, 0.15)) = 0.035
         _Grain        ("Surface Variation", Range(0.0, 0.5)) = 0.12
         _Dim          ("Dim (1=そのまま 0=真っ黒)", Range(0.0, 1.0)) = 1.0
+        _FadeNear     ("Fade Range at Dim=0 (m)", Float) = 5.0
+        _FadeFar      ("Fade Range at Dim=1 (m)", Float) = 200.0
     }
 
     SubShader
@@ -49,6 +51,7 @@ Shader "BLIND/ThermalSurface"
 
             float _TempC, _TempMin, _TempMax, _TempGamma;
             float _HeatIntensity, _EdgeCool, _Noise, _Grain, _Dim;
+            float _FadeNear, _FadeFar;
 
             v2f vert (appdata v)
             {
@@ -133,7 +136,30 @@ Shader "BLIND/ThermalSurface"
                 // エコロケ役の役割が無くなる。建物側は _Dim を下げてほぼ黒く落とし、
                 // 「熱源しか見えない」状態にする。不透明のままなので遮蔽は効く
                 // （＝壁の向こうは見えない）。
-                col *= _Dim;
+                // _Dim は「見た目でどのくらいの明るさにしたいか」で指定する。
+                // プロジェクトが Linear 色空間なので、出力値をそのまま掛けても
+                // 体感の明るさは落ちない（0.05倍にしても見た目は 26% までしか落ちない）。
+                // ここで知覚量→リニア量に直しておかないと、表の数字と実際の見え方がずれる。
+                #ifdef UNITY_COLORSPACE_GAMMA
+                    col *= _Dim;
+                #else
+                    col *= pow(max(_Dim, 0.0), 2.2);
+                #endif
+
+                // さらに、温度差の小さい物は「近くでしか読めない」ようにする。
+                //
+                // 実機でも、距離が延びるほど大気の透過と背景放射で温度差が埋もれる。
+                // 室温の壁は数mで背景に溶けるが、50℃の蛍光管は部屋の端からでも見える。
+                // ゲーム上は「サーモ役が入口に立っただけで間取りを読んでしまう」のを
+                // 防ぐ役割も持つ。形を伝えるのはエコロケ役の仕事なので、
+                // サーモ役には自分の足元より先の建物が見えていてはいけない。
+                //
+                // 黒く落ちても不透明のままなので遮蔽は効いたまま
+                //（＝壁の向こうの熱源は見えない）。
+                float dist = distance(_WorldSpaceCameraPos, i.worldPos);
+                float d2 = saturate(_Dim) * saturate(_Dim);
+                float range = lerp(_FadeNear, _FadeFar, d2);
+                col *= 1.0 - smoothstep(range * 0.45, range, dist);
 
                 return fixed4(saturate(col), 1.0);
             }

@@ -30,30 +30,35 @@ namespace BLIND.EditorTools
 
         /// <summary>
         /// dim の考え方：
-        /// 床・壁・天井までサーモではっきり見えると、サーモ役だけで空間の形が読めてしまい、
+        /// 床・壁・天井までサーモで見えると、サーモ役だけで空間の形が読めてしまい、
         /// 「エコロケ役が形を伝える」という非対称協力の前提が崩れる。
-        /// そこで建物側は 0.06〜0.10 まで落としてほぼ黒にし、什器は 0.25〜0.35 の
-        /// 気配だけ、熱源だけを 1.0 で見せる。不透明のままなので壁の遮蔽は効いたまま。
+        /// そこで建物側は 0.02〜0.03 の「言われれば分かる」程度まで落とし、
+        /// 什器は 0.05〜0.09 の気配だけ、熱源だけを 1.0 で見せる。
+        /// 不透明のままなので壁の遮蔽は効いたまま。
+        ///
+        /// dim はシェーダー側で距離の効きにも使っている。dim が小さいものほど
+        /// 手前でしか見えず、5m も離れれば背景に溶ける（ThermalSurface の _FadeNear）。
+        /// 減光だけだと「近寄れば結局全部読める」ので、その穴をここで塞いでいる。
         /// </summary>
         public static readonly Temp[] All =
         {
             // --- 建物（ほぼ黒。エコロケ役の領分） ---
-            new Temp("FloorStone",  15.0f, 0.06f, "コンクリ・テラゾー床。最も冷たい。形はエコロケ役の担当なのでほぼ黒"),
-            new Temp("Wall",        18.0f, 0.08f, "塗装壁・石膏。室温そのもの。ほぼ黒だが遮蔽はする"),
-            new Temp("Ceiling",     21.5f, 0.10f, "吊り天井。暖気が溜まりわずかに温かい"),
+            new Temp("FloorStone",  15.0f, 0.020f, "コンクリ・テラゾー床。最も冷たい。形はエコロケ役の担当なのでほぼ黒"),
+            new Temp("Wall",        18.0f, 0.025f, "塗装壁・石膏。室温そのもの。ほぼ黒だが遮蔽はする"),
+            new Temp("Ceiling",     21.5f, 0.030f, "吊り天井。暖気が溜まりわずかに温かい"),
 
-            // --- 什器（気配だけ。ぶつかる物があると分かる程度） ---
-            new Temp("Metal",       16.0f, 0.15f, "スチール書架。金属は放射率が低く実際より冷たく写る（実測どおりの現象）"),
-            new Temp("Prop",        19.0f, 0.18f, "だるま・人形など張り子や樹脂の小物"),
-            new Temp("Wood",        20.0f, 0.20f, "木箱・木製家具。断熱性が高く室温よりわずかに高い"),
-            new Temp("Cardboard",   20.5f, 0.20f, "段ボール。木材と同じ理由でやや高い"),
-            new Temp("Fabric",      22.0f, 0.24f, "布・カーペット。放熱しにくいぶん高め"),
-            new Temp("CRTOff",      17.5f, 0.22f, "電源の切れたCRT。ただの箱なので室温"),
-            new Temp("LampOff",     19.0f, 0.22f, "切れている照明パネル。樹脂板が室温のまま。どれが死んでいるかが分かる"),
-            new Temp("Water",       11.0f, 0.34f, "溜まり水。気化熱で室温より数℃低く、はっきり冷たく写る"),
+            // --- 什器（気配だけ。手を伸ばす距離で「何かある」と分かる程度） ---
+            new Temp("Metal",       16.0f, 0.050f, "スチール書架。金属は放射率が低く実際より冷たく写る（実測どおりの現象）"),
+            new Temp("Prop",        19.0f, 0.060f, "だるま・人形など張り子や樹脂の小物"),
+            new Temp("Wood",        20.0f, 0.070f, "木箱・木製家具。断熱性が高く室温よりわずかに高い"),
+            new Temp("Cardboard",   20.5f, 0.070f, "段ボール。木材と同じ理由でやや高い"),
+            new Temp("CRTOff",      17.5f, 0.070f, "電源の切れたCRT。ただの箱なので室温"),
+            new Temp("LampOff",     19.0f, 0.080f, "切れている照明パネル。樹脂板が室温のまま。どれが死んでいるかが分かる"),
+            new Temp("Fabric",      22.0f, 0.090f, "布・カーペット。放熱しにくいぶん高め"),
+            new Temp("Water",       11.0f, 0.200f, "溜まり水。気化熱で室温より数℃低い。落ちると危ないので例外的に読ませる"),
 
             // --- 熱源（サーモ役の領分。ここだけ全開） ---
-            new Temp("Duct",        25.0f, 0.75f, "空調ダクト。送風が生きていれば室温より高い"),
+            new Temp("Duct",        25.0f, 0.150f, "空調ダクト。送風が生きていれば室温より高い。部屋を端から端まで貫く長い管なので、明るくすると天井の一本線で間取りが読めてしまう"),
             new Temp("Body",        34.0f, 1.00f, "人体の衣服表面。素肌は33〜36℃、服の上からだとこのくらい"),
             new Temp("Skin",        36.0f, 1.00f, "人体の露出した肌"),
             new Temp("LampDim",     32.0f, 0.85f, "ちらついている・調光された照明パネル。生きてはいるが出力が落ちている"),
@@ -73,6 +78,11 @@ namespace BLIND.EditorTools
         public const float DisplayMin = 12f;
         public const float DisplayMax = 70f;
         public const float Gamma = 0.65f;
+
+        /// <summary>dim=0 の物が見える距離(m)。建物はこの距離で背景に溶ける。</summary>
+        public const float FadeNear = 5f;
+        /// <summary>dim=1 の物が見える距離(m)。熱源は部屋の端からでも見える。</summary>
+        public const float FadeFar = 200f;
 
         /// <summary>温度ごとのマテリアルを作る。同じ温度は同じマテリアルを共有する。</summary>
         [MenuItem("BLIND/vision/1. サーマル材質を作り直す")]
@@ -100,6 +110,8 @@ namespace BLIND.EditorTools
                 m.SetFloat("_Noise", 0.035f);
                 m.SetFloat("_Grain", t.celsius > 30f ? 0.4f : 0.12f);
                 m.SetFloat("_Dim", t.dim);
+                m.SetFloat("_FadeNear", FadeNear);
+                m.SetFloat("_FadeFar", FadeFar);
                 EditorUtility.SetDirty(m);
                 log.AppendLine(t.celsius.ToString("00.0").PadRight(6) + t.dim.ToString("0.00").PadRight(6)
                              + ("Thermal_" + t.key).PadRight(26) + t.note);
