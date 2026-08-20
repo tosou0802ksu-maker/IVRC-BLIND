@@ -66,11 +66,12 @@ Material:
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _EdgeIntensity: 3
-    - _EdgeThickness: 2
+    - _EdgeThickness: 1.2
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
     - _GlowIntensity: 0
+    - _MaxEdgeUV: 0.022
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1
@@ -79,9 +80,12 @@ Material:
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _UVSec: 0
+    - _UseObjectUv: 0
     - _ZWrite: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EdgeColor: {r: 0, g: 1, b: 0.5, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _ObjMin: {r: 0, g: 0, b: 0, a: 0}
+    - _ObjSize: {r: 1, g: 1, b: 1, a: 0}
   m_BuildTextureStacks: []
