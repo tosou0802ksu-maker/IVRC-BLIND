@@ -34,9 +34,9 @@ Material:
     m_Ints: []
     m_Floats:
     - _AmbientBoost: 0.03
-    - _Glossiness: 0.3
-    - _Metallic: 0
-    - _NormalStrength: 0.8
+    - _Glossiness: 0.742
+    - _Metallic: 1
+    - _NormalStrength: 0.78
     - _Saturation: 0.55
     - _TextureScale: 3.6
     m_Colors:

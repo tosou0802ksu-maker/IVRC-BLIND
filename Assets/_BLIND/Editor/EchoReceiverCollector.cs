@@ -16,21 +16,27 @@ public static class EchoReceiverCollector
     [MenuItem(MenuPath)]
     public static void CollectAll()
     {
+        EditorUtility.DisplayDialog("BLIND", Collect() + "\nシーンを保存してください。", "OK");
+    }
+
+    /// <summary>
+    /// ダイアログを出さない版。ツールやスクリプトからはこちらを呼ぶこと。
+    /// DisplayDialog はモーダルなので、外部から自動実行するとエディタが
+    /// 「OK が押されるまで」丸ごと止まってしまう。
+    /// </summary>
+    public static string Collect()
+    {
         var emitters = Object.FindObjectsOfType<EchoEmitter>(true);
         if (emitters.Length == 0)
         {
-            EditorUtility.DisplayDialog("BLIND",
-                "シーンに EchoEmitter が見つかりませんでした。", "OK");
-            return;
+            return "シーンに EchoEmitter が見つかりませんでした。";
         }
 
         var receivers = Object.FindObjectsOfType<EchoReceiver>(true);
         if (receivers.Length == 0)
         {
-            EditorUtility.DisplayDialog("BLIND",
-                "シーンに EchoReceiver が1つもありません。\n" +
-                "TriRole_Block などのプレハブを配置してから実行してください。", "OK");
-            return;
+            return "シーンに EchoReceiver が1つもありません。\n" +
+                   "TriRole_Block などのプレハブを配置してから実行してください。";
         }
 
         foreach (var emitter in emitters)
@@ -57,9 +63,8 @@ public static class EchoReceiverCollector
 
         EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
 
-        Debug.Log($"[BLIND] EchoReceiver {receivers.Length}個 を EchoEmitter {emitters.Length}個 に登録しました。");
-        EditorUtility.DisplayDialog("BLIND",
-            $"EchoReceiver {receivers.Length}個 を登録しました。\n" +
-            "シーンを保存してください。", "OK");
+        var msg = $"EchoReceiver {receivers.Length}個 を EchoEmitter {emitters.Length}個 に登録しました。";
+        Debug.Log("[BLIND] " + msg);
+        return msg;
     }
 }

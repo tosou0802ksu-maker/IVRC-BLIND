@@ -24,8 +24,8 @@
       "hash": "4ce7dd3cc54e37e2ed6dc59cb5a047f3dccb3f50"
     },
     "com.unity.ai.navigation": {
-      "version": "1.1.5",
-      "depth": 1,
+      "version": "1.1.7",
+      "depth": 0,
       "source": "registry",
       "dependencies": {
         "com.unity.modules.ai": "1.0.0"
@@ -322,6 +322,14 @@
         "com.unity.xr.oculus": "4.0.0",
         "com.unity.postprocessing": "3.2.2",
         "com.unity.ugui": "1.0.0"
+      }
+    },
+    "com.vrchat.core.vpm-resolver": {
+      "version": "file:com.vrchat.core.vpm-resolver",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "3.0.2"
       }
     },
     "com.vrchat.worlds": {
