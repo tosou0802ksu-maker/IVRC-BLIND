@@ -40,5 +40,5 @@ Material:
     - _Saturation: 0.35
     - _TextureScale: 2
     m_Colors:
-    - _Color: {r: 0.6, g: 0.61, b: 0.56, a: 1}
+    - _Color: {r: 0.645, g: 0.605, b: 0.535, a: 1}
   m_BuildTextureStacks: []
