@@ -7,21 +7,36 @@
 
 ## 表記が必須のもの（CC BY 等）
 
-| アセット | 作者 | ライセンス | 使用箇所 |
-|---|---|---|---|
-| Skeletal Hand | Jeremy Swan | CC BY 4.0 | `Art/Models/PolyPizza/SkeletalHand_JeremySwan_CCBY.fbx` |
-| Daruma | Ramujiro (@Ramzus) | CC BY 4.0 | `Art/Models/Daruma/Daruma_Ramujiro_CCBY/` — room12 のだるま（主役） |
-| Daruma doll | Jan | CC BY 4.0 | `Art/Models/Daruma/Daruma_Jan_CCBY/` — room12 のだるま（色違い） |
-| Daruma | Adrian Crisandy | CC BY 4.0 | `Art/Models/Daruma/Daruma_AdrianCrisandy_CCBY/` — room12 の遠景用だるま |
-| neko-daruma | higan69 | CC BY 4.0 | `Art/Models/Daruma/Daruma_Neko_higan69_CCBY/` — room12 のだるま（変わり種） |
+| アセット | 作者 | ライセンス | 入手元URL | 使用箇所 |
+|---|---|---|---|---|
+| Skeletal Hand | Jeremy Swan | CC BY 4.0 | https://poly.pizza/m/3b3VmmxXZ7S | `Art/Models/PolyPizza/SkeletalHand_JeremySwan_CCBY.fbx` |
+| Daruma | Ramujiro (@Ramzus) | CC BY 4.0 | https://sketchfab.com/3d-models/daruma-deb599b14ece4825a46045be9dce3589 | `Art/Models/Daruma/Daruma_Ramujiro_CCBY/` — room12 のだるま（主役） |
+| Daruma doll | Jan | CC BY 4.0 | https://sketchfab.com/3d-models/daruma-doll-55626deb94114053b9d47183a5181413 | `Art/Models/Daruma/Daruma_Jan_CCBY/` — room12 のだるま（色違い） |
+| Daruma | Adrian Crisandy | CC BY 4.0 | https://sketchfab.com/3d-models/daruma-76b5359e330440e8901d2e1a72ef5ebf | `Art/Models/Daruma/Daruma_AdrianCrisandy_CCBY/` — room12 の遠景用だるま |
+| neko-daruma | higan69 | CC BY 4.0 | https://sketchfab.com/3d-models/neko-daruma-590562e23b3d465b93abf66135f41ea6 | `Art/Models/Daruma/Daruma_Neko_higan69_CCBY/` — room12 のだるま（変わり種） |
 
-CC BY は **作者名の明記が義務**。以下の形で記載する。
+CC BY で必要なのは **作品名・作者名・入手元・ライセンス**（頭文字を取って TASL）の4点。
+加えて **改変したなら「改変した」と書く**のが義務。下記5件はすべて改変済み
+（シェーダの張り替え、スケールの正規化など）なので `— modified` を必ず残すこと。
 
-> "Skeletal Hand" by Jeremy Swan — licensed under CC BY 4.0 (via Poly Pizza)
-> "Daruma" by Ramujiro — licensed under CC BY 4.0 (via Sketchfab)
-> "Daruma doll" by Jan — licensed under CC BY 4.0 (via Sketchfab)
-> "Daruma" by Adrian Crisandy — licensed under CC BY 4.0 (via Sketchfab)
-> "neko-daruma" by higan69 — licensed under CC BY 4.0 (via Sketchfab)
+提出物（動画エンドロール・展示パネル・README）には、以下をそのまま貼れる。
+
+```
+"Skeletal Hand" by Jeremy Swan — https://poly.pizza/m/3b3VmmxXZ7S
+Licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/) — modified
+
+"Daruma" by Ramujiro — https://sketchfab.com/3d-models/daruma-deb599b14ece4825a46045be9dce3589
+Licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/) — modified
+
+"Daruma doll" by Jan — https://sketchfab.com/3d-models/daruma-doll-55626deb94114053b9d47183a5181413
+Licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/) — modified
+
+"Daruma" by Adrian Crisandy — https://sketchfab.com/3d-models/daruma-76b5359e330440e8901d2e1a72ef5ebf
+Licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/) — modified
+
+"neko-daruma" by higan69 — https://sketchfab.com/3d-models/neko-daruma-590562e23b3d465b93abf66135f41ea6
+Licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/) — modified
+```
 
 > だるま4種はいずれも glTF で入れているため、マテリアルが glTFast のシェーダ
 > （うち2種は `glTF/Unlit` で光を受けない）になっていた。Standard に張り替え済み。
