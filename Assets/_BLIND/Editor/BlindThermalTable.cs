@@ -106,9 +106,11 @@ namespace BLIND.EditorTools
                 m.SetFloat("_TempMax", DisplayMax);
                 m.SetFloat("_TempGamma", Gamma);
                 m.SetFloat("_HeatIntensity", 1f);
-                m.SetFloat("_EdgeCool", 0.18f);
-                m.SetFloat("_Noise", 0.035f);
-                m.SetFloat("_Grain", t.celsius > 30f ? 0.4f : 0.12f);
+                // ざらつきは控えめに。暗く落とした面ほど 8bit の階調が粗くなるので、
+                // ムラを強く入れるとブロック状のノイズ（ガビガビ）として目立ってしまう。
+                m.SetFloat("_EdgeCool", 0.10f);
+                m.SetFloat("_Noise", 0.015f);
+                m.SetFloat("_Grain", t.celsius > 30f ? 0.15f : 0.05f);
                 m.SetFloat("_Dim", t.dim);
                 m.SetFloat("_FadeNear", FadeNear);
                 m.SetFloat("_FadeFar", FadeFar);
