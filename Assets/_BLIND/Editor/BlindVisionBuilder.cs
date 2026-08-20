@@ -27,7 +27,10 @@ namespace BLIND.EditorTools
         const string MeshDir = "Assets/_BLIND/Art/Models/VisionMeshes";
 
         /// <summary>エコロケのブロックの大きさ(m)。小さいほどパルスが細かく広がる。</summary>
-        const float EchoChunk = 6f;
+        const float EchoChunk = 5f;
+
+        /// <summary>生成した EchoReceiver の点灯時間(秒)。</summary>
+        const float EchoGlowDuration = 2.5f;
 
         /// <summary>
         /// これを超える三角形数のメッシュは簡易形状に差し替える。
@@ -369,6 +372,7 @@ namespace BLIND.EditorTools
                     mr2.receiveShadows = false;
                     mr2.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
                     mr2.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+                    Recenter(mesh, go.transform);
                     tTris += mesh.triangles.Length / 3; tRend++;
                 }
                 // 簡易形状にすると部屋を塞ぐ大物は、素のメッシュを1枚だけ置く
@@ -385,38 +389,48 @@ namespace BLIND.EditorTools
                 eRoot.transform.SetParent(room, false);
                 long eTris = 0; int eRend = 0;
 
-                // 床の一枚板。天面だけあればよいので薄い箱にする
+                // 床は薄い板にする。ただし部屋に1枚だとパルスで床全体が一度に光ってしまい、
+                // 「反響が広がっていく」感じが出ないので、ブロックと同じ大きさに割る。
                 if (hasFloor)
                 {
-                    var slab = Object.Instantiate(BoxProxy());
-                    slab.name = rn + "_Echo_FloorSlab";
-                    var ci2 = new CombineInstance
-                    {
-                        mesh = EchoUv(slab),
-                        subMeshIndex = 0,
-                        transform = room.worldToLocalMatrix * Matrix4x4.TRS(
-                            new Vector3(floorBounds.center.x, floorBounds.max.y - 0.02f, floorBounds.center.z),
-                            Quaternion.identity,
-                            new Vector3(floorBounds.size.x, 0.04f, floorBounds.size.z)),
-                    };
-                    var fm = Combine(new List<CombineInstance> { ci2 }, rn + "_Echo_Floor");
-                    Object.DestroyImmediate(slab);
-                    Object.DestroyImmediate(ci2.mesh);
-                    if (fm != null)
-                    {
-                        var fg = new GameObject("E_FloorSlab");
-                        fg.transform.SetParent(eRoot.transform, false);
-                        fg.layer = LayerEcho;
-                        fg.AddComponent<MeshFilter>().sharedMesh = fm;
-                        var fmr = fg.AddComponent<MeshRenderer>();
-                        fmr.sharedMaterial = echoMat;
-                        fmr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                        fmr.receiveShadows = false;
-                        fmr.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
-                        fmr.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
-                        AddReceiver(fg, fmr);
-                        eTris += fm.triangles.Length / 3; eRend++;
-                    }
+                    int nx = Mathf.Max(1, Mathf.RoundToInt(floorBounds.size.x / EchoChunk));
+                    int nz = Mathf.Max(1, Mathf.RoundToInt(floorBounds.size.z / EchoChunk));
+                    float sx = floorBounds.size.x / nx, sz = floorBounds.size.z / nz;
+                    for (int ix = 0; ix < nx; ix++)
+                        for (int iz = 0; iz < nz; iz++)
+                        {
+                            var slab = Object.Instantiate(BoxProxy());
+                            var uvSlab = EchoUv(slab);
+                            var center = new Vector3(
+                                floorBounds.min.x + sx * (ix + 0.5f),
+                                floorBounds.max.y - 0.02f,
+                                floorBounds.min.z + sz * (iz + 0.5f));
+                            var ci2 = new CombineInstance
+                            {
+                                mesh = uvSlab,
+                                subMeshIndex = 0,
+                                transform = room.worldToLocalMatrix * Matrix4x4.TRS(
+                                    center, Quaternion.identity, new Vector3(sx, 0.04f, sz)),
+                            };
+                            var fm = Combine(new List<CombineInstance> { ci2 }, rn + "_Echo_Floor_" + ix + "_" + iz);
+                            Object.DestroyImmediate(slab);
+                            Object.DestroyImmediate(uvSlab);
+                            if (fm == null) continue;
+
+                            var fg = new GameObject("E_Floor_" + ix + "_" + iz);
+                            fg.transform.SetParent(eRoot.transform, false);
+                            fg.layer = LayerEcho;
+                            fg.AddComponent<MeshFilter>().sharedMesh = fm;
+                            var fmr = fg.AddComponent<MeshRenderer>();
+                            fmr.sharedMaterial = echoMat;
+                            fmr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                            fmr.receiveShadows = false;
+                            fmr.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
+                            fmr.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+                            Recenter(fm, fg.transform);
+                            AddReceiver(fg, fmr);
+                            eTris += fm.triangles.Length / 3; eRend++;
+                        }
                 }
                 foreach (var kv in byChunk)
                 {
@@ -433,6 +447,7 @@ namespace BLIND.EditorTools
                     mr2.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
                     mr2.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
 
+                    Recenter(mesh, go.transform);
                     AddReceiver(go, mr2);
                     eTris += mesh.triangles.Length / 3; eRend++;
                 }
@@ -547,7 +562,32 @@ namespace BLIND.EditorTools
             var so = new SerializedObject(rec);
             var arr = so.FindProperty("targetRenderers");
             if (arr != null) { arr.arraySize = 1; arr.GetArrayElementAtIndex(0).objectReferenceValue = r; }
+            var gd = so.FindProperty("glowDuration");
+            if (gd != null) gd.floatValue = EchoGlowDuration;
             so.ApplyModifiedProperties();
+        }
+
+        /// <summary>
+        /// メッシュを自分の重心へ寄せ直し、その分を Transform に持たせる。
+        ///
+        /// 結合したメッシュは部屋のローカル原点を基準に作られるので、そのまま置くと
+        /// GameObject の座標が全ブロック「部屋の原点」になってしまう。
+        /// EchoEmitter は receiver.transform.position までの距離と角度でパルスの
+        /// 当たり判定をしているため、これだと部屋の中の位置関係が完全に失われ、
+        /// 「部屋ごと全部光る」か「1つも光らない」かの二択になる。
+        /// （視界が真っ暗になっていた原因はこれ。）
+        /// </summary>
+        static void Recenter(Mesh mesh, Transform t)
+        {
+            if (mesh == null || !mesh.isReadable) return;
+            var c = mesh.bounds.center;
+            if (c.sqrMagnitude < 1e-8f) return;
+            var v = mesh.vertices;
+            for (int i = 0; i < v.Length; i++) v[i] -= c;
+            mesh.vertices = v;
+            mesh.RecalculateBounds();
+            EditorUtility.SetDirty(mesh);
+            t.localPosition = c;
         }
 
         static string[] Keys(Dictionary<string, List<CombineInstance>> d)

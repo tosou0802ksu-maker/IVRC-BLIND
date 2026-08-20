@@ -64,6 +64,10 @@ Shader "BLIND/ThermalSurface"
 
             // 実機のハンディサーマルカメラの標準的な色順(アイアン系ではなくレインボー系)
             // 0.0:紫 -> 1/6:青 -> 2/6:水色 -> 3/6:緑 -> 4/6:黄 -> 5/6:橙 -> 1.0:赤
+            //
+            // レンジ上限に張り付く高温(蛍光灯・安定器・炎)は白飛びさせる。
+            // 実機でも振り切れた画素は白になるし、暗い画面の中で「そこが熱源だ」と
+            // 一目で分かる目印になる。サーモ役の道しるべはこれしかない。
             fixed3 thermalRamp(float h)
             {
                 fixed3 purple = fixed3(0.30, 0.00, 0.48);
@@ -80,6 +84,8 @@ Shader "BLIND/ThermalSurface"
                 col = lerp(col, yellow, smoothstep(3.0/6.0, 4.0/6.0, h));
                 col = lerp(col, orange, smoothstep(4.0/6.0, 5.0/6.0, h));
                 col = lerp(col, red,    smoothstep(5.0/6.0, 6.0/6.0, h));
+                // 振り切れた所は白熱させる（h=0.86 あたり＝実温度 50℃ 前後から）
+                col = lerp(col, fixed3(1.0, 1.0, 0.92), smoothstep(0.86, 1.0, h));
                 return col;
             }
 
