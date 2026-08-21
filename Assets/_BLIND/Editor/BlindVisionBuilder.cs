@@ -158,6 +158,57 @@ namespace BLIND.EditorTools
             return mn >= 2.5f || mx >= 5.0f;
         }
 
+        /// <summary>
+        /// 細長い物・薄い板か。
+        ///
+        /// 簡易形状はバウンディングボックス（軸に沿った箱）で置き換える。
+        /// まっすぐ立った棒なら箱と実物はほぼ同じだが、斜めに走る物だと
+        /// 箱が実体より桁違いに大きくなる。
+        /// 実例：room14 の斜めのレーザーは太さ5cmしかないのに、
+        /// 箱にすると 4.2m×5.0m の板になり、サーモ役の画面を丸ごと橙で塗り潰していた。
+        ///
+        /// 1m を超える長さがあって、一番細い方向が一番長い方向の 15% 未満なら
+        /// 箱で代用してはいけないと判断する。パイプ・手すり・梁・ビームが該当する。
+        /// </summary>
+        /// <summary>
+        /// 什器用のエコロケ材質。建物用との違いは _RimWeight（シルエット発光）だけ。
+        ///
+        /// 建物は稜線（UVの端）だけを線で描く。箱の集合なのでそれで形が出る。
+        /// 置いてある物は椅子や人形のような有機的な形で、稜線が無いので
+        /// UVの端だけでは輪郭がほとんど出ず、暗闇に沈んで見えなかった。
+        /// 視線に対して縁になっている面を光らせると形が出る。
+        /// 反響定位で返ってくるのは物の「外形」なので、こちらが本来の見え方でもある。
+        /// </summary>
+        static Material EchoPropMaterial(Material baseMat)
+        {
+            const string path = EchoBigDir + "/EchoMaterial_Prop.mat";
+            if (!AssetDatabase.IsValidFolder(EchoBigDir))
+                AssetDatabase.CreateFolder("Assets/_BLIND/Art/Materials", "Echo");
+            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m == null) { m = new Material(baseMat); AssetDatabase.CreateAsset(m, path); }
+            m.shader = baseMat.shader;
+            m.CopyPropertiesFromMaterial(baseMat);
+            m.SetFloat("_RimWeight", 0.45f);
+            m.SetFloat("_RimPower", 2.5f);
+            m.SetFloat("_GlowIntensity", 0f);
+            EditorUtility.SetDirty(m);
+            return m;
+        }
+
+        /// <summary>部屋そのものを構成する面か（＝置いてある物ではないか）。</summary>
+        static bool IsArchitecture(string key)
+        {
+            return key == "Wall" || key == "Ceiling" || key == "FloorStone" || key == "Water";
+        }
+
+        static bool IsThinAndLong(Bounds b)
+        {
+            float mx = Mathf.Max(b.size.x, Mathf.Max(b.size.y, b.size.z));
+            float mn = Mathf.Min(b.size.x, Mathf.Min(b.size.y, b.size.z));
+            if (mx < 1.0f) return false;               // 小さい物は箱にしても実害が無い
+            return mn < mx * 0.15f;
+        }
+
         static CombineInstance ProxyInstance(Renderer mr, Transform room, bool echoUv, string key)
         {
             var b = mr.bounds;
@@ -198,9 +249,25 @@ namespace BLIND.EditorTools
             var b = mr.bounds;
             if (b.size.sqrMagnitude < 1e-6f) return false;
 
+            // 人体・体温を持つ物だけは箱に潰してはいけない。
+            // サーモ役の画面で緑に光る塊が「人の形」なのか「ただの箱」なのかは
+            // この部屋の意味そのもの（人形部屋に体温のある人形が混ざっている）で、
+            // 箱にした瞬間その情報が消える。重ければ粗くしてでも輪郭を残す。
+            if (readable && (key == "Body" || key == "Skin" || key == "Burning"))
+            {
+                var lite = BlindMeshReducer.SaveLite(src, 300, "_heat");
+                if (lite != null)
+                {
+                    ci.mesh = lite;
+                    ci.subMeshIndex = 0;
+                    ci.transform = room.worldToLocalMatrix * mr.transform.localToWorldMatrix;
+                    return true;
+                }
+            }
+
             // ただし簡易形状にすると部屋を塞いでしまう大物は、素のメッシュを
             // 1枚そのまま置く（結合できないので単独のレンダラーになる）
-            if (src != null && IsBig(b)) { standalone = true; return false; }
+            if (src != null && (IsBig(b) || IsThinAndLong(b))) { standalone = true; return false; }
             ci.mesh = IsRoundish(key, b) ? BlobProxy() : BoxProxy();
             ci.subMeshIndex = 0;
             var local = room.worldToLocalMatrix * Matrix4x4.TRS(b.center, Quaternion.identity, b.size);
@@ -248,6 +315,24 @@ namespace BLIND.EditorTools
         // -------------------------------------------------------------
         //  分類：レンダラーの名前とマテリアル名から温度クラスを決める
         // -------------------------------------------------------------
+        /// <summary>
+        /// room16 で「体温を持っている」人形。
+        ///
+        /// 16体全部を熱くすると、サーモ役の画面が人型で埋まって
+        /// 「どれが動くのか」が読めなくなる。逆に全部冷たいと、
+        /// サーモ役はこの部屋で何の役にも立たない。
+        /// 数体だけ熱くすると「16体のうち4体だけ体温がある」という状態になり、
+        /// サーモ役にしか分からない情報として一番強く効く。
+        /// 部屋の四隅に散らして、どこにいても最低1体は視界に入るようにしてある。
+        /// </summary>
+        static readonly HashSet<string> HotDolls = new HashSet<string>
+        {
+            "Doll_04",          // 西寄り中央
+            "Doll_10",          // 中央
+            "Doll_13",          // 東寄り
+            "Doll_Fallen_09",   // 南、倒れている
+        };
+
         /// <summary>戻り値が null ならその物はサーモ／エコロケに出さない。</summary>
         static string Classify(Renderer r, out bool echo)
         {
@@ -263,13 +348,31 @@ namespace BLIND.EditorTools
             // 2枚重なって Zファイティング（チラつき）を起こす。汚れには温度も反響も無い。
             if (all.Contains("decal") || all.Contains("stain") || all.Contains("soot")) { echo = false; return null; }
 
+            // --- 体温を持つもの（room16） ---
+            // 人形は名前で個体指定する。親をたどって判定するのは、
+            // 人形が USDRoot などの中間ノードを挟んでいる場合があるため。
+            for (var tr = go.transform; tr != null; tr = tr.parent)
+            {
+                if (HotDolls.Contains(tr.name)) return "Body";
+                // 巨大な手とその手が掴んでいる人形。この部屋の主なので一番はっきり見せる
+                if (tr.name == "Prop_GiantHand") return "Skin";
+            }
+
             // --- レーザー（room14）: サーモ役だけの領分 ---
             // ビームも天井の発射装置も、まとめてサーモ専用にする。
             // エコロケ役に装置が見えると「天井に何か並んでる」で危険を推理できてしまい、
             // サーモ役が唯一の情報源である状態が崩れる。
             // Default層の実体は別途 NowOnly(25) へ移すので過去人にも見えない。
             // 「何も見えないのに焼かれる」という状況を、サーモ役の一言だけが防ぐ。
-            if (all.Contains("laser")) { echo = false; return "Laser"; }
+            if (all.Contains("laser"))
+            {
+                echo = false;
+                // 発光板(LaserGlow)はビームを太く見せるための板で、
+                // 大きい物だと 4.3m×5.0m あり、近くに立つと画面が丸ごと白く覆われる。
+                // サーモには芯(LaserBeam)と発射装置だけ出せば「細い線」として読める。
+                if (all.Contains("glow")) return null;
+                return "Laser";
+            }
 
             // --- 発熱するもの（サーモ役の道しるべになる） ---
             if (n == "Lens" || all.Contains("lamplens")) return "Lamp";
@@ -297,11 +400,19 @@ namespace BLIND.EditorTools
             if (all.Contains("basin")) return "FloorStone";
             if (all.Contains("floortile") || n.StartsWith("Floor") || all.Contains("floor")) return "FloorStone";
             if (all.Contains("ceiling") || all.Contains("plenum")) return "Ceiling";
-            if (all.Contains("wall") || all.Contains("dado") || all.Contains("doorframe")
-                || all.Contains("plaster") || all.Contains("trim")) return "Wall";
+            // kabesitatya = 壁に貼り付いた腰板。room1・room4 に計46枚ある。
+            // 什器として扱うとシルエット発光が乗り、浅い角度で見たときに
+            // 壁一面が緑に塗り潰されてしまう。壁の一部なので建物側で扱う。
+            if (all.Contains("wall") || all.Contains("kabe") || all.Contains("dado") || all.Contains("doorframe")
+                || all.Contains("plaster") || all.Contains("trim") || all.Contains("baseboard")
+                || all.Contains("cornice") || all.Contains("handrail")) return "Wall";
 
             // --- 什器 ---
-            if (all.Contains("duct") || all.Contains("conduit") || all.Contains("hanger")) return "Duct";
+            // 配管系。room9 のロッカー裏を這う配管、room12 の空調、room2・room14 の通気口。
+            // 中を何かが通っている＝生きている設備として、サーモ役にはっきり見せる。
+            if (all.Contains("duct") || all.Contains("conduit") || all.Contains("hanger")
+                || all.Contains("pipe") || all.Contains("vent") || all.Contains("tube")
+                || all.Contains("valve") || all.Contains("plumb")) return "Duct";
             if (all.Contains("rack") || all.Contains("steel") || all.Contains("desk") || all.Contains("chair")
                 || all.Contains("locker") || all.Contains("scaffold") || all.Contains("ladder")) return "Metal";
             if (all.Contains("box") || all.Contains("cardboard") || all.Contains("archivebox")) return "Cardboard";
@@ -364,7 +475,15 @@ namespace BLIND.EditorTools
 
                 // --- 元になるレンダラーを集めて分類 ---
                 var byTemp = new Dictionary<string, List<CombineInstance>>();
+                // エコロケのチャンクは「建物」と「置いてある物」で分ける。
+                //
+                // 什器だけシルエット発光(_RimWeight)を効かせたいため。
+                // 全部に効かせると、床・壁・天井は必ずどこかが視線に対して縁になるので
+                // 画面全体が緑で埋まり、暗闇そのものが無くなってしまう（実際にそうなった）。
+                // 建物は稜線だけ、物は輪郭全体、と分けるとエコロケ役の画面で
+                // 「部屋の形」と「そこに在る物」が別の見え方になって読み分けられる。
                 var byChunk = new Dictionary<Vector3Int, List<CombineInstance>>();
+                var byChunkProp = new Dictionary<Vector3Int, List<CombineInstance>>();
                 var temps = new List<Mesh>();   // UV貼り直し用の一時メッシュ。最後に破棄する
                 int skipped = 0, used = 0;
                 var floorBounds = new Bounds(); bool hasFloor = false;
@@ -417,7 +536,8 @@ namespace BLIND.EditorTools
                         {
                             var lp = room.InverseTransformPoint(mr.bounds.center);
                             var cell = new Vector3Int(Mathf.FloorToInt(lp.x / EchoChunk), 0, Mathf.FloorToInt(lp.z / EchoChunk));
-                            if (!byChunk.ContainsKey(cell)) byChunk[cell] = new List<CombineInstance>();
+                            var bucket = IsArchitecture(key) ? byChunk : byChunkProp;
+                            if (!bucket.ContainsKey(cell)) bucket[cell] = new List<CombineInstance>();
 
                             // エコロケ層は「UVの端＝輪郭」で線を引くので、UVが0〜1でない
                             // メッシュ（床タイル・手続き生成の棚・FBXの実寸UV）をそのまま渡すと
@@ -447,7 +567,7 @@ namespace BLIND.EditorTools
                                 eci = ProxyInstance(mr, room, true, key);
                             }
                             temps.Add(eci.mesh);
-                            byChunk[cell].Add(eci);
+                            bucket[cell].Add(eci);
                         }
                     }
                     used++;
@@ -533,16 +653,21 @@ namespace BLIND.EditorTools
                             eTris += fm.triangles.Length / 3; eRend++;
                         }
                 }
-                foreach (var kv in byChunk)
+                var propMat = EchoPropMaterial(echoMat);
+                foreach (var pair in new[] {
+                    new KeyValuePair<Dictionary<Vector3Int, List<CombineInstance>>, Material>(byChunk, echoMat),
+                    new KeyValuePair<Dictionary<Vector3Int, List<CombineInstance>>, Material>(byChunkProp, propMat) })
+                foreach (var kv in pair.Key)
                 {
-                    var mesh = Combine(kv.Value, rn + "_Echo_" + kv.Key.x + "_" + kv.Key.z);
+                    bool isProp = pair.Value == propMat;
+                    var mesh = Combine(kv.Value, rn + "_Echo" + (isProp ? "Prop" : "") + "_" + kv.Key.x + "_" + kv.Key.z);
                     if (mesh == null) continue;
-                    var go = new GameObject("E_" + kv.Key.x + "_" + kv.Key.z);
+                    var go = new GameObject("E_" + (isProp ? "P" : "") + kv.Key.x + "_" + kv.Key.z);
                     go.transform.SetParent(eRoot.transform, false);
                     go.layer = LayerEcho;
                     go.AddComponent<MeshFilter>().sharedMesh = mesh;
                     var mr2 = go.AddComponent<MeshRenderer>();
-                    mr2.sharedMaterial = echoMat;
+                    mr2.sharedMaterial = pair.Value;
                     mr2.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                     mr2.receiveShadows = false;
                     mr2.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;

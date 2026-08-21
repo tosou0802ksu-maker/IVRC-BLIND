@@ -30,7 +30,7 @@ namespace BLIND.EditorTools
         const int LayerDefault = 0;
         const int LayerThermal = 22;
         const int LayerEcho = 23;
-        const int LayerMemory = 24;
+        public const int LayerMemory = 24;
 
         static bool Movable(GameObject g)
         {

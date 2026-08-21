@@ -84,8 +84,12 @@ Shader "BLIND/ThermalSurface"
                 col = lerp(col, yellow, smoothstep(3.0/6.0, 4.0/6.0, h));
                 col = lerp(col, orange, smoothstep(4.0/6.0, 5.0/6.0, h));
                 col = lerp(col, red,    smoothstep(5.0/6.0, 6.0/6.0, h));
-                // 振り切れた所は白熱させる（h=0.86 あたり＝実温度 50℃ 前後から）
-                col = lerp(col, fixed3(1.0, 1.0, 0.92), smoothstep(0.86, 1.0, h));
+                // 振り切れた所は白熱させる。
+                // ただし白へ寄せるのを 0.93 から、色も純白ではなく温かい象牙色にしてある。
+                // 純白に早く飛ばすと、熱い物がのっぺりした白い塊になって
+                // 「何が熱いのか」も「どのくらい熱いのか」も読めなくなる。
+                // 赤〜橙の帯を最後まで残したほうが、熱源の形と強さが伝わる。
+                col = lerp(col, fixed3(1.0, 0.93, 0.82), smoothstep(0.93, 1.0, h));
                 return col;
             }
 

@@ -137,6 +137,124 @@ namespace BLIND.EditorTools
                  + "エコロケ層の複製が消え、サーモ層が 88℃ で作り直されます。";
         }
 
+        // -------------------------------------------------------------
+
+        [MenuItem("BLIND/部屋修正/3. room9に「過去人だけ塞がって見える」通路を作る")]
+        public static void FixRoom9Menu()
+        {
+            EditorUtility.DisplayDialog("BLIND", FixRoom9FakeWall(), "OK");
+        }
+
+        /// <summary>
+        /// room9（ロッカー部屋）の東側の開口(2m×3.25m)に、
+        /// 過去人にだけ見える「壁」を重ねる。
+        ///
+        /// Memory(24) は過去人にしか映らないレイヤーなので、
+        ///   過去人      … 行き止まりの壁に見える
+        ///   エコロケ    … 開口として見える（Echo層には何も置かない）
+        ///   サーモ      … 同上
+        /// になる。コライダーは付けないので、実際には歩いて通れる。
+        ///
+        /// 過去人が「そっちは行き止まりだ」と言い、エコロケが「いや空いてる」と返す。
+        /// 過去人が見ているのは"かつてこの部屋がどうだったか"なので、
+        /// 嘘をついているわけではなく、後から壊された壁を見ている、という理屈になる。
+        /// </summary>
+        public static string FixRoom9FakeWall()
+        {
+            var room9 = Object.FindObjectsOfType<Transform>(true).FirstOrDefault(t => t.name == "room9");
+            if (room9 == null) return "room9 が見つかりません。";
+
+            const string objName = "Memory_SealedDoorway_East";
+            var old = room9.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == objName);
+            if (old != null) Undo.DestroyObjectImmediate(old.gameObject);
+
+            // 東の壁 x=-9.2、開口は z -46.30〜-44.30 / y 0〜3.25
+            var center = new Vector3(-9.20f, 1.625f, -45.30f);
+            var size = new Vector3(0.20f, 3.25f, 2.00f);
+
+            // 同じ部屋の壁の材質をそのまま使う。過去人の目には
+            // 他の壁と地続きに見えないと「壁」として通用しない。
+            var wallMat = room9.GetComponentsInChildren<MeshRenderer>(true)
+                .Where(r => r.gameObject.layer == 0 && r.gameObject.name == "WallSegment")
+                .Select(r => r.sharedMaterial).FirstOrDefault(m => m != null);
+
+            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.name = objName;
+            go.transform.SetParent(room9, true);
+            go.transform.position = center;
+            go.transform.localScale = size;
+            go.layer = BlindNowOnlyTagger.LayerMemory;
+            if (wallMat != null) go.GetComponent<MeshRenderer>().sharedMaterial = wallMat;
+
+            // ここが肝。当たり判定を消さないと本当に塞がってしまう。
+            Object.DestroyImmediate(go.GetComponent<Collider>());
+            Undo.RegisterCreatedObjectUndo(go, "room9 fake wall");
+
+            EditorSceneManagerSetDirty(room9);
+            return "room9 東の開口に Memory(24) の壁を設置しました。\n"
+                 + "  位置 " + center.ToString("F2") + " / 大きさ " + size.ToString("F2") + "\n"
+                 + "  材質 " + (wallMat != null ? wallMat.name : "(見つからず・既定)") + "\n"
+                 + "  コライダー無し＝通り抜けられる\n"
+                 + "過去人だけが行き止まりに見え、エコロケ役には開口として見えます。";
+        }
+
+        // -------------------------------------------------------------
+
+        [MenuItem("BLIND/部屋修正/4. room16(人形部屋)を暗くする")]
+        public static void FixRoom16Menu()
+        {
+            EditorUtility.DisplayDialog("BLIND", DarkenRoom16(), "OK");
+        }
+
+        /// <summary>
+        /// room16 の照明を落とす。
+        ///
+        /// 数体の人形と巨大な手にだけ体温を持たせた（BlindVisionBuilder.HotDolls）ので、
+        /// 過去人の視界が明るいままだと「見えている人形」と「熱い人形」の対応が
+        /// 過去人の側だけで完結してしまい、サーモ役の情報が要らなくなる。
+        /// 部屋を暗くして、過去人にも人形が何体あるのか分からない状態にする。
+        ///
+        /// 完全な暗闇にはしない。過去人は文字と看板を読む役なので、
+        /// 手元が見える程度は残す（既存比 35%）。
+        /// </summary>
+        public static string DarkenRoom16()
+        {
+            var room16 = Object.FindObjectsOfType<Transform>(true).FirstOrDefault(t => t.name == "room16");
+            if (room16 == null) return "room16 が見つかりません。";
+
+            // 「今の値に0.35を掛ける」書き方にすると、二度実行しただけで
+            // 0.1225倍まで落ちて部屋が完全な暗闇になる（実際にそうなった）。
+            // 何度実行しても同じ結果になるよう、元の明るさを表に持って絶対値で入れる。
+            // Original は改変前にシーンから読み取った実測値。
+            float[] original = { 9.041876f, 2f, 3f, 0f, 2f, 7f, 3f };
+            const float scale = 0.35f;
+
+            var log = new StringBuilder("room16 の照明を元の " + (scale * 100) + "% に設定しました\n");
+            int n = 0, idx = 0;
+            foreach (var l in room16.GetComponentsInChildren<Light>(true))
+            {
+                string nm = l.gameObject.name;
+                // 穴から差す光は道しるべなので残す
+                if (nm.StartsWith("HoleLight")) { log.AppendLine("  " + nm + " : 1.50 据え置き(道しるべ)"); continue; }
+
+                float target;
+                if (nm.StartsWith("CoolFill")) target = 0.85f * scale;      // 元 0.85
+                else if (idx < original.Length) target = original[idx++] * scale;
+                else continue;
+
+                if (target <= 0.001f) continue;
+                Undo.RecordObject(l, "darken room16");
+                float before = l.intensity;
+                l.intensity = target;
+                EditorUtility.SetDirty(l);
+                log.AppendLine("  " + nm + " : " + before.ToString("F2") + " → " + target.ToString("F2"));
+                n++;
+            }
+            log.AppendLine("変更 " + n + "灯");
+            EditorSceneManagerSetDirty(room16);
+            return log.ToString();
+        }
+
         static void EditorSceneManagerSetDirty(Transform t)
         {
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(t.gameObject.scene);
