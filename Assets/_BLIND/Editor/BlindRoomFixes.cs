@@ -255,6 +255,113 @@ namespace BLIND.EditorTools
             return log.ToString();
         }
 
+        // ================================================================
+        // 5. room19 のライトを穴と対応させる
+        // ================================================================
+        //
+        // Excalidraw 設計仕様：
+        //   「上のライトが罠（落し穴）に対応してる」
+        //   「この床の真上にあるライトにサーモ視点で温度をなくして
+        //    他のライトは温度つけて欲しい」
+        //
+        // room19 の床は作者が手で置いた板（yukaarutokoro）で、板が無い所が穴。
+        // 天井のライトのうち、直下に床がある物は点灯（サーモに熱として見える）、
+        // 直下が穴（＝床が無い）の物は消灯（サーモには冷たく見える）にする。
+        // サーモ役は天井の温度パターンだけで「どこが安全か」を読み取り、
+        // 他のメンバーに伝えることができる。
+
+        [MenuItem("BLIND/部屋修正/5. room19のライトを穴と対応させる")]
+        public static void FixRoom19LightsMenu()
+        {
+            EditorUtility.DisplayDialog("BLIND", FixRoom19Lights(), "OK");
+        }
+
+        /// <summary>ダイアログを出さない版。自動化からはこちらを呼ぶ。</summary>
+        public static string FixRoom19Lights()
+        {
+            var room19 = Object.FindObjectsOfType<Transform>(true)
+                .FirstOrDefault(t => t.name == "room19" && t.parent != null && t.parent.name == "=== ROOMS ===");
+            if (room19 == null) return "room19 が見つかりません。";
+
+            // --- 床がある場所を収集 ---
+            // 作者が置いた床板（GeneratedRoom の外にある当たり判定）の XZ 範囲を集める。
+            // ライトの直下にこの範囲が含まれれば「安全」、含まれなければ「穴」。
+            var floorBounds = new List<Bounds>();
+            foreach (var col in room19.GetComponentsInChildren<Collider>(true))
+            {
+                // GeneratedRoom の中（自動生成の壁枠）は除外
+                bool insideGen = false;
+                for (var p = col.transform; p != null && p != room19; p = p.parent)
+                    if (p.name == "GeneratedRoom") { insideGen = true; break; }
+                if (insideGen) continue;
+
+                var b = col.bounds;
+                // 床の高さにある平たいコライダーだけ
+                if (b.max.y > 0.35f || b.size.x < 0.3f || b.size.z < 0.3f) continue;
+                floorBounds.Add(b);
+            }
+
+            // GeneratedRoom の Floor も確認
+            var genFloor = room19.Find("GeneratedRoom/Floor");
+            if (genFloor != null && genFloor.gameObject.activeSelf)
+            {
+                foreach (var r in genFloor.GetComponentsInChildren<Renderer>(true))
+                    floorBounds.Add(r.bounds);
+            }
+
+            if (floorBounds.Count == 0)
+                return "room19: 床の当たり判定が見つからない（yukaarutokoro が未配置？）";
+
+            var log = new StringBuilder("room19 のライトを穴と対応させる:\n");
+            int litCount = 0, offCount = 0;
+
+            foreach (var light in room19.GetComponentsInChildren<Light>(true))
+            {
+                // ライトの直下に床があるか？
+                float lx = light.transform.position.x;
+                float lz = light.transform.position.z;
+                bool hasFloorBelow = false;
+                for (int i = 0; i < floorBounds.Count; i++)
+                {
+                    var fb = floorBounds[i];
+                    if (lx >= fb.min.x && lx <= fb.max.x && lz >= fb.min.z && lz <= fb.max.z)
+                    {
+                        hasFloorBelow = true;
+                        break;
+                    }
+                }
+
+                if (hasFloorBelow)
+                {
+                    // 安全な床の上 → ライトを点灯状態に（サーモに熱として見える）
+                    Undo.RecordObject(light, "room19 light on");
+                    light.enabled = true;
+                    EditorUtility.SetDirty(light);
+                    litCount++;
+                }
+                else
+                {
+                    // 穴の上 → ライトを消灯状態に（サーモには冷たく見える）
+                    Undo.RecordObject(light, "room19 light off");
+                    light.enabled = false;
+                    EditorUtility.SetDirty(light);
+                    offCount++;
+                }
+            }
+
+            // ライトのレンダラー名に _off を付けることで、
+            // BlindVisionBuilder.Classify が LampOff として分類する。
+            // Light コンポーネントの enabled を見る LampIsLit() とも連携する。
+            log.AppendLine("  点灯(安全な床の上): " + litCount + " 灯");
+            log.AppendLine("  消灯(穴の上):       " + offCount + " 灯");
+            log.AppendLine("  検出した床板: " + floorBounds.Count + " 枚");
+            log.AppendLine("\n※ BlindVisionBuilder は LampIsLit() でライトの on/off を見て");
+            log.AppendLine("  Lamp(52℃) / LampOff(19℃) を自動で振り分けます。");
+
+            EditorSceneManagerSetDirty(room19);
+            return log.ToString();
+        }
+
         static void EditorSceneManagerSetDirty(Transform t)
         {
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(t.gameObject.scene);
