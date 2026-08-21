@@ -2,6 +2,7 @@
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
+using VRC.Udon.Common;
 
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
 public class EchoEmitter : UdonSharpBehaviour
@@ -11,12 +12,35 @@ public class EchoEmitter : UdonSharpBehaviour
     [SerializeField] private PlayerVisionController localVisionController;
 
     [Header("パルス設定")]
-    [SerializeField] private float pulseRange = 10f;
-    [SerializeField] private float pulseAngle = 45f;
-    [SerializeField] private float pulseInterval = 3f;
+    [SerializeField] private float pulseRange = 12f;
+    [SerializeField] private float pulseAngle = 55f;
+
+    // 自動パルスの間隔。「点灯している総時間」は
+    //   distance * delayPerMeter (届くまで) + distance * delayPerMeter (保持) + glowDuration (減衰)
+    // なので、間隔をこれより短くすると前のパルスが消える前に次が来て光りっぱなしになる。
+    // 現行値(12m地点)で 0.54 + 0.54 + 0.6 = 1.68秒。間隔2.2秒に対して約0.5秒の暗闇が残る。
+    [SerializeField] private float pulseInterval = 2.2f;
 
     [Header("遅延設定")]
-    [SerializeField] private float delayPerMeter = 0.1f;
+    [SerializeField] private float delayPerMeter = 0.045f;
+
+    [Header("手動パルス")]
+    [Tooltip("トリガー(デスクトップでは左クリック)で任意のタイミングでパルスを撃てるようにする。" +
+             "自動パルスを待つ時間がそのままストレスになるため、" +
+             "「見たい時に見る」操作を与えて待ち時間の体感を消すのが狙い。")]
+    [SerializeField] private bool allowManualPulse = true;
+
+    [Tooltip("手動パルスの最短間隔。連打で光りっぱなしになるのを防ぐ。" +
+             "暗闇と一瞬の安心感のコントラストが体験の核なので、ここは必ず1秒以上残す。")]
+    [SerializeField] private float manualCooldown = 1.1f;
+
+    [Header("遮蔽判定(12:00以降の検証用。既定はオフ)")]
+    [Tooltip("オンにすると壁の向こうの輪郭が光らなくなる。" +
+             "コライダーが無い面は一切光らなくなるため、実機で確認するまでオフのままにすること。")]
+    [SerializeField] private bool occlusionCheck = false;
+    // LayerMask 型にしないこと。int -> LayerMask の暗黙変換は Udon に公開されておらず、
+    // 初期化子(= ~0)だけでU#のコンパイルが落ちる。-1 は「全レイヤー」の意味。
+    [SerializeField] private int occluderMask = -1;
 
     [Header("エディタテスト用")]
     [SerializeField] private Transform editorCamera;
@@ -32,6 +56,7 @@ public class EchoEmitter : UdonSharpBehaviour
     [SerializeField] private Transform leftHandIndicator;
 
     private float timer = 0f;
+    private float manualCooldownTimer = 0f;
     private VRCPlayerApi localPlayer;
 
     void Start()
@@ -67,12 +92,39 @@ public class EchoEmitter : UdonSharpBehaviour
         // 狙っている方向が分かるよう、パルスの発射有無に関わらず毎フレーム追従させる
         UpdateIndicators();
 
+        if (manualCooldownTimer > 0f) manualCooldownTimer -= Time.deltaTime;
+
         timer += Time.deltaTime;
         if (timer >= pulseInterval)
         {
             timer = 0f;
             EmitFromBothHands();
         }
+    }
+
+    // トリガー(デスクトップでは左クリック)で撃つ手動パルス。
+    //
+    // 自動パルスだけだと、プレイヤーは「次の光が来るまで何もできずに待つ」状態になる。
+    // 暗闇そのものは体験の核だが、"自分では何もできない"待ち時間は
+    // 恐怖ではなく手持ち無沙汰になってしまう。撃つ操作を渡すと同じ暗闇が
+    // 「自分で選んで踏み込んでいる暗闇」に変わる。
+    //
+    // クールダウンを1秒以上残してあるのは、連打で光りっぱなしにさせないため。
+    // 光が途切れない状態はエコロケ役にとって一番退屈な状態で、
+    // かつ「形を伝える」役割の価値そのものを消してしまう。
+    public override void InputUse(bool value, UdonInputEventArgs args)
+    {
+        if (!value) return;
+        if (!allowManualPulse) return;
+        if (!IsEchoRole()) return;
+        if (localPlayer == null) return;
+        if (manualCooldownTimer > 0f) return;
+
+        manualCooldownTimer = manualCooldown;
+        // 自動パルスのタイマーも戻す。手で撃った直後に自動パルスが重なると
+        // 二重に光って「撃った手応え」が分からなくなるため。
+        timer = 0f;
+        EmitFromBothHands();
     }
 
     private void SetIndicatorsActive(bool active)
@@ -145,6 +197,16 @@ public class EchoEmitter : UdonSharpBehaviour
 
             if (distance > pulseRange) continue;
             if (angle > pulseAngle) continue;
+
+            // 壁の向こうの輪郭まで光ると、エコロケ役は立っているだけで
+            // 隣の部屋の間取りまで読めてしまう。サーモ側で距離フェードを入れて
+            // 「その場の熱しか読めない」ようにしたのと同じ理由で、本来はここも塞ぐべき。
+            // ただしコライダーの無い面は完全に光らなくなるので、実機で確認するまで既定はオフ。
+            if (occlusionCheck && distance > 0.01f)
+            {
+                if (Physics.Raycast(origin, toReceiver.normalized, distance - 0.05f,
+                                    occluderMask, QueryTriggerInteraction.Ignore)) continue;
+            }
 
             float startDelay = distance * delayPerMeter;
             float fadeStartDelay = distance * delayPerMeter;

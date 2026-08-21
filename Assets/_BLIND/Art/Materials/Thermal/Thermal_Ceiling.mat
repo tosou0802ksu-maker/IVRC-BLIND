@@ -25,7 +25,7 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _Dim: 0.03
+    - _Dim: 0.034
     - _EdgeCool: 0.1
     - _FadeFar: 200
     - _FadeNear: 5

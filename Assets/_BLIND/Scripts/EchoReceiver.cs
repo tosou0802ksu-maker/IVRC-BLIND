@@ -7,7 +7,7 @@ using VRC.Udon;
 public class EchoReceiver : UdonSharpBehaviour
 {
     [SerializeField] private Renderer[] targetRenderers;
-    [SerializeField] private float glowDuration = 1.5f;
+    [SerializeField] private float glowDuration = 0.6f;
 
     private MaterialPropertyBlock propertyBlock;
     private float glowTimer = 0f;
