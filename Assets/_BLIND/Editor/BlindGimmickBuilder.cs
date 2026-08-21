@@ -523,6 +523,24 @@ namespace BLIND.EditorTools
             Vector3 center;
             var mesh = Bake(mb, name, out center);
 
+            if (echo)
+            {
+                var v = mesh.vertices;
+                var uv = new Vector2[v.Length];
+                var b = mesh.bounds;
+                var size = new Vector3(Mathf.Max(b.size.x, 1e-4f), Mathf.Max(b.size.y, 1e-4f), Mathf.Max(b.size.z, 1e-4f));
+                for (int i = 0; i < v.Length; i++)
+                {
+                    var p = new Vector3((v[i].x - b.min.x) / size.x, (v[i].y - b.min.y) / size.y, (v[i].z - b.min.z) / size.z);
+                    var n = mesh.normals[i];
+                    float ax = Mathf.Abs(n.x), ay = Mathf.Abs(n.y), az = Mathf.Abs(n.z);
+                    if (ax >= ay && ax >= az) uv[i] = new Vector2(p.z, p.y);
+                    else if (ay >= az) uv[i] = new Vector2(p.x, p.z);
+                    else uv[i] = new Vector2(p.x, p.y);
+                }
+                mesh.SetUVs(0, uv);
+            }
+
             var go = new GameObject(name);
             Undo.RegisterCreatedObjectUndo(go, "pit piece");
             go.transform.SetParent(parent, false);
