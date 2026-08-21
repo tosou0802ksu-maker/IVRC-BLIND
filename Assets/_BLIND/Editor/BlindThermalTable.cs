@@ -25,7 +25,23 @@ namespace BLIND.EditorTools
             public float celsius;
             public float dim;      // 1=そのまま見える 0=真っ黒（遮蔽はする）
             public string note;
-            public Temp(string k, float c, float d, string n) { key = k; celsius = c; dim = d; note = n; }
+
+            /// <summary>
+            /// この材質だけ表示レンジの上限を変える。0 なら共通の DisplayMax を使う。
+            ///
+            /// 実機のサーマルカメラは映っている範囲に合わせて自動でレンジを詰める。
+            /// 12〜70℃ は「炎がある部屋」に合わせた目盛りなので、
+            /// 炎の無い部屋で人体(34〜36℃)を映すと目盛りの真ん中＝緑にしかならず、
+            /// 「冷たい物体」に見えてしまう。人体しか熱源が無い部屋では
+            /// カメラは人体の帯まで目盛りを詰めるので、上限を下げるのが実機に近い。
+            /// </summary>
+            public float displayMax;
+
+            public Temp(string k, float c, float d, string n)
+            { key = k; celsius = c; dim = d; note = n; displayMax = 0f; }
+
+            public Temp(string k, float c, float d, float dmax, string n)
+            { key = k; celsius = c; dim = d; note = n; displayMax = dmax; }
         }
 
         /// <summary>
@@ -70,13 +86,32 @@ namespace BLIND.EditorTools
             // 配管は「生きている設備」としてはっきり読ませる。
             // 長い管なので天井の一本線で間取りがある程度読めてしまう副作用はあるが、
             // 通っている配管をサーモ役が追えること自体を道しるべとして使う判断。
+            // room11 の天井は配線束と配管がびっしり通っているが、全部 Duct(38℃) だったため
+            // 一面がのっぺりした同じ色になり、どれが1本の線なのかも読めなかった。
+            // 実際の天井裏は、電流が流れている線だけが熱く、死んだ線は室温のまま。
+            // 4段階に散らすと、天井が「温度のまだら模様」になって線の走り方が見える。
+            new Temp("DuctDead",    21.0f, 0.300f, "電気の来ていない配線。室温のまま。room11 の天井をまだらにするための一番冷たい帯"),
+            new Temp("DuctWarm",    29.0f, 0.420f, "軽く電流の流れている配線。ほんのり温かい"),
+            new Temp("DuctHot",     46.0f, 0.700f, "負荷のかかっている配線・温水管。触ると熱いくらい"),
             new Temp("Duct",        38.0f, 0.550f, "配管・空調ダクト。中を温水や排気が通っているぶん室温よりはっきり高い。" +
                                                    "サーモ役には天井や壁を這う線として見え、部屋から部屋への繋がりを追える"),
-            new Temp("Body",        34.0f, 1.00f, "人体の衣服表面。素肌は33〜36℃、服の上からだとこのくらい"),
-            new Temp("Skin",        36.0f, 1.00f, "人体の露出した肌"),
+            // Body / Skin は room16 でしか使っていない。
+            // room16 の最高温度は肌の 36℃ で、蛍光灯も炎も無い。
+            // それを 12〜70℃ の目盛りで映すと人体は目盛りの中央＝緑になり、
+            // 「体温がある」はずの人形が一番冷たそうな色で出てしまっていた。
+            // 実機なら映っている範囲に合わせて目盛りが 40℃ 付近まで詰まるので、
+            // 上限を 40 にして人体を橙〜赤に置く。この2行だけの局所的な変更で、
+            // 他の部屋の見え方（蛍光灯や炎の白飛び）には影響しない。
+            new Temp("Body",        34.0f, 1.00f, 40.0f, "人体の衣服表面。素肌は33〜36℃、服の上からだとこのくらい"),
+            new Temp("Skin",        36.0f, 1.00f, 40.0f, "人体の露出した肌"),
             new Temp("LampDim",     32.0f, 0.85f, "ちらついている・調光された照明パネル。生きてはいるが出力が落ちている"),
             new Temp("CRTOn",       47.0f, 1.00f, "通電中のCRTの筐体。ブラウン管の排熱で 45〜50℃"),
-            new Temp("Lamp",        52.0f, 1.00f, "蛍光管そのもの。管壁は 40〜60℃"),
+            // 生きている照明は白く振り切れさせる。
+            // 人体を 40℃ 目盛りに移した結果、52℃ の照明と 34℃ の人体が
+            // どちらも橙になり、ぱっと見で区別がつかなくなった。
+            // 「白＝まだ電気が来ている物 / 橙＝体温のある物」と色で分けておくと、
+            // サーモ役は形を確かめる前に、それがどちらの種類かを言える。
+            new Temp("Lamp",        52.0f, 1.00f, 53.0f, "蛍光管そのもの。管壁は 40〜60℃"),
             new Temp("Burning",     66.0f, 1.00f, "全身が燃えている人体。実際は炎と同じく振り切れるが、炎の中で" +
                                                   "「人の形」だけは輪郭として読めてほしいので、炎より一段低く置いてある"),
             new Temp("Ballast",     68.0f, 1.00f, "照明器具の本体・安定器。蛍光灯で最も熱い部位"),
@@ -125,7 +160,7 @@ namespace BLIND.EditorTools
                 m.shader = sh;
                 m.SetFloat("_TempC", t.celsius);
                 m.SetFloat("_TempMin", DisplayMin);
-                m.SetFloat("_TempMax", DisplayMax);
+                m.SetFloat("_TempMax", t.displayMax > 0f ? t.displayMax : DisplayMax);
                 m.SetFloat("_TempGamma", Gamma);
                 m.SetFloat("_HeatIntensity", 1f);
                 // ざらつきは控えめに。暗く落とした面ほど 8bit の階調が粗くなるので、

@@ -348,13 +348,11 @@ namespace BLIND.EditorTools
         /// サーモ役にしか分からない情報として一番強く効く。
         /// 部屋の四隅に散らして、どこにいても最低1体は視界に入るようにしてある。
         /// </summary>
-        static readonly HashSet<string> HotDolls = new HashSet<string>
-        {
-            "Doll_04",          // 西寄り中央
-            "Doll_10",          // 中央
-            "Doll_13",          // 東寄り
-            "Doll_Fallen_09",   // 南、倒れている
-        };
+        /// 【廃止】以前はここに挙げた4体だけを熱くしていた。
+        /// 「16体のうち4体だけ体温がある」という設計だったが、実際に見ると
+        /// サーモ役の視界には人影が4つ浮かぶだけで、部屋に人形が林立している
+        /// という事実そのものが伝わらなかった。今は Prop_Dolls 配下を全部 Body にしている。
+        static readonly HashSet<string> HotDolls = new HashSet<string>();
 
         /// <summary>
         /// 形そのものが情報になっている物。箱やブロブに潰してはいけない。
@@ -368,6 +366,38 @@ namespace BLIND.EditorTools
         {
             "knight", "bishop", "rook", "pawn", "queen", "king",
         };
+
+        /// <summary>
+        /// この器具に生きた光源が付いているか。1=点いている 0=消えている -1=Light が無い。
+        /// 器具本体（Globe など）から親を数段さかのぼって Light を探す。
+        /// 電球と Light コンポーネントは同じ階層に無いことが多いため。
+        /// </summary>
+        static int LampIsLit(Transform t)
+        {
+            for (var tr = t; tr != null; tr = tr.parent)
+            {
+                var lights = tr.GetComponentsInChildren<Light>(true);
+                if (lights.Length == 0) continue;
+                foreach (var l in lights)
+                    if (l.enabled && l.gameObject.activeInHierarchy && l.intensity > 0.01f) return 1;
+                return 0;
+            }
+            return -1;
+        }
+
+        /// <summary>
+        /// 名前から決まる 0..n-1 の番号。同じ名前なら毎回同じ値になる。
+        /// 作り直すたびに天井の模様が変わると、サーモ役が覚えた地形が毎回無効になる。
+        /// </summary>
+        static int StableIndex(string name, int n)
+        {
+            unchecked
+            {
+                int h = 17;
+                foreach (var c in name) h = h * 31 + c;
+                return ((h % n) + n) % n;
+            }
+        }
 
         static bool IsSilhouetteProp(Renderer r)
         {
@@ -397,15 +427,57 @@ namespace BLIND.EditorTools
             // 2枚重なって Zファイティング（チラつき）を起こす。汚れには温度も反響も無い。
             if (all.Contains("decal") || all.Contains("stain") || all.Contains("soot")) { echo = false; return null; }
 
+            // 過去の人の視界を塞ぐためだけに置いた黒い複製。
+            // 元の壁が別レイヤーに残っていて、そちらから既にサーモ・エコロケが
+            // 作られている。これも拾うと同じ壁が二重になり、面が重なってちらつく。
+            if (n.StartsWith("Blackout_")) { echo = false; return null; }
+
             // --- 体温を持つもの（room16） ---
             // 人形は名前で個体指定する。親をたどって判定するのは、
             // 人形が USDRoot などの中間ノードを挟んでいる場合があるため。
             for (var tr = go.transform; tr != null; tr = tr.parent)
             {
-                if (HotDolls.Contains(tr.name)) return "Body";
-                // 巨大な手とその手が掴んでいる人形。この部屋の主なので一番はっきり見せる
-                if (tr.name == "Prop_GiantHand") return "Skin";
+                // room16 の人形は全部が体温を持つ。
+                // 以前は4体だけ熱くしていたが、それだと残り12体がサーモ役に見えず、
+                // 「人形だらけの部屋」という部屋の姿そのものが伝わらなかった。
+                // 全部に体温があれば、サーモ役には人影が林立して見える。
+                if (tr.name == "Prop_Dolls") return "Body";
+
+                // 巨大な手。この部屋の主なので、素肌として一番はっきり見せる。
+                // 掴まれている人形は服の上からの体温、床を突き破った破片は木材のまま。
+                if (tr.name == "Prop_GiantHand")
+                {
+                    if (n == "GrabbedDoll") return "Body";
+                    if (n.StartsWith("Splinter") || n == "Void") break;
+                    return "Skin";
+                }
             }
+
+            // --- room11 の天井の配線と配管 ---
+            // 全部 Duct(38℃) で塗ると天井が一面同じ色になり、線の走り方が読めない。
+            // 名前から作った固定の番号で4段階に散らし、
+            // 「電気の来ている線」と「死んだ線」が混じった天井にする。
+            // 乱数ではなく名前のハッシュを使うのは、作り直すたびに模様が変わらないようにするため。
+            if (all.Contains("wire") || all.Contains("tuyaux") || all.Contains("cable"))
+            {
+                for (var tr = go.transform; tr != null; tr = tr.parent)
+                {
+                    if (tr.name != "room11") continue;
+                    switch (StableIndex(n, 4))
+                    {
+                        case 0: return "DuctDead";
+                        case 1: return "DuctWarm";
+                        case 2: return "Duct";
+                        default: return "DuctHot";
+                    }
+                }
+            }
+
+            // --- ブラウン管の画面 ---
+            // 筐体(back/top)は室温のままにして、前面のガラスだけ熱くする。
+            // 画面だけが光っていると、サーモ役には「山積みの機械のうち
+            // どれがこちらを向いているか」まで分かる。
+            if (n.StartsWith("front_case_low")) return "CRTOn";
 
             // --- レーザー（room14）: サーモ役だけの領分 ---
             // ビームも天井の発射装置も、まとめてサーモ専用にする。
@@ -426,16 +498,33 @@ namespace BLIND.EditorTools
             // --- 発熱するもの（サーモ役の道しるべになる） ---
             if (n == "Lens" || all.Contains("lamplens")) return "Lamp";
             if (n == "Housing" || all.Contains("lamphousing")) return "Ballast";
-            if (all.Contains("fluoro")) return "Lamp";
-            // 天井の照明パネルは On / Dim / Off の3種がある。生きている物だけが熱い＝
-            // サーモ役には「どの列の灯りが生きているか」が読める
-            if (all.Contains("lightpanel") || all.Contains("light_panel")
+
+            // 取り込んだ照明器具は、名前が LightPanel でないというだけで
+            // 全部 19℃ の小物になっていた（room16 の吊り下げ電球、room11 の蛍光灯、
+            // room8 の埋込照明、各部屋の typeBlight など）。
+            // 停電したビルで唯一まだ電気が来ている場所がサーモ役の道しるべなので、
+            // ここが冷たいとサーモ役は暗闇に置き去りになる。
+            //
+            // "fluoro" は "Fluorescent" に一致しない（fluore と fluoro）。
+            // room11 の蛍光灯10本がずっと常温だったのはこれが原因。
+            if (n == "Globe" || n == "Shade"
+                || all.Contains("fluor") || all.Contains("bulb")
+                || all.Contains("lightfixture") || all.Contains("ceilinglight")
+                || all.Contains("typeblight") || all.Contains("emergency_light")
+                || all.Contains("lightpanel") || all.Contains("light_panel")
                 || all.Contains("chess light"))
             {
                 if (all.Contains("_off")) return "LampOff";
                 if (all.Contains("_dim")) return "LampDim";
+
+                // 名前で分からない器具は、実際に付いている Light を見て判断する。
+                // 消えている器具まで熱いと「どこはまだ生きているか」が読めなくなる。
+                var lit = LampIsLit(go.transform);
+                if (lit == 0) return "LampOff";
                 return "Lamp";
             }
+            // 天井の照明パネルは On / Dim / Off の3種がある。生きている物だけが熱い＝
+            // サーモ役には「どの列の灯りが生きているか」が読める
 
             // --- CRT モニタ ---
             if (all.Contains("crt") || all.Contains("screenshards") || all.Contains("screenoff") || all.Contains("screenon"))

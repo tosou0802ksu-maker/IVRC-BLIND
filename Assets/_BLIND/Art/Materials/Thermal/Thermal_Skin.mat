@@ -34,7 +34,7 @@ Material:
     - _Noise: 0.015
     - _TempC: 36
     - _TempGamma: 0.65
-    - _TempMax: 70
+    - _TempMax: 40
     - _TempMin: 12
     m_Colors: []
   m_BuildTextureStacks: []
