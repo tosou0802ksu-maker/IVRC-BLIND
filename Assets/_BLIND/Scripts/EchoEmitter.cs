@@ -82,7 +82,6 @@ public class EchoEmitter : UdonSharpBehaviour
 
         if (Input.GetKeyDown(KeyCode.T))
         {
-            Debug.Log("Tキー検知");
             EmitFromEditorCamera();
             return;
         }

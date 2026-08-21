@@ -70,7 +70,7 @@ public class PuzzleButton : UdonSharpBehaviour
         }
 
         // 残熱と音は全員に伝える(サーモ役が他人の押した跡を見るため)
-        SendCustomNetworkEvent(NetworkEventTarget.All, "OnPressedGlobal");
+        SendCustomNetworkEvent(NetworkEventTarget.All, nameof(OnPressedGlobal));
     }
 
     // ネットワーク越しに全員のクライアントで実行される

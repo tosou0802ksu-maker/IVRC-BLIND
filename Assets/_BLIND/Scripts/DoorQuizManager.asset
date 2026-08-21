@@ -337,7 +337,7 @@ MonoBehaviour:
       Data: 21|UnityEngine.HeaderAttribute, UnityEngine.CoreModule
     - Name: header
       Entry: 1
-      Data: "\u30C9\u30A2\u306E\u958B\u3044\u305F\u4F4D\u7F6E(3\u3064\u5206\u30FB\u6B63\u89E3\u30C9\u30A2\u306E\u307F\u4F7F\u7528)"
+      Data: "\u30C9\u30A2\u306E\u958B\u3044\u305F\u4F4D\u7F6E(\u30ED\u30FC\u30AB\u30EB\u5EA7\u6A19\u30FB3\u3064\u5206\u30FB\u6B63\u89E3\u30C9\u30A2\u306E\u307F\u4F7F\u7528)"
     - Name: 
       Entry: 8
       Data: 

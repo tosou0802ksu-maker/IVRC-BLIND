@@ -51,6 +51,11 @@ public class WanderingHeatHazard : UdonSharpBehaviour
         }
 
         Transform target = waypoints[targetIndex];
+        if (target == null)
+        {
+            targetIndex = (targetIndex + 1) % waypoints.Length;
+            return;
+        }
         Vector3 toTarget = target.position - transform.position;
 
         if (toTarget.magnitude <= 0.05f)

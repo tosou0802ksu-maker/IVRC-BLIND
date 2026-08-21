@@ -27,7 +27,7 @@ public class DoorQuizManager : UdonSharpBehaviour
     [SerializeField] private Transform door1;
     [SerializeField] private Transform door2;
 
-    [Header("ドアの開いた位置(3つ分・正解ドアのみ使用)")]
+    [Header("ドアの開いた位置(ローカル座標・3つ分・正解ドアのみ使用)")]
     [SerializeField] private Vector3 door0OpenPosition;
     [SerializeField] private Vector3 door1OpenPosition;
     [SerializeField] private Vector3 door2OpenPosition;
@@ -49,9 +49,9 @@ public class DoorQuizManager : UdonSharpBehaviour
 
     void Start()
     {
-        if (door0 != null) door0ClosedPosition = door0.position;
-        if (door1 != null) door1ClosedPosition = door1.position;
-        if (door2 != null) door2ClosedPosition = door2.position;
+        if (door0 != null) door0ClosedPosition = door0.localPosition;
+        if (door1 != null) door1ClosedPosition = door1.localPosition;
+        if (door2 != null) door2ClosedPosition = door2.localPosition;
 
         ApplyState();
     }
@@ -128,13 +128,13 @@ public class DoorQuizManager : UdonSharpBehaviour
         switch (index)
         {
             case 0:
-                if (door0 != null) door0.position = open ? door0OpenPosition : door0ClosedPosition;
+                if (door0 != null) door0.localPosition = open ? door0OpenPosition : door0ClosedPosition;
                 break;
             case 1:
-                if (door1 != null) door1.position = open ? door1OpenPosition : door1ClosedPosition;
+                if (door1 != null) door1.localPosition = open ? door1OpenPosition : door1ClosedPosition;
                 break;
             case 2:
-                if (door2 != null) door2.position = open ? door2OpenPosition : door2ClosedPosition;
+                if (door2 != null) door2.localPosition = open ? door2OpenPosition : door2ClosedPosition;
                 break;
         }
     }
