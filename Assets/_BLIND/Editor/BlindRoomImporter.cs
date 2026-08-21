@@ -11,14 +11,16 @@ namespace BLIND.EditorTools
         private const string MainScenePath = "Assets/_BLIND/Scenes/MainWorld/MainWorld.unity";
         private const string SoshiScenePath = "Assets/_BLIND/Scenes/soshi.unity";
 
-        [MenuItem("BLIND/部屋合体/soshiから部屋(8, 11, 13, 17, 19)を取り込む")]
-        public static void ImportRoomsFromSoshi()
+        [MenuItem("BLIND/部屋合体/1. soshiから部屋を合体＆視界生成(全自動)", priority = -10)]
+        public static void ImportAndBuildAll()
         {
             if (EditorApplication.isPlaying)
             {
                 Debug.LogError("[BLIND] プレイモード中は実行できません。");
                 return;
             }
+
+            Debug.Log("[BLIND] ===== 部屋合体＆視界レイヤー自動生成プロセスを開始 =====");
 
             // 1. MainWorld シーンを開く
             Scene mainScene = EditorSceneManager.OpenScene(MainScenePath, OpenSceneMode.Single);
@@ -55,7 +57,7 @@ namespace BLIND.EditorTools
 
             string[] targetRoomNames = new string[] { "room8", "room11", "room13", "room17", "room19" };
 
-            // soshi シーンから該当の部屋を探す
+            // soshi シーンから該当の部屋を探す（重複部屋は除外）
             Dictionary<string, GameObject> soshiRooms = new Dictionary<string, GameObject>();
             foreach (var rootGo in soshiScene.GetRootGameObjects())
             {
@@ -63,6 +65,8 @@ namespace BLIND.EditorTools
                 {
                     if (rootGo.name == name && !soshiRooms.ContainsKey(name))
                     {
+                        // room11 が2つある場合、子オブジェクト数が多い方（実体）を優先
+                        if (name == "room11" && rootGo.transform.childCount == 0) continue;
                         soshiRooms[name] = rootGo;
                     }
                 }
@@ -93,17 +97,33 @@ namespace BLIND.EditorTools
                 // ドア・位置調整
                 AdjustRoom(name, soshiRoomGo);
 
-                Debug.Log($"[BLIND] {name} を soshi から MainWorld へ統合・調整しました。");
+                Debug.Log($"[BLIND] [OK] {name} を soshi から MainWorld へ統合・調整完了");
             }
 
             // 5. soshi シーンを閉じる
             EditorSceneManager.CloseScene(soshiScene, true);
 
-            // 6. MainWorld を保存
-            EditorSceneManager.MarkSceneDirty(mainScene);
-            EditorSceneManager.SaveScene(mainScene);
+            // 6. サーマル材質を作り直す
+            Debug.Log("[BLIND] [Step 2/5] サーマル材質の生成中...");
+            BlindThermalTable.BuildMaterials();
 
-            Debug.Log("[BLIND] 全ターゲット部屋の統合が完了し、MainWorld を保存しました。");
+            // 7. 全部屋にサーモ・エコロケ層を生成
+            Debug.Log("[BLIND] [Step 3/5] 全部屋にサーモ・エコロケ層を自動生成中...");
+            string visionLog = BlindVisionBuilder.BuildMine();
+            Debug.Log("[BLIND] " + visionLog);
+
+            // 8. エコロケ受信機を EchoEmitter に再登録
+            Debug.Log("[BLIND] [Step 4/5] EchoReceiver の再登録中...");
+            EchoReceiverCollector.Collect();
+
+            // 9. 実機テスト用の数値を適用＆シーン保存
+            Debug.Log("[BLIND] [Step 5/5] 実機数値の適用＆シーン保存中...");
+            string tuningLog = BlindTuning1200.Apply();
+            Debug.Log("[BLIND] " + tuningLog);
+
+            Debug.Log("[BLIND] ===== 全工程が正常に完了しました！ =====");
+            EditorUtility.DisplayDialog("BLIND", "部屋合体と視界レイヤー生成（サーマル・エコロケ）が全自動で完了しました！
+Playモードで動作確認を行ってください。", "OK");
         }
 
         private static void AdjustRoom(string name, GameObject roomGo)
@@ -136,7 +156,7 @@ namespace BLIND.EditorTools
                     break;
 
                 case "room17":
-                    // room16（Z=-15.4）に合わせて +2.1m シフト (Z: -20.0 -> -17.9)
+                    // room16（北ドア Z=-15.4）に合わせて +2.1m シフト (Z: -20.0 -> -17.9)
                     roomGo.transform.localPosition = new Vector3(20.6f, 0f, -17.9f);
                     break;
 

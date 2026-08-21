@@ -408,11 +408,12 @@ namespace BLIND.EditorTools
                 || all.Contains("cornice") || all.Contains("handrail")) return "Wall";
 
             // --- 什器 ---
-            // 配管系。room9 のロッカー裏を這う配管、room12 の空調、room2・room14 の通気口。
+            // 配管系。room9 のロッカー裏を這う配管、room12 の空調、room2・room14 の通気口、room11 の配線・コード。
             // 中を何かが通っている＝生きている設備として、サーモ役にはっきり見せる。
             if (all.Contains("duct") || all.Contains("conduit") || all.Contains("hanger")
                 || all.Contains("pipe") || all.Contains("vent") || all.Contains("tube")
-                || all.Contains("valve") || all.Contains("plumb")) return "Duct";
+                || all.Contains("valve") || all.Contains("plumb")
+                || all.Contains("wire") || all.Contains("cable") || all.Contains("cord") || all.Contains("electrical")) return "Duct";
             if (all.Contains("rack") || all.Contains("steel") || all.Contains("desk") || all.Contains("chair")
                 || all.Contains("locker") || all.Contains("scaffold") || all.Contains("ladder")) return "Metal";
             if (all.Contains("box") || all.Contains("cardboard") || all.Contains("archivebox")) return "Cardboard";
