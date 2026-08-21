@@ -252,7 +252,7 @@ namespace BLIND.EditorTools
                     int layer = pass == 0 ? LayerDefault : (pass == 1 ? LayerThermal : LayerEcho);
                     string tag = pass == 0 ? "D" : (pass == 1 ? "T" : "E");
                     Material deckMat = pass == 0 ? FloorMaterialOf(room.transform) : (pass == 1 ? tDeck : echoMat);
-                    Material pitMat  = pass == 0 ? voidMat : (pass == 1 ? tVoid : echoMat);
+                    Material pitMat  = pass == 0 ? deckMat : (pass == 1 ? tVoid : echoMat);
 
                     for (int z = 0; z < s.nz; z++)
                     {
