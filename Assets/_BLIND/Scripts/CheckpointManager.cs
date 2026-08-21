@@ -82,6 +82,33 @@ public class CheckpointManager : UdonSharpBehaviour
         RefreshDoors();
     }
 
+    // ボタン側から呼ぶ「順序を問わない」版。
+    // 赤→青→緑の順に回るとは限らない(3方向に分岐したマップなので
+    // どのボタンから押しても良い)ため、押した瞬間のボタン地点を
+    // そのまま復帰地点にする。index の大小は見ない。
+    public void SetCheckpointDirect(int index)
+    {
+        if (checkpoints == null || index < 0 || index >= checkpoints.Length)
+        {
+            return;
+        }
+
+        if (index == currentIndex)
+        {
+            return;
+        }
+
+        if (!Networking.IsOwner(gameObject))
+        {
+            Networking.SetOwner(Networking.LocalPlayer, gameObject);
+        }
+
+        currentIndex = index;
+        RequestSerialization();
+
+        RefreshDoors();
+    }
+
     // ------------------------------------------------------------
     // 死亡判定 → 全員復帰
     // ------------------------------------------------------------
