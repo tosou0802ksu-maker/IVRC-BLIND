@@ -385,6 +385,20 @@ namespace BLIND.EditorTools
             return -1;
         }
 
+        /// <summary>
+        /// 名前から決まる 0..n-1 の番号。同じ名前なら毎回同じ値になる。
+        /// 作り直すたびに天井の模様が変わると、サーモ役が覚えた地形が毎回無効になる。
+        /// </summary>
+        static int StableIndex(string name, int n)
+        {
+            unchecked
+            {
+                int h = 17;
+                foreach (var c in name) h = h * 31 + c;
+                return ((h % n) + n) % n;
+            }
+        }
+
         static bool IsSilhouetteProp(Renderer r)
         {
             for (var tr = r.transform; tr != null; tr = tr.parent)
@@ -438,6 +452,32 @@ namespace BLIND.EditorTools
                     return "Skin";
                 }
             }
+
+            // --- room11 の天井の配線と配管 ---
+            // 全部 Duct(38℃) で塗ると天井が一面同じ色になり、線の走り方が読めない。
+            // 名前から作った固定の番号で4段階に散らし、
+            // 「電気の来ている線」と「死んだ線」が混じった天井にする。
+            // 乱数ではなく名前のハッシュを使うのは、作り直すたびに模様が変わらないようにするため。
+            if (all.Contains("wire") || all.Contains("tuyaux") || all.Contains("cable"))
+            {
+                for (var tr = go.transform; tr != null; tr = tr.parent)
+                {
+                    if (tr.name != "room11") continue;
+                    switch (StableIndex(n, 4))
+                    {
+                        case 0: return "DuctDead";
+                        case 1: return "DuctWarm";
+                        case 2: return "Duct";
+                        default: return "DuctHot";
+                    }
+                }
+            }
+
+            // --- ブラウン管の画面 ---
+            // 筐体(back/top)は室温のままにして、前面のガラスだけ熱くする。
+            // 画面だけが光っていると、サーモ役には「山積みの機械のうち
+            // どれがこちらを向いているか」まで分かる。
+            if (n.StartsWith("front_case_low")) return "CRTOn";
 
             // --- レーザー（room14）: サーモ役だけの領分 ---
             // ビームも天井の発射装置も、まとめてサーモ専用にする。

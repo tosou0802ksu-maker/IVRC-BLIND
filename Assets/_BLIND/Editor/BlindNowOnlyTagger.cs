@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEditor;
@@ -112,49 +113,159 @@ namespace BLIND.EditorTools
             EditorUtility.DisplayDialog("BLIND", Room16OnlyDolls(), "OK");
         }
 
-        /// <summary>過去の人から隠すグループ。ここに挙げた物だけが NowOnly に移る。</summary>
-        static readonly string[] Room16Hidden =
+        /// <summary>過去の人に何を見せるかの部屋ごとの指定。</summary>
+        class Rule
         {
-            "Shelves",             // 書架
-            "Prop_ShelfDecor",     // 棚の上の小物・マネキン頭部
-            "Prop_Furniture",      // 机・箱・樽・梯子など
-            "Prop_FurnitureDecor", // 人形の部位など家具まわりの小物
+            public string room;
+            /// <summary>丸ごと隠すグループ名（そのオブジェクト以下すべて）。</summary>
+            public string[] hide = new string[0];
+            /// <summary>1つおきに隠すグループ名。半分だけ見える状態を作る。</summary>
+            public string[] hideHalf = new string[0];
+            /// <summary>指定するとこれ以外を全部隠す（建物は常に残る）。名前の先頭一致。</summary>
+            public string[] showOnly = null;
+            public string note;
+        }
+
+        /// <summary>
+        /// 過去の人の視界は「部屋の形は見えるが、中に何があるかは分からない」を狙う。
+        /// 床・壁紙・天井はどの部屋でも必ず見せる（showOnly でも建物は除外しない）。
+        /// 隠した物も当たり判定は残るので、見えない障害物としてそこに在り続ける。
+        /// </summary>
+        static readonly Rule[] Rules =
+        {
+            new Rule { room = "room6",
+                hide = new[] { "cumos", "roadblocks", "fire_hydrant_1k" },
+                note = "背の高い壁状の塊と車止めを消す。コーン・道路標識・草・路面は残す。"
+                     + "標識を残すのは、文字と矢印が過去の人だけの情報源だから。" },
+
+            new Rule { room = "room9",
+                hideHalf = new[] { "Props_Lockers" },
+                note = "ロッカー55台を1台おきに消す。見えているロッカーの間に"
+                     + "見えないロッカーが挟まっているので、列の隙間を信用できなくなる。" },
+
+            new Rule { room = "room11",
+                showOnly = new[] { "CRT_final (4)", "Wire" },
+                note = "真ん中のテレビの山と、床を這う配線だけ。天井の配線束・配管・"
+                     + "蛍光灯・ロッカー・器具はすべて消える。"
+                     + "Wire は先頭一致。小文字の wires（天井束）には当たらない。" },
+
+            new Rule { room = "room12",
+                hide = new[] { "Prop_MonitorPile" },
+                hideHalf = new[] { "Prop_Daruma" },
+                note = "真ん中のモニタの山を消し、だるまは1体おきに消す。" },
+
+            new Rule { room = "room15",
+                hide = new[] { "Prop_BurningMannequin", "Fire_Ring" },
+                note = "燃えている人を過去の人から消す。サーモ役だけが見つけられる存在にする。"
+                     + "動く熱源の複製は Thermal(22) 側に別に作られているので影響しない。" },
+
+            new Rule { room = "room16",
+                hide = new[] { "Shelves", "Prop_ShelfDecor", "Prop_Furniture", "Prop_FurnitureDecor" },
+                note = "棚・家具・小物を消す。壁紙・床・天井・照明・人形・巨大な手は残す。" },
         };
 
+        /// <summary>
+        /// 建物そのもの。どの部屋でも過去の人に見せ続ける。
+        /// showOnly を指定した部屋でも、ここに当たる物は隠さない。
+        /// </summary>
+        static bool IsArchitecture(GameObject g, Transform room)
+        {
+            for (var tr = g.transform; tr != null && tr != room; tr = tr.parent)
+            {
+                var n = tr.name;
+                if (n == "GeneratedRoom" || n == "Ceiling" || n == "Panelling"
+                    || n.EndsWith("_Dado") || n.EndsWith("_Ceiling")) return true;
+            }
+            var rn = g.name;
+            return rn.StartsWith("WallSegment") || rn.StartsWith("FloorTile")
+                || rn.StartsWith("FloorSlab") || rn.StartsWith("CeilingPanel")
+                || rn.StartsWith("FramePiece") || rn.StartsWith("Cornice")
+                || rn.StartsWith("Baseboard") || rn.StartsWith("CofferPanel")
+                || rn.StartsWith("Stile") || rn.StartsWith("Rail")
+                || rn.StartsWith("BeamX") || rn.StartsWith("BeamZ");
+        }
+
+        [MenuItem("BLIND/vision/5. 全部屋の過去人の視界を表どおりにする")]
+        public static void ApplyPastPersonRulesMenu()
+        {
+            EditorUtility.DisplayDialog("BLIND", ApplyPastPersonRules(), "OK");
+        }
+
         /// <summary>ダイアログを出さない版。自動化からはこちらを呼ぶこと。</summary>
-        public static string Room16OnlyDolls()
+        public static string ApplyPastPersonRules()
+        {
+            var log = new StringBuilder();
+            foreach (var rule in Rules) log.AppendLine(ApplyRule(rule));
+            log.AppendLine("この後 [BLIND]→[vision]→[2.] で作り直すこと。");
+            return log.ToString();
+        }
+
+        static string ApplyRule(Rule rule)
         {
             var room = Object.FindObjectsOfType<Transform>(true)
-                .FirstOrDefault(t => t.name == "room16" && t.parent != null && t.parent.name == "=== ROOMS ===");
-            if (room == null) return "room16 が === ROOMS === の下に見つからない";
+                .FirstOrDefault(t => t.name == rule.room && t.parent != null && t.parent.name == "=== ROOMS ===");
+            if (room == null) return rule.room + ": 見つからない";
 
             // 以前の版が作った黒い遮蔽シェルは、壁を見せる方式では要らない
             var shell = room.Find(BlackoutRoot);
             if (shell != null) Undo.DestroyObjectImmediate(shell.gameObject);
 
+            // 1つおきに隠す指定は、グループの子の順番で決める。
+            // レンダラー単位で数えるとロッカー1台が本体と扉で割れてしまうため。
+            var halfHidden = new HashSet<Transform>();
+            foreach (var gn in rule.hideHalf)
+            {
+                var grp = room.Find(gn);
+                if (grp == null) continue;
+                int i = 0;
+                foreach (Transform child in grp)
+                {
+                    if (i % 2 == 1) halfHidden.Add(child);
+                    i++;
+                }
+            }
+
             int hidden = 0, shown = 0;
             foreach (var r in room.GetComponentsInChildren<Renderer>(true))
             {
                 var g = r.gameObject;
-                if (!Movable(g)) continue;   // 生成済みの複製には触らない
+                if (!Movable(g)) continue;
+                if (g.layer != LayerDefault && g.layer != LayerNowOnly) continue;
 
                 bool hide = false;
-                for (var tr = g.transform; tr != null && tr != room; tr = tr.parent)
-                    if (Room16Hidden.Contains(tr.name)) { hide = true; break; }
+                if (!IsArchitecture(g, room))
+                {
+                    for (var tr = g.transform; tr != null && tr != room; tr = tr.parent)
+                    {
+                        if (rule.hide.Contains(tr.name)) { hide = true; break; }
+                        if (halfHidden.Contains(tr)) { hide = true; break; }
+                    }
+                    if (!hide && rule.showOnly != null)
+                    {
+                        bool keep = false;
+                        for (var tr = g.transform; tr != null && tr != room && !keep; tr = tr.parent)
+                            foreach (var k in rule.showOnly)
+                                if (tr.name == k || tr.name.StartsWith(k)) { keep = true; break; }
+                        hide = !keep;
+                    }
+                }
 
                 int want = hide ? LayerNowOnly : LayerDefault;
-                if (g.layer != LayerDefault && g.layer != LayerNowOnly) continue;
-                if (g.layer == want) { if (hide) hidden++; else shown++; continue; }
+                if (hide) hidden++; else shown++;
+                if (g.layer == want) continue;
 
-                Undo.RecordObject(g, "room16 NowOnly");
+                Undo.RecordObject(g, "past-person visibility");
                 g.layer = want;
                 EditorUtility.SetDirty(g);
-                if (hide) hidden++; else shown++;
             }
+            return string.Format("{0,-7}: 隠す {1,4}個 / 見せる {2,4}個   {3}",
+                                 rule.room, hidden, shown, rule.note);
+        }
 
-            return "room16: 過去人から隠した " + hidden + "個（棚・家具・小物）\n"
-                 + "  過去人に見えるまま: " + shown + "個（壁・床・天井・腰壁・照明・人形・巨大な手）\n"
-                 + "この後 [BLIND]→[vision]→[2.] で room16 を作り直すこと。";
+        /// <summary>旧名。room16 だけを処理する。</summary>
+        public static string Room16OnlyDolls()
+        {
+            return ApplyRule(Rules.First(r => r.room == "room16"));
         }
 
         const string BlackoutRoot = "Vision_Blackout";
