@@ -33,8 +33,12 @@ namespace BLIND.EditorTools
         /// 生成した EchoReceiver の点灯時間(秒)。
         /// EchoEmitter の pulseInterval より十分短くしないと、次のパルスが来る前に
         /// 消えず「常に見えている」状態になり、暗闇を手探りする感じが無くなる。
+        ///
+        /// パルス間隔を 3.5→2.2秒 に詰めた分、ここも 1.2→0.6秒 に削ってある。
+        /// 「1回の光がどれだけ長く残るか」ではなく「暗闇が何秒あるか」が体験の核なので、
+        /// 間隔を縮めるときは必ずこちらも同じ比率で縮めること。
         /// </summary>
-        const float EchoGlowDuration = 1.2f;
+        const float EchoGlowDuration = 0.6f;
 
         /// <summary>
         /// これを超える三角形数のメッシュは簡易形状に差し替える。

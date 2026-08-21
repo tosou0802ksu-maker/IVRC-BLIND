@@ -42,6 +42,13 @@ public class PlayerVisionController : UdonSharpBehaviour
     [Tooltip("過去の人役。Default + Memory(24) + Player + PlayerLocal にチェックを入れる。")]
     [SerializeField] private LayerMask memoryCullingMask;
 
+    [Header("過去の人から「現在」を隠す")]
+    [Tooltip("オンにすると NowOnly(25) レイヤーの物が過去の人には見えなくなる。" +
+             "過去の人は「かつてそこにあった部屋」しか見えず、現在の障害物は" +
+             "エコロケ役とサーモ役に教えてもらうしかなくなる。" +
+             "実機テストで A/B を切り替えて体験を比べられるようにここをbool にしてある。")]
+    [SerializeField] private bool memoryHidesPresent = true;
+
     [Header("背景を真っ黒にする役割")]
     [Tooltip("オンにするとスカイボックスを描かず単色で塗りつぶす(=暗闇になる)。")]
     [SerializeField] private bool echoBlackout = true;
@@ -54,6 +61,9 @@ public class PlayerVisionController : UdonSharpBehaviour
     [Header("エディタ確認用のフォールバック(任意)")]
     [Tooltip("実機ではVRCCameraSettingsを使うため未設定でも構わない。")]
     [SerializeField] private Camera localCamera;
+
+    // 「現在だけに存在する物」を置くレイヤー。過去の人には見えない。
+    public const int LayerNowOnly = 25;
 
     private ViewRole currentRole;
 
@@ -118,7 +128,13 @@ public class PlayerVisionController : UdonSharpBehaviour
 
     private void ApplyVisionMask()
     {
-        LayerMask mask = echoCullingMask;
+        // ここを LayerMask 型のまま扱わないこと。
+        // LayerMask への代入は int -> LayerMask の暗黙変換を呼ぶが、
+        // この演算子は Udon に公開されておらず
+        // 「Method is not exposed to Udon」でU#のコンパイルが丸ごと落ちる。
+        // (落ちるとシーンを開いても中身が空で読み込まれるので原因が分かりにくい)
+        // LayerMask -> int の向きだけは公開されているので、最初に int にして以降は int で通す。
+        int mask = echoCullingMask;
         bool blackout = echoBlackout;
 
         if (currentRole == ViewRole.Thermal)
@@ -130,6 +146,15 @@ public class PlayerVisionController : UdonSharpBehaviour
         {
             mask = memoryCullingMask;
             blackout = memoryBlackout;
+
+            // NowOnly(25) は「今そこにある物」。過去の人の視界からは必ず落とす。
+            // インスペクタで誤ってチェックが入っても効かないよう、ここで確実に落としている。
+            // 見えないだけでコライダーは残るので、過去の人はぶつかる。
+            // それでいい ―― ぶつかる前に他の2人が教えられるかどうかがこのゲーム。
+            if (memoryHidesPresent)
+            {
+                mask = mask & ~(1 << LayerNowOnly);
+            }
         }
 
         bool forcedBlackout = forcedBlackoutTimer > 0f;

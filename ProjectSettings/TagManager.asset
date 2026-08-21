@@ -30,13 +30,13 @@ TagManager:
   - Thermal
   - Echo
   - Memory
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
+  - NowOnly
+  -
+  -
+  -
+  -
+  -
+  -
   m_SortingLayers:
   - name: Default
     uniqueID: 0
