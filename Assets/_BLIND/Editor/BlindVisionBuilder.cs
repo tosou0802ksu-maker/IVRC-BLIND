@@ -253,16 +253,17 @@ namespace BLIND.EditorTools
             // サーモ役の画面で緑に光る塊が「人の形」なのか「ただの箱」なのかは
             // この部屋の意味そのもの（人形部屋に体温のある人形が混ざっている）で、
             // 箱にした瞬間その情報が消える。重ければ粗くしてでも輪郭を残す。
-            if (readable && (key == "Body" || key == "Skin" || key == "Burning" || IsSilhouetteProp(mr)))
+            bool silhouette = IsSilhouetteProp(mr);
+            if (readable && (key == "Body" || key == "Skin" || key == "Burning" || silhouette))
             {
-                var lite = BlindMeshReducer.SaveLite(src, 300, "_heat");
-                if (lite != null)
-                {
-                    ci.mesh = lite;
-                    ci.subMeshIndex = 0;
-                    ci.transform = room.worldToLocalMatrix * mr.transform.localToWorldMatrix;
-                    return true;
-                }
+                var lite = BlindMeshReducer.SaveLite(src, silhouette ? SilhouetteTris : HeatShapeTris, "_heat");
+
+                // 元が既に目標より軽いと SaveLite は null を返す。
+                // そこで諦めて箱にしてしまうと、軽いだけの物が箱に化けるので素の形を使う。
+                ci.mesh = lite != null ? lite : src;
+                ci.subMeshIndex = 0;
+                ci.transform = room.worldToLocalMatrix * mr.transform.localToWorldMatrix;
+                return true;
             }
 
             // ただし簡易形状にすると部屋を塞いでしまう大物は、素のメッシュを
@@ -277,6 +278,23 @@ namespace BLIND.EditorTools
 
         /// <summary>エコロケ用に素の形を使うときの上限。これを超えたら簡略版を作る。</summary>
         const int EchoShapeTris = 300;
+
+        /// <summary>
+        /// 体温を持つ物（人形・焼けた人）をサーモ／エコロケに出すときの粗さ。
+        /// 「人の形をした何か」と分かれば足りるので、ここは粗くてよい。
+        /// </summary>
+        const int HeatShapeTris = 300;
+
+        /// <summary>
+        /// 形そのものが情報になっている物（チェス駒）の粗さ。
+        ///
+        /// 頂点クラスタリングは格子にスナップする方式なので、
+        /// 回転体を削ると台座の輪から先に段々になり、最後は溶けた塊になる。
+        /// 実測で比べたところ、ナイトが馬に見えなくなるのが 1500、
+        /// ルークの狭間が消えるのが 800、原形をとどめないのが 300 だった。
+        /// 2500 なら駒の種類が判別でき、8個で 2万三角形に収まる。
+        /// </summary>
+        const int SilhouetteTris = 2500;
 
         /// <summary>
         /// エコロケ層に使う元メッシュを決める。null なら簡易形状（箱）にする。
@@ -305,11 +323,16 @@ namespace BLIND.EditorTools
                 if (!src.isReadable) return null;   // それでも駄目なら箱で妥協
             }
 
+            // 形そのものが情報になっている物は、輪郭用でも粗くしすぎない。
+            // 300 まで落とすとチェス駒が種類の区別できない塊になる。
+            int budget = IsSilhouetteProp(mr) ? SilhouetteTris : EchoShapeTris;
+
             int tris = src.triangles.Length / 3;
-            if (tris <= EchoShapeTris) return src;
+            if (tris <= budget) return src;
 
             // 表示用の簡略版とは別に、輪郭専用のもっと粗い版を作る
-            return BlindMeshReducer.SaveLite(src, EchoShapeTris, "_echo");
+            var lite = BlindMeshReducer.SaveLite(src, budget, "_echo");
+            return lite != null ? lite : src;
         }
 
         // -------------------------------------------------------------
