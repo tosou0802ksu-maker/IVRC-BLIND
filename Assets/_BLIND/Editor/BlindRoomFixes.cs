@@ -2,6 +2,7 @@ using System.Linq;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace BLIND.EditorTools
 {
@@ -354,7 +355,7 @@ namespace BLIND.EditorTools
             // Light コンポーネントの enabled を見る LampIsLit() とも連携する。
             log.AppendLine("  点灯(安全な床の上): " + litCount + " 灯");
             log.AppendLine("  消灯(穴の上):       " + offCount + " 灯");
-            log.AppendLine("  検出した床板: " + floorBounds.Count + " 枚");
+            log.AppendLine("  検出した床板: " + floorBounds.Count.ToString() + " 枚");
             log.AppendLine("\n※ BlindVisionBuilder は LampIsLit() でライトの on/off を見て");
             log.AppendLine("  Lamp(52℃) / LampOff(19℃) を自動で振り分けます。");
 
