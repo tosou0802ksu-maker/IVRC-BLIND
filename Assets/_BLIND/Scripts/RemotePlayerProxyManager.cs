@@ -23,6 +23,9 @@ public class RemotePlayerProxyManager : UdonSharpBehaviour
     [Header("他プレイヤーに常時持たせる熱の強さ")]
     [SerializeField] private float remotePlayerHeat = 1.0f;
 
+    [Header("サーマル非表示ゾーン(ゾーン内のプレイヤーはサーマルで見えなくなる)")]
+    [SerializeField] private ThermalHideZone[] thermalHideZones;
+
     void Update()
     {
         if (proxyRigs == null || proxyRigs.Length == 0)
@@ -52,13 +55,17 @@ public class RemotePlayerProxyManager : UdonSharpBehaviour
             {
                 rig.SetVisible(true);
                 rig.UpdatePose(p);
-                rig.SetHeat(remotePlayerHeat);
+
+                bool hidden = IsInThermalHideZone(p.GetPosition());
+                rig.SetHeat(hidden ? 0f : remotePlayerHeat);
+                rig.SetThermalVisible(!hidden);
             }
 
             slot++;
         }
 
         // 人数が足りない分(2人揃っていない時)は残りのプロキシを隠す
+        // ※thermalHideZonesが未設定でも通常動作に影響なし
         for (int i = slot; i < proxyRigs.Length; i++)
         {
             if (proxyRigs[i] != null)
@@ -66,5 +73,20 @@ public class RemotePlayerProxyManager : UdonSharpBehaviour
                 proxyRigs[i].SetVisible(false);
             }
         }
+    }
+
+    private bool IsInThermalHideZone(Vector3 position)
+    {
+        if (thermalHideZones == null) return false;
+
+        for (int i = 0; i < thermalHideZones.Length; i++)
+        {
+            if (thermalHideZones[i] != null && thermalHideZones[i].IsInside(position))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

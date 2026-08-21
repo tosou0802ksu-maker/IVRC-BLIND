@@ -120,6 +120,19 @@ public class MannequinProxyRig : UdonSharpBehaviour
         }
     }
 
+    // サーマルRendererの表示/非表示を切り替える。
+    // ThermalHideZone内にいるプレイヤーのサーマル表示を消すために使う。
+    public void SetThermalVisible(bool visible)
+    {
+        if (thermalRenderers == null) return;
+
+        for (int i = 0; i < thermalRenderers.Length; i++)
+        {
+            if (thermalRenderers[i] == null) continue;
+            thermalRenderers[i].enabled = visible;
+        }
+    }
+
     public void UpdatePose(VRCPlayerApi player)
     {
         if (player == null || !player.IsValid()) return;
