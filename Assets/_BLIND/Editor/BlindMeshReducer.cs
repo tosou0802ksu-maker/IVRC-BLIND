@@ -213,7 +213,12 @@ namespace BLIND.EditorTools
         /// 簡略化した結果は独立した .asset として保存するので、
         /// この設定はここで一時的に必要になるだけ。
         /// </summary>
-        static int EnsureReadable(IEnumerable<Mesh> meshes)
+        /// <summary>
+        /// メッシュを CPU から読めるようにする。読めないと三角形を数えることも
+        /// 減量することもできず、エコロケ層が箱の代用品になってしまう。
+        /// BlindVisionBuilder からも呼ぶので public。
+        /// </summary>
+        public static int EnsureReadable(IEnumerable<Mesh> meshes)
         {
             var paths = new HashSet<string>();
             foreach (var m in meshes)

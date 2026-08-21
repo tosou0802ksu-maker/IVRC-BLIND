@@ -208,32 +208,37 @@ namespace BLIND.EditorTools
             return true;
         }
 
-        /// <summary>エコロケで「形そのもの」を見せる価値がある温度クラス。</summary>
-        static bool ShapeMatters(string key)
-        {
-            return key == "Prop" || key == "Body" || key == "Skin" || key == "Burning";
-        }
-
         /// <summary>エコロケ用に素の形を使うときの上限。これを超えたら簡略版を作る。</summary>
-        const int EchoShapeTris = 220;
+        const int EchoShapeTris = 300;
 
         /// <summary>
-        /// エコロケ層に使う元メッシュを決める。null なら簡易形状（箱・楕円体）にする。
+        /// エコロケ層に使う元メッシュを決める。null なら簡易形状（箱）にする。
         ///
-        /// 軽い物はそのまま使う。人形のように「形そのものがその部屋の意味」である物は、
-        /// 重くても簡略版を作ってでも形を出す。人形部屋が箱の羅列にしか見えないと、
-        /// エコロケ役はその部屋に何があるのか一生分からないため。
-        /// 逆に CRT や段ボールのように元から箱の物は、簡易形状で情報が落ちない。
+        /// 以前は「形が意味を持つ物」だけ実形状にして、他は箱で代用していた。
+        /// しかしそれだと room11・room13・room19 のように、床と壁以外が
+        /// 全部 12三角形の箱になる部屋が出てしまい、エコロケ役には
+        /// 「四角い何かが置いてある」以上のことが一生分からなかった。
+        ///
+        /// 実測すると箱プロキシ113個の合計はわずか1,356三角形。
+        /// 全部を300三角形の実形状に置き換えても増えるのは3万程度で、
+        /// マップ全体102万に対して誤差でしかない。
+        /// ポリゴンを惜しむ理由が無いので、読める物は全部そのまま形を出す。
         /// </summary>
         static Mesh EchoSource(Renderer mr, string key)
         {
             var mf = mr.GetComponent<MeshFilter>();
             var src = mf != null ? mf.sharedMesh : null;
-            if (src == null || !src.isReadable) return null;
+            if (src == null) return null;
+
+            // 読めないメッシュは三角形を数えることすらできない。
+            // インポート設定を書き換えて読めるようにしてから判断する。
+            if (!src.isReadable)
+            {
+                BlindMeshReducer.EnsureReadable(new[] { src });
+                if (!src.isReadable) return null;   // それでも駄目なら箱で妥協
+            }
 
             int tris = src.triangles.Length / 3;
-            if (tris <= MaxPropTris) return src;
-            if (!ShapeMatters(key)) return null;
             if (tris <= EchoShapeTris) return src;
 
             // 表示用の簡略版とは別に、輪郭専用のもっと粗い版を作る
@@ -257,6 +262,14 @@ namespace BLIND.EditorTools
             // 床に密着したゼロ厚のポリゴンなので、そのまま複製すると床と同じ高さに
             // 2枚重なって Zファイティング（チラつき）を起こす。汚れには温度も反響も無い。
             if (all.Contains("decal") || all.Contains("stain") || all.Contains("soot")) { echo = false; return null; }
+
+            // --- レーザー（room14）: サーモ役だけの領分 ---
+            // ビームも天井の発射装置も、まとめてサーモ専用にする。
+            // エコロケ役に装置が見えると「天井に何か並んでる」で危険を推理できてしまい、
+            // サーモ役が唯一の情報源である状態が崩れる。
+            // Default層の実体は別途 NowOnly(25) へ移すので過去人にも見えない。
+            // 「何も見えないのに焼かれる」という状況を、サーモ役の一言だけが防ぐ。
+            if (all.Contains("laser")) { echo = false; return "Laser"; }
 
             // --- 発熱するもの（サーモ役の道しるべになる） ---
             if (n == "Lens" || all.Contains("lamplens")) return "Lamp";
@@ -358,6 +371,10 @@ namespace BLIND.EditorTools
 
                 int proxied = 0;
                 var bigOnes = new List<KeyValuePair<Renderer, string>>();
+                // 大きい物は結合せず単体で複製するが、その経路も echo フラグを見ること。
+                // 見落とすと「エコロケに出すな」と分類した物（レーザーなど）が
+                // 大きいというだけで復活してしまう。実際にレーザーで踏んだ。
+                var bigOnesEcho = new List<KeyValuePair<Renderer, string>>();
                 foreach (var mr in room.GetComponentsInChildren<MeshRenderer>(true))
                 {
                     if (!mr.gameObject.activeInHierarchy) continue;
@@ -370,7 +387,12 @@ namespace BLIND.EditorTools
                     CombineInstance ci; bool standalone;
                     if (!MakeInstance(mr, room, key, out standalone, out ci))
                     {
-                        if (standalone) { bigOnes.Add(new KeyValuePair<Renderer, string>(mr, key)); used++; }
+                        if (standalone)
+                        {
+                            bigOnes.Add(new KeyValuePair<Renderer, string>(mr, key));
+                            if (echo) bigOnesEcho.Add(new KeyValuePair<Renderer, string>(mr, key));
+                            used++;
+                        }
                         else skipped++;
                         continue;
                     }
@@ -530,7 +552,7 @@ namespace BLIND.EditorTools
                     AddReceiver(go, mr2);
                     eTris += mesh.triangles.Length / 3; eRend++;
                 }
-                foreach (var kv in bigOnes)
+                foreach (var kv in bigOnesEcho)
                 {
                     var em = EchoMatFor(kv.Key, rn, echoMat);
                     var go = CloneReal(kv.Key, eRoot.transform, LayerEcho, em, "E_");
