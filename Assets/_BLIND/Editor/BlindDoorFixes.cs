@@ -175,10 +175,16 @@ namespace BLIND.EditorTools
         // ------------------------------------------------------------------
 
         /// <summary>
-        /// room19 は generateFloor が false で、床が1枚も無い。
-        /// この部屋の GeneratedRoom は WallSegment / FramePiece / CeilingPanel
-        /// しか入っておらず、手作業で足した物が無いので BuildRoom() してよい。
-        /// ついでに開口高さも標準の 2.30 にしてから建て直す。
+        /// room19 の床を用意する。ただし作者が自前の床を置いている場合は絶対に生成しない。
+        ///
+        /// room19 の床は「yukaarutokoro（床ある所）」という名前の板を並べて作られており、
+        /// 板が無い所がそのまま落とし穴になる仕掛けになっている。
+        /// ここで RoomBuilder3 の自動生成床を足すと、その穴を1つ残らず埋めてしまい、
+        /// 仕掛けが完全に死ぬ（実測で 62セル分の穴が塞がっていた）。
+        ///
+        /// なので、部屋の中に GeneratedRoom 以外の床コライダーが既にあるときは、
+        /// 生成しないどころか generateFloor を false に戻し、
+        /// 以前このメソッドが作ってしまった FloorTile も撤去する。
         /// </summary>
         static string RebuildRoom19WithFloor()
         {
@@ -187,6 +193,15 @@ namespace BLIND.EditorTools
 
             var t = rb.GetType();
             var root = Room("room19");
+
+            // 作者が置いた床（GeneratedRoom の外にある、床の高さの当たり判定）を探す
+            var authorFloor = root.GetComponentsInChildren<Collider>(true)
+                .Where(c => c.bounds.max.y < 0.35f && c.bounds.size.x > 0.3f && c.bounds.size.z > 0.3f)
+                .Where(c => !InsideGenerated(c.transform, root))
+                .ToList();
+
+            if (authorFloor.Count > 0)
+                return RemoveGeneratedFloor(rb, t, root, authorFloor.Count);
 
             // 手で足した物が紛れ込んでいたら建て直さない（消してしまうため）
             var gen = root.Find("GeneratedRoom");
@@ -216,6 +231,51 @@ namespace BLIND.EditorTools
 
             var floors = root.GetComponentsInChildren<Renderer>(true).Count(r => r.name.StartsWith("Floor"));
             return "room19: 床を生成して建て直した（床 " + floors + " 枚 / 開口高さ 2.30）";
+        }
+
+        static bool InsideGenerated(Transform t, Transform root)
+        {
+            for (var p = t; p != null && p != root; p = p.parent)
+                if (p.name == "GeneratedRoom") return true;
+            return false;
+        }
+
+        /// <summary>
+        /// 自動生成した床を撤去し、二度と生えないよう generateFloor を false にする。
+        /// 作者が床を置いた後にこのツールを再実行しても仕掛けを壊さないための後始末。
+        /// </summary>
+        static string RemoveGeneratedFloor(Component rb, System.Type t, Transform root, int authorPieces)
+        {
+            var gen = root.Find("GeneratedRoom");
+            int removed = 0;
+            if (gen != null)
+            {
+                var tiles = gen.GetComponentsInChildren<Transform>(true)
+                    .Where(x => x.name.StartsWith("FloorTile") || x.name.StartsWith("FloorSlab"))
+                    .Select(x => x.gameObject).ToList();
+                foreach (var g in tiles) { Undo.DestroyObjectImmediate(g); removed++; }
+
+                // 床だけを載せていた入れ物が空になったら一緒に片付ける
+                var floorRoot = gen.Find("Floor");
+                if (floorRoot != null && floorRoot.childCount == 0)
+                    Undo.DestroyObjectImmediate(floorRoot.gameObject);
+            }
+
+            var gf = t.GetField("generateFloor");
+            bool turnedOff = false;
+            if (gf != null && (bool)gf.GetValue(rb))
+            {
+                Undo.RecordObject(rb, "Disable room19 auto floor");
+                gf.SetValue(rb, false);
+                EditorUtility.SetDirty(rb);
+                turnedOff = true;
+            }
+
+            if (removed == 0 && !turnedOff)
+                return "room19: 作者の床（" + authorPieces + "枚）を使用中。自動生成床は無し（変更なし）";
+
+            return "room19: 作者の床（" + authorPieces + "枚 / 落とし穴あり）を検出。"
+                 + "自動生成床 " + removed + "枚を撤去し、generateFloor を false に戻した";
         }
 
         // ------------------------------------------------------------------

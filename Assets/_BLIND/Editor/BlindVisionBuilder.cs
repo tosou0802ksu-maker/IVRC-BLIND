@@ -253,7 +253,7 @@ namespace BLIND.EditorTools
             // サーモ役の画面で緑に光る塊が「人の形」なのか「ただの箱」なのかは
             // この部屋の意味そのもの（人形部屋に体温のある人形が混ざっている）で、
             // 箱にした瞬間その情報が消える。重ければ粗くしてでも輪郭を残す。
-            if (readable && (key == "Body" || key == "Skin" || key == "Burning"))
+            if (readable && (key == "Body" || key == "Skin" || key == "Burning" || IsSilhouetteProp(mr)))
             {
                 var lite = BlindMeshReducer.SaveLite(src, 300, "_heat");
                 if (lite != null)
@@ -333,6 +333,32 @@ namespace BLIND.EditorTools
             "Doll_Fallen_09",   // 南、倒れている
         };
 
+        /// <summary>
+        /// 形そのものが情報になっている物。箱やブロブに潰してはいけない。
+        ///
+        /// room19 のチェス駒がこれにあたる。ナイトなのかルークなのかが分からないと、
+        /// 3人が「馬の駒の右」「塔みたいなやつの手前」と言い合えない。
+        /// 箱に潰すと駒が全部同じ直方体になり、この部屋で会話が成立しなくなる。
+        /// 駒は1個2〜7万tri と重いが、粗くしてでも輪郭を残す価値がある。
+        /// </summary>
+        static readonly string[] SilhouetteProps =
+        {
+            "knight", "bishop", "rook", "pawn", "queen", "king",
+        };
+
+        static bool IsSilhouetteProp(Renderer r)
+        {
+            for (var tr = r.transform; tr != null; tr = tr.parent)
+            {
+                string n = tr.name.ToLower();
+                foreach (var k in SilhouetteProps)
+                    if (n.StartsWith(k)) return true;
+                // 部屋やシーンのルートまで行ったら打ち切る
+                if (tr.name.StartsWith("room") || tr.name.Contains("ROOMS")) break;
+            }
+            return false;
+        }
+
         /// <summary>戻り値が null ならその物はサーモ／エコロケに出さない。</summary>
         static string Classify(Renderer r, out bool echo)
         {
@@ -380,7 +406,8 @@ namespace BLIND.EditorTools
             if (all.Contains("fluoro")) return "Lamp";
             // 天井の照明パネルは On / Dim / Off の3種がある。生きている物だけが熱い＝
             // サーモ役には「どの列の灯りが生きているか」が読める
-            if (all.Contains("lightpanel") || all.Contains("light_panel"))
+            if (all.Contains("lightpanel") || all.Contains("light_panel")
+                || all.Contains("chess light"))
             {
                 if (all.Contains("_off")) return "LampOff";
                 if (all.Contains("_dim")) return "LampDim";
