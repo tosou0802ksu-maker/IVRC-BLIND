@@ -29,15 +29,19 @@ namespace BLIND.EditorTools
         /// <summary>エコロケのブロックの大きさ(m)。小さいほどパルスが細かく広がる。</summary>
         const float EchoChunk = 5f;
 
-        /// <summary>生成した EchoReceiver の点灯時間(秒)。</summary>
-        const float EchoGlowDuration = 2.5f;
+        /// <summary>
+        /// 生成した EchoReceiver の点灯時間(秒)。
+        /// EchoEmitter の pulseInterval より十分短くしないと、次のパルスが来る前に
+        /// 消えず「常に見えている」状態になり、暗闇を手探りする感じが無くなる。
+        /// </summary>
+        const float EchoGlowDuration = 1.2f;
 
         /// <summary>
         /// これを超える三角形数のメッシュは簡易形状に差し替える。
         /// サーモは「その物が何度か」、エコロケは「どこに何があるか」しか伝えないので、
         /// 人形の指1本まで再現しても情報は増えず、ポリゴンだけが3倍になる。
         /// </summary>
-        const int MaxPropTris = 260;
+        const int MaxPropTris = 180;
 
         static Mesh _boxProxy, _blobProxy;
 
@@ -200,6 +204,38 @@ namespace BLIND.EditorTools
             return true;
         }
 
+        /// <summary>エコロケで「形そのもの」を見せる価値がある温度クラス。</summary>
+        static bool ShapeMatters(string key)
+        {
+            return key == "Prop" || key == "Body" || key == "Skin" || key == "Burning";
+        }
+
+        /// <summary>エコロケ用に素の形を使うときの上限。これを超えたら簡略版を作る。</summary>
+        const int EchoShapeTris = 220;
+
+        /// <summary>
+        /// エコロケ層に使う元メッシュを決める。null なら簡易形状（箱・楕円体）にする。
+        ///
+        /// 軽い物はそのまま使う。人形のように「形そのものがその部屋の意味」である物は、
+        /// 重くても簡略版を作ってでも形を出す。人形部屋が箱の羅列にしか見えないと、
+        /// エコロケ役はその部屋に何があるのか一生分からないため。
+        /// 逆に CRT や段ボールのように元から箱の物は、簡易形状で情報が落ちない。
+        /// </summary>
+        static Mesh EchoSource(Renderer mr, string key)
+        {
+            var mf = mr.GetComponent<MeshFilter>();
+            var src = mf != null ? mf.sharedMesh : null;
+            if (src == null || !src.isReadable) return null;
+
+            int tris = src.triangles.Length / 3;
+            if (tris <= MaxPropTris) return src;
+            if (!ShapeMatters(key)) return null;
+            if (tris <= EchoShapeTris) return src;
+
+            // 表示用の簡略版とは別に、輪郭専用のもっと粗い版を作る
+            return BlindMeshReducer.SaveLite(src, EchoShapeTris, "_echo");
+        }
+
         // -------------------------------------------------------------
         //  分類：レンダラーの名前とマテリアル名から温度クラスを決める
         // -------------------------------------------------------------
@@ -264,10 +300,24 @@ namespace BLIND.EditorTools
         }
 
         // -------------------------------------------------------------
-        [MenuItem("BLIND/vision/2. 担当部屋にサーモ・エコロケを生成")]
+        [MenuItem("BLIND/vision/2. 全部屋にサーモ・エコロケを生成")]
         public static string BuildMine()
         {
-            return Build(new[] { "room2", "room7", "room9", "room12", "room15", "room16" });
+            // MainWorld に全員の部屋を統合したので、=== ROOMS === の下を全部対象にする。
+            // 分類は名前とマテリアル名から自動で決まるので、他メンバーが作った部屋も
+            // そのまま通せる（当たらなかった物は Prop 扱いになる）。
+            var root = GameObject.Find("=== ROOMS ===");
+            if (root == null)
+                return Build(new[] { "room2", "room7", "room9", "room12", "room15", "room16" });
+
+            var rooms = new List<string>();
+            foreach (Transform t in root.transform)
+            {
+                if (t.name == "roomtest") continue;         // 動作確認用なので出さない
+                if (t.GetComponentsInChildren<MeshRenderer>(true).Length == 0) continue;
+                rooms.Add(t.name);
+            }
+            return Build(rooms.ToArray());
         }
 
         public static string Build(string[] roomNames)
@@ -343,13 +393,33 @@ namespace BLIND.EditorTools
                             var cell = new Vector3Int(Mathf.FloorToInt(lp.x / EchoChunk), 0, Mathf.FloorToInt(lp.z / EchoChunk));
                             if (!byChunk.ContainsKey(cell)) byChunk[cell] = new List<CombineInstance>();
 
-                            // エコロケ層は必ず簡易形状で組む。
-                            // EchoHighlight は「UVの端＝輪郭」で線を引くため、元メッシュのUVが
-                            // 0〜1でない（床タイル・手続き生成の書架・FBXの実寸UVなど）と
-                            // 面全体が輪郭と判定されてベタ塗りになる。箱と楕円体なら
-                            // 必ず面ごとに0〜1が入るので、どんな元データでも輪郭が出る。
-                            // 反響定位はもともと形の輪郭しか分からない設定なので情報も失われない。
-                            var eci = ProxyInstance(mr, room, true, key);
+                            // エコロケ層は「UVの端＝輪郭」で線を引くので、UVが0〜1でない
+                            // メッシュ（床タイル・手続き生成の棚・FBXの実寸UV）をそのまま渡すと
+                            // 面全体が輪郭と判定されてベタ塗りになる。
+                            //
+                            // ただし全部を箱で代用すると、部屋の内装（回り縁・格天井・
+                            // 壁パネル・棚板・照明器具）まで箱に潰れて「倉庫に箱が並んでいる」
+                            // だけの部屋になってしまう。エコロケ役が形を伝える係である以上、
+                            // ここが潰れるとその部屋の性格が誰にも伝わらない。
+                            //
+                            // そこで、CPU側でUVを貼り直せる軽いメッシュ（読み取り可・260三角形以下）は
+                            // 素の形のまま使う。内装の造作はほぼ全部これに当たるので、
+                            // ポリゴンをほとんど増やさずに部屋の中身が出る。
+                            var srcE = EchoSource(mr, key);
+                            CombineInstance eci;
+                            if (srcE != null)
+                            {
+                                eci = new CombineInstance
+                                {
+                                    mesh = EchoUv(srcE),
+                                    subMeshIndex = 0,
+                                    transform = room.worldToLocalMatrix * mr.transform.localToWorldMatrix,
+                                };
+                            }
+                            else
+                            {
+                                eci = ProxyInstance(mr, room, true, key);
+                            }
                             temps.Add(eci.mesh);
                             byChunk[cell].Add(eci);
                         }
@@ -467,10 +537,15 @@ namespace BLIND.EditorTools
 
                 foreach (var tm in temps) if (tm != null) Object.DestroyImmediate(tm);
 
+                // --- アニメーションで動く熱源（燃える男・炎） ---
+                var fxLog = new System.Text.StringBuilder();
+                int fx = BuildMovingHeat(room, rn, fxLog);
+
                 log.AppendLine(rn.PadRight(8)
                     + " 元 " + used.ToString().PadLeft(4) + " 個(簡易化 " + proxied + " / 除外 " + skipped + ")"
                     + " → サーモ " + tRend + " 枚/" + tTris.ToString("N0") + "tri"
                     + " / エコロケ " + eRend + " 枚/" + eTris.ToString("N0") + "tri"
+                    + (fx > 0 ? " / 動く熱源 " + fx + "個" + fxLog : "")
                     + "  温度: " + string.Join(", ", Keys(byTemp)));
                 totalTris += tTris + eTris; totalRend += tRend + eRend;
             }
@@ -516,7 +591,14 @@ namespace BLIND.EditorTools
                 var all = (smr.name + "|" + (smr.transform.parent != null ? smr.transform.parent.name : "")
                          + "|" + (smr.transform.parent != null && smr.transform.parent.parent != null ? smr.transform.parent.parent.name : "")
                          + "|" + (smr.sharedMaterial != null ? smr.sharedMaterial.name : "")).ToLower();
-                string key = all.Contains("burn") || all.Contains("fire") ? "Burning" : "Body";
+                // 骨で動く＝人間とは限らない。監視カメラのように可動部だけ骨で動く物もあるので、
+                // 「人」と分かる名前のときだけ体温を与える。それ以外は室温の小物扱いにする。
+                string key;
+                if (all.Contains("burn") || all.Contains("fire")) key = "Burning";
+                else if (all.Contains("human") || all.Contains("body") || all.Contains("mannequin")
+                      || all.Contains("manequin") || all.Contains("doll") || all.Contains("person")
+                      || all.Contains("char") || all.Contains("avatar")) key = "Body";
+                else key = "Prop";
 
                 var mat = BlindThermalTable.Mat(key);
                 if (mat == null) continue;
@@ -684,18 +766,38 @@ namespace BLIND.EditorTools
             return m;
         }
 
-        /// <summary>EchoReceiver を付けて自分自身を対象にする。</summary>
+        /// <summary>
+        /// EchoReceiver を付けて自分自身を対象にする。
+        ///
+        /// **必ず UdonSharpUndo.AddComponent を使うこと。**
+        /// 素の GameObject.AddComponent だと C# 側のプロキシしか作られず、
+        /// 対になる UdonBehaviour が生成されない。エディタでは動いているように見えるが、
+        /// VRChat 実機で動くのは UdonBehaviour の方なので、アップロードすると
+        /// 受信機が1つも反応しない（＝エコロケ役の視界が永久に真っ暗になる）。
+        /// </summary>
         static void AddReceiver(GameObject go, Renderer r)
         {
             var rt = System.Type.GetType("EchoReceiver, Assembly-CSharp");
             if (rt == null) return;
-            var rec = go.AddComponent(rt);
+            var undoType = System.Type.GetType("UdonSharpEditor.UdonSharpUndo, UdonSharp.Editor");
+            Component rec = null;
+            if (undoType != null)
+            {
+                var mi = undoType.GetMethod("AddComponent", new[] { typeof(GameObject), typeof(System.Type) });
+                if (mi != null) rec = mi.Invoke(null, new object[] { go, rt }) as Component;
+            }
+            if (rec == null) rec = go.AddComponent(rt);   // 最後の手段（実機では動かない）
             var so = new SerializedObject(rec);
             var arr = so.FindProperty("targetRenderers");
             if (arr != null) { arr.arraySize = 1; arr.GetArrayElementAtIndex(0).objectReferenceValue = r; }
             var gd = so.FindProperty("glowDuration");
             if (gd != null) gd.floatValue = EchoGlowDuration;
             so.ApplyModifiedProperties();
+
+            // プロキシ側の値を実体の UdonBehaviour に流し込む（これを忘れると実機に反映されない）
+            var usb = rec as UdonSharp.UdonSharpBehaviour;
+            if (usb != null && UdonSharpEditor.UdonSharpEditorUtility.GetBackingUdonBehaviour(usb) != null)
+                UdonSharpEditor.UdonSharpEditorUtility.CopyProxyToUdon(usb);
         }
 
         /// <summary>
@@ -755,8 +857,10 @@ namespace BLIND.EditorTools
         public static string Clear()
         {
             int n = 0;
+            var doomed = new List<GameObject>();
             foreach (var g in Object.FindObjectsOfType<GameObject>())
-                if (g.name == EchoGroup || g.name == ThermalGroup) { Object.DestroyImmediate(g); n++; }
+                if (g.name == EchoGroup || g.name == ThermalGroup || g.name.StartsWith(FxPrefix)) doomed.Add(g);
+            foreach (var d in doomed) if (d != null) { Object.DestroyImmediate(d); n++; }
             return n + " 個の生成層を削除";
         }
     }

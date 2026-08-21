@@ -1,65 +1,164 @@
 fileFormatVersion: 2
 guid: 4ac2d3200d6f4d07d86bedabb1493616
 ModelImporter:
-  serializedVersion: 19
-  fileIDToRecycleName:
-    100000: lowpoly monitor
-    100002: //RootNode
-    100004: screenOFF
-    100006: screenON
-    100008: screenShards.001
-    100010: screenShards.002
-    100012: screenShards.003
-    100014: screenShards.004
-    100016: screenShards.005
-    100018: CRTMonitor
-    400000: lowpoly monitor
-    400002: //RootNode
-    400004: screenOFF
-    400006: screenON
-    400008: screenShards.001
-    400010: screenShards.002
-    400012: screenShards.003
-    400014: screenShards.004
-    400016: screenShards.005
-    400018: CRTMonitor
-    2300000: lowpoly monitor
-    2300002: screenOFF
-    2300004: screenON
-    2300006: screenShards.001
-    2300008: screenShards.002
-    2300010: screenShards.003
-    2300012: screenShards.004
-    2300014: screenShards.005
-    2300016: CRTMonitor
-    3300000: lowpoly monitor
-    3300002: screenOFF
-    3300004: screenON
-    3300006: screenShards.001
-    3300008: screenShards.002
-    3300010: screenShards.003
-    3300012: screenShards.004
-    3300014: screenShards.005
-    3300016: CRTMonitor
-    4300000: screenShards.005
-    4300002: screenShards.004
-    4300004: screenShards.003
-    4300006: screenShards.002
-    4300008: screenShards.001
-    4300010: screenON
-    4300012: screenOFF
-    4300014: lowpoly monitor
-    4300016: CRTMonitor
-    9500000: //RootNode
+  serializedVersion: 22200
+  internalIDToNameTable:
+  - first:
+      1: 100000
+    second: lowpoly monitor
+  - first:
+      1: 100002
+    second: //RootNode
+  - first:
+      1: 100004
+    second: screenOFF
+  - first:
+      1: 100006
+    second: screenON
+  - first:
+      1: 100008
+    second: screenShards.001
+  - first:
+      1: 100010
+    second: screenShards.002
+  - first:
+      1: 100012
+    second: screenShards.003
+  - first:
+      1: 100014
+    second: screenShards.004
+  - first:
+      1: 100016
+    second: screenShards.005
+  - first:
+      1: 100018
+    second: CRTMonitor
+  - first:
+      4: 400000
+    second: lowpoly monitor
+  - first:
+      4: 400002
+    second: //RootNode
+  - first:
+      4: 400004
+    second: screenOFF
+  - first:
+      4: 400006
+    second: screenON
+  - first:
+      4: 400008
+    second: screenShards.001
+  - first:
+      4: 400010
+    second: screenShards.002
+  - first:
+      4: 400012
+    second: screenShards.003
+  - first:
+      4: 400014
+    second: screenShards.004
+  - first:
+      4: 400016
+    second: screenShards.005
+  - first:
+      4: 400018
+    second: CRTMonitor
+  - first:
+      23: 2300000
+    second: lowpoly monitor
+  - first:
+      23: 2300002
+    second: screenOFF
+  - first:
+      23: 2300004
+    second: screenON
+  - first:
+      23: 2300006
+    second: screenShards.001
+  - first:
+      23: 2300008
+    second: screenShards.002
+  - first:
+      23: 2300010
+    second: screenShards.003
+  - first:
+      23: 2300012
+    second: screenShards.004
+  - first:
+      23: 2300014
+    second: screenShards.005
+  - first:
+      23: 2300016
+    second: CRTMonitor
+  - first:
+      33: 3300000
+    second: lowpoly monitor
+  - first:
+      33: 3300002
+    second: screenOFF
+  - first:
+      33: 3300004
+    second: screenON
+  - first:
+      33: 3300006
+    second: screenShards.001
+  - first:
+      33: 3300008
+    second: screenShards.002
+  - first:
+      33: 3300010
+    second: screenShards.003
+  - first:
+      33: 3300012
+    second: screenShards.004
+  - first:
+      33: 3300014
+    second: screenShards.005
+  - first:
+      33: 3300016
+    second: CRTMonitor
+  - first:
+      43: 4300000
+    second: screenShards.005
+  - first:
+      43: 4300002
+    second: screenShards.004
+  - first:
+      43: 4300004
+    second: screenShards.003
+  - first:
+      43: 4300006
+    second: screenShards.002
+  - first:
+      43: 4300008
+    second: screenShards.001
+  - first:
+      43: 4300010
+    second: screenON
+  - first:
+      43: 4300012
+    second: screenOFF
+  - first:
+      43: 4300014
+    second: lowpoly monitor
+  - first:
+      43: 4300016
+    second: CRTMonitor
+  - first:
+      95: 9500000
+    second: //RootNode
+  externalObjects: {}
   materials:
-    importMaterials: 1
+    materialImportMode: 1
     materialName: 0
     materialSearch: 1
+    materialLocation: 0
   animations:
     legacyGenerateAnimations: 4
     bakeSimulation: 0
     resampleCurves: 1
     optimizeGameObjects: 0
+    removeConstantScaleCurves: 0
     motionNodeName: 
     rigImportErrors: 
     rigImportWarnings: 
@@ -67,39 +166,65 @@ ModelImporter:
     animationImportWarnings: 
     animationRetargetingWarnings: 
     animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
     animationCompression: 1
     animationRotationError: 0.5
     animationPositionError: 0.5
     animationScaleError: 0.5
     animationWrapMode: 0
     extraExposedTransformPaths: []
+    extraUserProperties: []
     clipAnimations: []
-    isReadable: 0
+    isReadable: 1
   meshes:
     lODScreenPercentages: []
     globalScale: 1
     meshCompression: 0
     addColliders: 0
+    useSRGBMaterialColor: 1
+    sortHierarchyByName: 1
+    importPhysicalCameras: 0
+    importVisibility: 0
     importBlendShapes: 1
+    importCameras: 0
+    importLights: 0
+    nodeNameCollisionStrategy: 0
+    fileIdsGeneration: 1
     swapUVChannels: 0
     generateSecondaryUV: 0
     useFileUnits: 1
-    optimizeMeshForGPU: 1
     keepQuads: 0
     weldVertices: 1
+    bakeAxisConversion: 0
+    preserveHierarchy: 0
+    skinWeightsMode: 0
+    maxBonesPerVertex: 4
+    minBoneWeight: 0.001
+    optimizeBones: 1
+    meshOptimizationFlags: -1
+    indexFormat: 1
     secondaryUVAngleDistortion: 8
     secondaryUVAreaDistortion: 15.000001
     secondaryUVHardAngle: 88
+    secondaryUVMarginMethod: 0
+    secondaryUVMinLightmapResolution: 40
+    secondaryUVMinObjectScale: 1
     secondaryUVPackMargin: 4
     useFileScale: 1
+    strictVertexDataChecks: 0
   tangentSpace:
     normalSmoothAngle: 60
     normalImportMode: 0
     tangentImportMode: 3
+    normalCalculationMode: 0
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 1
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  referencedClips: []
   importAnimation: 1
-  copyAvatar: 0
   humanDescription:
-    serializedVersion: 2
+    serializedVersion: 3
     human: []
     skeleton: []
     armTwist: 0.5
@@ -109,14 +234,19 @@ ModelImporter:
     armStretch: 0.05
     legStretch: 0.05
     feetSpacing: 0
+    globalScale: 1
     rootMotionBoneName: 
-    rootMotionBoneRotation: {x: 0, y: 0, z: 0, w: 1}
     hasTranslationDoF: 0
     hasExtraRoot: 0
     skeletonHasParents: 1
   lastHumanDescriptionAvatarSource: {instanceID: 0}
+  autoGenerateAvatarMappingIfUnspecified: 1
   animationType: 2
   humanoidOversampling: 1
+  avatarSetup: 1
+  addHumanoidExtraRootOnlyWhenUsingAvatar: 0
+  importBlendShapeDeformPercent: 0
+  remapMaterialsIfMaterialImportModeIsNone: 1
   additionalBone: 0
   userData: 
   assetBundleName: 
