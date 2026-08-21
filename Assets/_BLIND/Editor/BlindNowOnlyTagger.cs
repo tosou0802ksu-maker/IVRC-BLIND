@@ -86,14 +86,19 @@ namespace BLIND.EditorTools
         }
 
         /// <summary>
-        /// room16 で、過去の人に見せる物を「人形」と「巨大な手」だけに絞る。
+        /// room16 で、過去の人から「部屋の中に置いてある物」だけを隠す。
         ///
-        /// これまで過去の人は現在の内装をそのまま見ていたので、
-        /// 棚も家具も壁も自力で見えてしまい、エコロケ役と役割が重なっていた。
-        /// 見える物を人形と手だけにすると、過去の人の視界は
-        /// 「暗闇に人影が林立し、その中央に巨大な手がある」だけになる。
-        /// 家具や壁は見えないまま当たり判定だけが残るので、
-        /// どこを通れるかはエコロケ役に聞くしかない。
+        /// 壁・床・天井・腰壁（＝部屋そのもの）は見せたままにする。
+        /// 一度これも隠してみたが、視界を削るどころか逆効果だった。
+        /// 壁を描かないということは壁が遮らないということでもあるので、
+        /// 隣の room17 の廊下が丸ごと透けて見え、他の部屋の間取りまで
+        /// 過去の人に渡してしまっていた。
+        ///
+        /// 隠すのは棚・家具・小物だけ。当たり判定は残るので、
+        /// 「部屋の形は見えるのに、そこに何が置いてあるかは分からない」
+        /// という状態になる。ぶつかる物の在り処はエコロケ役に聞くしかない。
+        ///
+        /// 人形と巨大な手は、この部屋の主役なので見せたままにする。
         ///
         /// サーモ・エコロケ側の複製は BlindVisionBuilder が
         /// Thermal(22)/Echo(23) 以外の全レイヤーから作るので、
@@ -101,11 +106,20 @@ namespace BLIND.EditorTools
         ///
         /// 何度実行しても同じ結果になる。
         /// </summary>
-        [MenuItem("BLIND/vision/4. room16 の過去人を「人形と手だけ」にする")]
+        [MenuItem("BLIND/vision/4. room16 の過去人から「中の物」を隠す")]
         public static void Room16OnlyDollsMenu()
         {
             EditorUtility.DisplayDialog("BLIND", Room16OnlyDolls(), "OK");
         }
+
+        /// <summary>過去の人から隠すグループ。ここに挙げた物だけが NowOnly に移る。</summary>
+        static readonly string[] Room16Hidden =
+        {
+            "Shelves",             // 書架
+            "Prop_ShelfDecor",     // 棚の上の小物・マネキン頭部
+            "Prop_Furniture",      // 机・箱・樽・梯子など
+            "Prop_FurnitureDecor", // 人形の部位など家具まわりの小物
+        };
 
         /// <summary>ダイアログを出さない版。自動化からはこちらを呼ぶこと。</summary>
         public static string Room16OnlyDolls()
@@ -114,38 +128,32 @@ namespace BLIND.EditorTools
                 .FirstOrDefault(t => t.name == "room16" && t.parent != null && t.parent.name == "=== ROOMS ===");
             if (room == null) return "room16 が === ROOMS === の下に見つからない";
 
-            // 過去の人に見せ続けるグループ
-            var keep = new[] { "Prop_Dolls", "Prop_GiantHand" };
+            // 以前の版が作った黒い遮蔽シェルは、壁を見せる方式では要らない
+            var shell = room.Find(BlackoutRoot);
+            if (shell != null) Undo.DestroyObjectImmediate(shell.gameObject);
 
-            int hidden = 0, kept = 0;
+            int hidden = 0, shown = 0;
             foreach (var r in room.GetComponentsInChildren<Renderer>(true))
             {
                 var g = r.gameObject;
                 if (!Movable(g)) continue;   // 生成済みの複製には触らない
 
-                bool visible = false;
+                bool hide = false;
                 for (var tr = g.transform; tr != null && tr != room; tr = tr.parent)
-                    if (keep.Contains(tr.name)) { visible = true; break; }
+                    if (Room16Hidden.Contains(tr.name)) { hide = true; break; }
 
-                int want = visible ? LayerDefault : LayerNowOnly;
-                if (visible) kept++;
-                if (g.layer == want) continue;
+                int want = hide ? LayerNowOnly : LayerDefault;
                 if (g.layer != LayerDefault && g.layer != LayerNowOnly) continue;
+                if (g.layer == want) { if (hide) hidden++; else shown++; continue; }
 
                 Undo.RecordObject(g, "room16 NowOnly");
                 g.layer = want;
                 EditorUtility.SetDirty(g);
-                if (want == LayerNowOnly) hidden++;
+                if (hide) hidden++; else shown++;
             }
 
-            int shell = BuildBlackoutShell(room);
-
-            int now = room.GetComponentsInChildren<Renderer>(true)
-                          .Count(r => r.gameObject.layer == LayerNowOnly);
-            return "room16: 過去人から隠した " + hidden + "個（今回の変更分）\n"
-                 + "  過去人に見えるまま: " + kept + "個（人形と巨大な手）\n"
-                 + "  NowOnly(25) の合計: " + now + "個\n"
-                 + "  黒い遮蔽シェル: " + shell + "枚\n"
+            return "room16: 過去人から隠した " + hidden + "個（棚・家具・小物）\n"
+                 + "  過去人に見えるまま: " + shown + "個（壁・床・天井・腰壁・照明・人形・巨大な手）\n"
                  + "この後 [BLIND]→[vision]→[2.] で room16 を作り直すこと。";
         }
 

@@ -367,6 +367,24 @@ namespace BLIND.EditorTools
             "knight", "bishop", "rook", "pawn", "queen", "king",
         };
 
+        /// <summary>
+        /// この器具に生きた光源が付いているか。1=点いている 0=消えている -1=Light が無い。
+        /// 器具本体（Globe など）から親を数段さかのぼって Light を探す。
+        /// 電球と Light コンポーネントは同じ階層に無いことが多いため。
+        /// </summary>
+        static int LampIsLit(Transform t)
+        {
+            for (var tr = t; tr != null; tr = tr.parent)
+            {
+                var lights = tr.GetComponentsInChildren<Light>(true);
+                if (lights.Length == 0) continue;
+                foreach (var l in lights)
+                    if (l.enabled && l.gameObject.activeInHierarchy && l.intensity > 0.01f) return 1;
+                return 0;
+            }
+            return -1;
+        }
+
         static bool IsSilhouetteProp(Renderer r)
         {
             for (var tr = r.transform; tr != null; tr = tr.parent)
@@ -440,16 +458,33 @@ namespace BLIND.EditorTools
             // --- 発熱するもの（サーモ役の道しるべになる） ---
             if (n == "Lens" || all.Contains("lamplens")) return "Lamp";
             if (n == "Housing" || all.Contains("lamphousing")) return "Ballast";
-            if (all.Contains("fluoro")) return "Lamp";
-            // 天井の照明パネルは On / Dim / Off の3種がある。生きている物だけが熱い＝
-            // サーモ役には「どの列の灯りが生きているか」が読める
-            if (all.Contains("lightpanel") || all.Contains("light_panel")
+
+            // 取り込んだ照明器具は、名前が LightPanel でないというだけで
+            // 全部 19℃ の小物になっていた（room16 の吊り下げ電球、room11 の蛍光灯、
+            // room8 の埋込照明、各部屋の typeBlight など）。
+            // 停電したビルで唯一まだ電気が来ている場所がサーモ役の道しるべなので、
+            // ここが冷たいとサーモ役は暗闇に置き去りになる。
+            //
+            // "fluoro" は "Fluorescent" に一致しない（fluore と fluoro）。
+            // room11 の蛍光灯10本がずっと常温だったのはこれが原因。
+            if (n == "Globe" || n == "Shade"
+                || all.Contains("fluor") || all.Contains("bulb")
+                || all.Contains("lightfixture") || all.Contains("ceilinglight")
+                || all.Contains("typeblight") || all.Contains("emergency_light")
+                || all.Contains("lightpanel") || all.Contains("light_panel")
                 || all.Contains("chess light"))
             {
                 if (all.Contains("_off")) return "LampOff";
                 if (all.Contains("_dim")) return "LampDim";
+
+                // 名前で分からない器具は、実際に付いている Light を見て判断する。
+                // 消えている器具まで熱いと「どこはまだ生きているか」が読めなくなる。
+                var lit = LampIsLit(go.transform);
+                if (lit == 0) return "LampOff";
                 return "Lamp";
             }
+            // 天井の照明パネルは On / Dim / Off の3種がある。生きている物だけが熱い＝
+            // サーモ役には「どの列の灯りが生きているか」が読める
 
             // --- CRT モニタ ---
             if (all.Contains("crt") || all.Contains("screenshards") || all.Contains("screenoff") || all.Contains("screenon"))
