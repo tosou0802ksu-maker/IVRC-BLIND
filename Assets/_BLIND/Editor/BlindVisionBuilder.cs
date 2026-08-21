@@ -348,13 +348,11 @@ namespace BLIND.EditorTools
         /// サーモ役にしか分からない情報として一番強く効く。
         /// 部屋の四隅に散らして、どこにいても最低1体は視界に入るようにしてある。
         /// </summary>
-        static readonly HashSet<string> HotDolls = new HashSet<string>
-        {
-            "Doll_04",          // 西寄り中央
-            "Doll_10",          // 中央
-            "Doll_13",          // 東寄り
-            "Doll_Fallen_09",   // 南、倒れている
-        };
+        /// 【廃止】以前はここに挙げた4体だけを熱くしていた。
+        /// 「16体のうち4体だけ体温がある」という設計だったが、実際に見ると
+        /// サーモ役の視界には人影が4つ浮かぶだけで、部屋に人形が林立している
+        /// という事実そのものが伝わらなかった。今は Prop_Dolls 配下を全部 Body にしている。
+        static readonly HashSet<string> HotDolls = new HashSet<string>();
 
         /// <summary>
         /// 形そのものが情報になっている物。箱やブロブに潰してはいけない。
@@ -397,14 +395,30 @@ namespace BLIND.EditorTools
             // 2枚重なって Zファイティング（チラつき）を起こす。汚れには温度も反響も無い。
             if (all.Contains("decal") || all.Contains("stain") || all.Contains("soot")) { echo = false; return null; }
 
+            // 過去の人の視界を塞ぐためだけに置いた黒い複製。
+            // 元の壁が別レイヤーに残っていて、そちらから既にサーモ・エコロケが
+            // 作られている。これも拾うと同じ壁が二重になり、面が重なってちらつく。
+            if (n.StartsWith("Blackout_")) { echo = false; return null; }
+
             // --- 体温を持つもの（room16） ---
             // 人形は名前で個体指定する。親をたどって判定するのは、
             // 人形が USDRoot などの中間ノードを挟んでいる場合があるため。
             for (var tr = go.transform; tr != null; tr = tr.parent)
             {
-                if (HotDolls.Contains(tr.name)) return "Body";
-                // 巨大な手とその手が掴んでいる人形。この部屋の主なので一番はっきり見せる
-                if (tr.name == "Prop_GiantHand") return "Skin";
+                // room16 の人形は全部が体温を持つ。
+                // 以前は4体だけ熱くしていたが、それだと残り12体がサーモ役に見えず、
+                // 「人形だらけの部屋」という部屋の姿そのものが伝わらなかった。
+                // 全部に体温があれば、サーモ役には人影が林立して見える。
+                if (tr.name == "Prop_Dolls") return "Body";
+
+                // 巨大な手。この部屋の主なので、素肌として一番はっきり見せる。
+                // 掴まれている人形は服の上からの体温、床を突き破った破片は木材のまま。
+                if (tr.name == "Prop_GiantHand")
+                {
+                    if (n == "GrabbedDoll") return "Body";
+                    if (n.StartsWith("Splinter") || n == "Void") break;
+                    return "Skin";
+                }
             }
 
             // --- レーザー（room14）: サーモ役だけの領分 ---
