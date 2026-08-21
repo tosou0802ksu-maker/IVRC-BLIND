@@ -122,8 +122,9 @@ namespace BLIND.EditorTools
             Debug.Log("[BLIND] " + tuningLog);
 
             Debug.Log("[BLIND] ===== 全工程が正常に完了しました！ =====");
-            EditorUtility.DisplayDialog("BLIND", "部屋合体と視界レイヤー生成（サーマル・エコロケ）が全自動で完了しました！
-Playモードで動作確認を行ってください。", "OK");
+            EditorUtility.DisplayDialog("BLIND",
+                "部屋合体と視界レイヤー生成（サーマル・エコロケ）が全自動で完了しました！\n"
+                + "Playモードで動作確認を行ってください。", "OK");
         }
 
         private static void AdjustRoom(string name, GameObject roomGo)
