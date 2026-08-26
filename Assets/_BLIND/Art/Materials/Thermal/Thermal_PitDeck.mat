@@ -25,14 +25,22 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _Dim: 0.45
+    - _BodyCoreY: 1.15
+    - _BodyCoreness: 0
+    - _BodyDrop: 7
+    - _BodyMottle: 1.6
+    - _BodyPow: 1
+    - _BodyProfile: 0
+    - _BodySpread: 0.85
+    - _BodyVein: 2.2
+    - _Dim: 0.022
     - _EdgeCool: 0.1
     - _FadeFar: 200
     - _FadeNear: 5
     - _Grain: 0.05
     - _HeatIntensity: 1
     - _Noise: 0.015
-    - _TempC: 24
+    - _TempC: 15
     - _TempGamma: 0.65
     - _TempMax: 70
     - _TempMin: 12

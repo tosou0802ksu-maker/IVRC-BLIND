@@ -201,6 +201,91 @@ namespace BLIND.EditorTools
             return key == "Wall" || key == "Ceiling" || key == "FloorStone" || key == "Water";
         }
 
+        // -------------------------------------------------------------
+        //  動く物の検出
+        // -------------------------------------------------------------
+        /// <summary>
+        /// 「あとで動く物」の Transform 集合を作る。
+        ///
+        /// なぜ必要か：
+        /// 静止物は結合して Vision_Thermal / Vision_Echo にまとめている。これは
+        /// ドローコールを Default の 1/8 まで落とすための重要な最適化で、やめたくない。
+        /// しかし結合してしまうと、複製は元オブジェクトとは別の場所（部屋直下のバケツ）に
+        /// 置かれるため、元が動いても複製は取り残される。
+        ///
+        /// 実際に踏んだ事故：room3 のガレージシャッターを開くギミックを入れたとき、
+        /// T_Garage_Shutter / E_Garage_Shutter が Vision_Thermal / Vision_Echo の下に
+        /// いたので一緒に上がらず、サーモ役とエコロケ役にはシャッターが閉じたまま見えていた。
+        /// 過去人だけが「開いた」と言い、他の2人には嘘に聞こえる、という最悪のバグになる。
+        ///
+        /// 対策として、動く物だけは結合せず、複製を元オブジェクトの子として置く。
+        /// 子にしておけば元が動けば必ず一緒に動く。構造的に二度とズレない。
+        /// 動く物はドアやシャッターのように数が少ないので、結合をやめても損失は小さい。
+        ///
+        /// 判定材料は2つ：
+        ///   1. Animator の支配下にある（ドアの開閉アニメ・歩く人形など）
+        ///   2. ギミックスクリプトから Transform / GameObject として参照されている
+        ///      （MultiButtonDoor.targetDoor1、DoorQuizManager.door0〜2 など）
+        /// 2 はフィールド名を決め打ちにせず、UdonSharpBehaviour の全参照を舐めて集める。
+        /// 名前で判定すると新しいギミックを足すたびにここを直す羽目になるため。
+        /// </summary>
+        static HashSet<Transform> CollectMovable(Transform room)
+        {
+            var roots = new HashSet<Transform>();
+
+            // 1. Animator の支配下。
+            //    ただしコントローラの刺さっていない Animator は動かない。
+            //    room9 の配管はインポート時に付いた空の Animator を92個持っていて、
+            //    これを「動く物」と誤判定すると配管が全部結合対象から外れ、
+            //    サーモ・エコロケのドローコールがそれぞれ +92 される。
+            //    マップ全体でコントローラを持つ Animator は3個しかない。
+            foreach (var anim in room.GetComponentsInChildren<Animator>(true))
+                if (anim != null && anim.runtimeAnimatorController != null) roots.Add(anim.transform);
+
+            // 2. ギミックスクリプトが握っている Transform
+            //    シーン全体を見る。room3 のシャッターのように、
+            //    マネージャが別の部屋にいる場合があるため。
+            foreach (var usb in Object.FindObjectsOfType<UdonSharp.UdonSharpBehaviour>(true))
+            {
+                if (usb == null) continue;
+                var so = new SerializedObject(usb);
+                var it = so.GetIterator();
+                bool e = it.NextVisible(true);
+                while (e)
+                {
+                    if (it.propertyType == SerializedPropertyType.ObjectReference && it.objectReferenceValue != null)
+                    {
+                        Transform t = null;
+                        if (it.objectReferenceValue is Transform tr) t = tr;
+                        else if (it.objectReferenceValue is GameObject g) t = g.transform;
+                        if (t != null && t.IsChildOf(room)) roots.Add(t);
+                    }
+                    e = it.NextVisible(false);
+                }
+            }
+
+            // 見つけた根の配下すべてを「動く」とみなす。
+            // ドアは板・枠・取っ手が子に分かれていることが多く、根だけ拾っても意味が無い。
+            var all = new HashSet<Transform>();
+            foreach (var r in roots)
+            {
+                if (r == null || r == room) continue;      // 部屋そのものを指す参照は無視する
+
+                // 安全弁：大きな入れ物への参照が1つ紛れ込むだけで、その配下が
+                // まるごと結合対象から外れてドローコールが跳ね上がる。
+                // 動く物（ドア・シャッター）はどれも十数レンダラーで収まるので、
+                // それを大きく超える塊は「参照はされているが動く物ではない」と見なす。
+                int rc = r.GetComponentsInChildren<MeshRenderer>(true).Length;
+                if (rc > MovableRendererCap) continue;
+
+                foreach (var t in r.GetComponentsInChildren<Transform>(true)) all.Add(t);
+            }
+            return all;
+        }
+
+        /// <summary>「動く物」1つが持てるレンダラー数の上限。超えたら結合側に回す（CollectMovable 参照）。</summary>
+        const int MovableRendererCap = 40;
+
         static bool IsThinAndLong(Bounds b)
         {
             float mx = Mathf.Max(b.size.x, Mathf.Max(b.size.y, b.size.z));
@@ -237,6 +322,21 @@ namespace BLIND.EditorTools
             bool readable = src != null && src.isReadable;
             int tris = readable ? src.triangles.Length / 3 : int.MaxValue;
 
+            // 体温を持つ物は結合しない。1体ずつ独立したレンダラーにする。
+            //
+            // 結合すると16体が1枚のメッシュになり、MaterialPropertyBlock は
+            // レンダラー単位でしか効かないので「16体が完全に同じ呼吸をする」ことしかできない。
+            // ThermalBodyDrift で1体ずつ違う周期で体温を揺らし、さらに1体だけを
+            // 「暖かい個体」にするには、個体が別々のレンダラーである必要がある。
+            //
+            // 軽い物でも結合側へ落とさないよう、三角形数の判定より先に置いている。
+            // 代償はドローコール +16 程度。サーモ層は元々レンダラーが少ないので許容範囲。
+            if (readable && (key == "Body" || key == "Skin" || key == "Burning"))
+            {
+                standalone = true;
+                return false;
+            }
+
             if (readable && tris <= MaxPropTris)
             {
                 ci.mesh = src;
@@ -254,7 +354,7 @@ namespace BLIND.EditorTools
             // この部屋の意味そのもの（人形部屋に体温のある人形が混ざっている）で、
             // 箱にした瞬間その情報が消える。重ければ粗くしてでも輪郭を残す。
             bool silhouette = IsSilhouetteProp(mr);
-            if (readable && (key == "Body" || key == "Skin" || key == "Burning" || silhouette))
+            if (readable && silhouette)
             {
                 var lite = BlindMeshReducer.SaveLite(src, silhouette ? SilhouetteTris : HeatShapeTris, "_heat");
 
@@ -276,14 +376,34 @@ namespace BLIND.EditorTools
             return true;
         }
 
+        /// <summary>体温を持つ＝人体プロファイルを効かせる分類キーか。</summary>
+        static bool IsBodyKey(string key)
+        {
+            return key == "Body" || key == "Skin" || key == "Burning";
+        }
+
         /// <summary>エコロケ用に素の形を使うときの上限。これを超えたら簡略版を作る。</summary>
         const int EchoShapeTris = 300;
 
         /// <summary>
-        /// 体温を持つ物（人形・焼けた人）をサーモ／エコロケに出すときの粗さ。
-        /// 「人の形をした何か」と分かれば足りるので、ここは粗くてよい。
+        /// 体温を持つ物（人形・焼けた人）をサーモ層に出すときの粗さ。
+        ///
+        /// 以前は 300 だった。「人の形をした何か」と分かれば足りるという判断だったが、
+        /// 実測したところこれは二重減面になっていた。room16 の人形は Default 層の時点で
+        /// 既に BlindMeshReducer が作った `_lite` メッシュ（3,561三角形）で、
+        /// それをさらに 300 まで落としていた。頂点クラスタリングは格子スナップなので、
+        /// 一度粗くした物をもう一度かけると腕や脚が胴から千切れ、輪郭に穴が空く。
+        /// サーモ視点のスクリーンショットで人形の脚が分離して見えていたのはこれが原因。
+        ///
+        /// サーモ視点の「暗闇に人体だけが浮かぶ」画は作品の看板になる絵なので、
+        /// ここを削る意味は薄い。4000 にすると：
+        ///   ・人形(_lite 3,561) は予算内なので減面されず、Default 層と同じ形が出る
+        ///   ・巨大な腕(GiantArm 4,867) だけが 4,000 に落ちる（ほぼ原形）
+        /// 増えるのは room16 全体で3〜4万三角形程度。マップ100万に対して誤差。
+        /// サーモ層はレンダラー数が Default の 1/8 しかなく、コストは三角形ではなく
+        /// ドローコールに支配されているので、この増加は体感に出ない。
         /// </summary>
-        const int HeatShapeTris = 300;
+        const int HeatShapeTris = 4000;
 
         /// <summary>
         /// 形そのものが情報になっている物（チェス駒）の粗さ。
@@ -597,16 +717,36 @@ namespace BLIND.EditorTools
             if (echoMat == null) return "EchoMaterial.mat が無い";
 
             var log = new System.Text.StringBuilder();
-            long totalTris = 0; int totalRend = 0;
+            long totalTris = 0; int totalRend = 0; int baked = 0;
 
             foreach (var rn in roomNames)
             {
                 var room = FindRoom(rn);
                 if (room == null) { log.AppendLine(rn + ": 見つからない"); continue; }
 
-                // 既存の生成物を消す
+                // 既存の生成物を消す。
+                // ただし Vision_* の中に手で置いた物が紛れ込んでいることがあるので、
+                // 消す前に助け出す。room13 のクイズ扉9枚(Doors1〜3)が実際に
+                // Vision_Echo の下に入っていて、この掃除で消える寸前だった。
+                // 生成物は必ず E_/T_/VisionFX_ で始まるので、それ以外は人が置いた物とみなす。
                 foreach (var g in new[] { EchoGroup, ThermalGroup })
-                { var old = room.Find(g); if (old != null) Object.DestroyImmediate(old.gameObject); }
+                {
+                    var old = room.Find(g);
+                    if (old == null) continue;
+                    var rescued = new List<Transform>();
+                    for (int i = old.childCount - 1; i >= 0; i--)
+                    {
+                        var c = old.GetChild(i);
+                        if (c.name.StartsWith("E_") || c.name.StartsWith("T_") || c.name.StartsWith(FxPrefix)) continue;
+                        rescued.Add(c);
+                    }
+                    foreach (var c in rescued) c.SetParent(room, true);   // 見た目を変えずに部屋直下へ退避
+                    if (rescued.Count > 0)
+                        log.AppendLine("  ⚠ " + rn + "/" + g + " に手置きの物が " + rescued.Count
+                                     + " 個あった。消さずに部屋直下へ退避した: "
+                                     + string.Join(", ", rescued.ConvertAll(x => x.name).ToArray()));
+                    Object.DestroyImmediate(old.gameObject);
+                }
                 // 動く熱源の複製は元の親の下にぶら下がっているので、名前で探して消す
                 var doomedFx = new List<GameObject>();
                 foreach (var t in room.GetComponentsInChildren<Transform>(true))
@@ -634,14 +774,49 @@ namespace BLIND.EditorTools
                 // 見落とすと「エコロケに出すな」と分類した物（レーザーなど）が
                 // 大きいというだけで復活してしまう。実際にレーザーで踏んだ。
                 var bigOnesEcho = new List<KeyValuePair<Renderer, string>>();
+
+                // 動く物は結合しない。複製を元の子として置き、必ず一緒に動かす（CollectMovable 参照）
+                var movable = CollectMovable(room);
+                var movers = new List<KeyValuePair<Renderer, string>>();
+                var moversEcho = new List<KeyValuePair<Renderer, string>>();
+
+                // 動く物の中に残っている「前回までの生成物」を消す。
+                // バケツの外に居るので上の掃除では拾えない。消さずに作り直すと
+                // 同じ位置に複製が重なってZファイティングになる。
+                // 消すのは生成物の命名規則(T_/E_/VisionFX_)に合う物だけ。
+                // 手で置いた色分けコピー（room13 のクイズ扉など）は人の意図なので触らない。
+                {
+                    var stale = new List<GameObject>();
+                    foreach (var t in movable)
+                    {
+                        if (t == null) continue;
+                        if (t.gameObject.layer != LayerThermal && t.gameObject.layer != LayerEcho) continue;
+                        var n2 = t.name;
+                        if (n2.StartsWith("T_") || n2.StartsWith("E_") || n2.StartsWith(FxPrefix)) stale.Add(t.gameObject);
+                    }
+                    foreach (var d in stale) if (d != null) Object.DestroyImmediate(d);
+                    if (stale.Count > 0) log.AppendLine("  " + rn + ": 動く物に残っていた旧生成物 " + stale.Count + " 個を削除");
+                    if (stale.Count > 0) movable = CollectMovable(room);   // 消した分を反映して取り直す
+                }
+
                 foreach (var mr in room.GetComponentsInChildren<MeshRenderer>(true))
                 {
                     if (!mr.gameObject.activeInHierarchy) continue;
                     if (mr.gameObject.layer == LayerThermal || mr.gameObject.layer == LayerEcho) continue;
+                    if (mr.name.StartsWith(FxPrefix)) continue;   // 前回の複製を材料にしない
 
                     bool echo;
                     var key = Classify(mr, out echo);
                     if (key == null) { skipped++; continue; }
+
+                    if (movable.Contains(mr.transform))
+                    {
+                        movers.Add(new KeyValuePair<Renderer, string>(mr, key));
+                        if (echo) moversEcho.Add(new KeyValuePair<Renderer, string>(mr, key));
+                        used++;
+                        continue;
+                    }
+
 
                     CombineInstance ci; bool standalone;
                     if (!MakeInstance(mr, room, key, out standalone, out ci))
@@ -742,6 +917,17 @@ namespace BLIND.EditorTools
                     var bm = BlindThermalTable.Mat(kv.Value);
                     var go = CloneReal(kv.Key, tRoot.transform, LayerThermal, bm, "T_");
                     if (go == null) continue;
+                    if (IsBodyKey(kv.Value) && BlindBodyThermalBake.Apply(go)) baked++;
+                    tTris += TriCount(kv.Key); tRend++;
+                }
+                // 動く物は元オブジェクトの子に置く。バケツに入れると開閉ギミックで置き去りになる。
+                // 名前を FxPrefix にしておくと、作り直しのときに既存の掃除処理がそのまま拾ってくれる。
+                foreach (var kv in movers)
+                {
+                    var bm = BlindThermalTable.Mat(kv.Value);
+                    var go = CloneReal(kv.Key, kv.Key.transform, LayerThermal, bm, FxPrefix + "T_");
+                    if (go == null) continue;
+                    if (IsBodyKey(kv.Value) && BlindBodyThermalBake.Apply(go)) baked++;
                     tTris += TriCount(kv.Key); tRend++;
                 }
 
@@ -825,6 +1011,15 @@ namespace BLIND.EditorTools
                     AddReceiver(go, go.GetComponent<MeshRenderer>());
                     eTris += TriCount(kv.Key); eRend++;
                 }
+                // 動く物（サーモ側と同じ理由で元オブジェクトの子に置く）
+                foreach (var kv in moversEcho)
+                {
+                    var em = EchoMatFor(kv.Key, rn, echoMat);
+                    var go = CloneReal(kv.Key, kv.Key.transform, LayerEcho, em, FxPrefix + "E_");
+                    if (go == null) continue;
+                    AddReceiver(go, go.GetComponent<MeshRenderer>());
+                    eTris += TriCount(kv.Key); eRend++;
+                }
 
                 foreach (var tm in temps) if (tm != null) Object.DestroyImmediate(tm);
 
@@ -842,8 +1037,108 @@ namespace BLIND.EditorTools
             }
 
             AssetDatabase.SaveAssets();
+            // エコロケ層を作り直した以上、必ず受信機を登録し直す。
+            //
+            // EchoEmitter は「パルスを届ける相手」を receivers 配列で持っている。
+            // この関数はエコロケ層(Vision_Echo)をまるごと作り直すので、
+            // 前の EchoReceiver は破棄され、配列には欠損参照だけが残る。
+            // 実際にそれが起きて、1部屋を作り直しただけで
+            // 「エコロケ視点が全部の部屋で真っ暗」になった（719個中56個が欠損）。
+            //
+            // 手で [BLIND]→[エコロケ受信機を集め直す] を回す運用にしていたが、
+            // 作り直すたびに必要な手順を人間の記憶に預けてはいけない。
+            // 部屋を1つだけ作り直したときも、他の部屋の受信機ごと入れ直す。
+            log.AppendLine("  " + EchoReceiverCollector.Collect());
+
+            log.AppendLine(WireBodyDrift());
+            if (baked > 0)
+                log.AppendLine("  肉の厚みを焼き込んだ人体メッシュ " + baked + " 体 / 最後の1体: "
+                             + BlindBodyThermalBake.LastReport);
             log.AppendLine("\n合計 " + totalRend + " レンダラー / " + totalTris.ToString("N0") + " tri を追加");
             return log.ToString();
+        }
+
+        /// <summary>
+        /// 体温を持つレンダラーを部屋ごとに集めて ThermalBodyDrift に繋ぐ。
+        ///
+        /// 温度が固定だと、サーモ役の画面で人形は「止まった絵」にしかならない。
+        /// 一度見れば以降は情報が増えず、二度目からはただの背景になる。
+        /// 本物のサーモグラフィが不気味なのは、生きている物の温度が絶えず動くからで、
+        /// その「動いている」という手がかりを与えるのがこの処理。
+        ///
+        /// 「暖かい個体」は部屋ごとに1体だけ選ぶ。16体のうち1体だけ体温が高く、
+        /// 他と違うリズムで脈打つ ―― サーモ役だけが気付ける異常として置いている。
+        /// どの個体になるかは名前から決まるので、作り直しても入れ替わらない。
+        /// </summary>
+        static string WireBodyDrift()
+        {
+            var driftType = System.Type.GetType("ThermalBodyDrift, Assembly-CSharp");
+            if (driftType == null) return "  ThermalBodyDrift が未コンパイル。体温の揺らぎは未設定。";
+
+            var rooms = GameObject.Find("=== ROOMS ===");
+            if (rooms == null) return "";
+
+            var report = new System.Text.StringBuilder();
+            foreach (Transform room in rooms.transform)
+            {
+                // この部屋のサーモ層にある体温レンダラーを集める
+                var bodies = new List<Renderer>();
+                foreach (var r in room.GetComponentsInChildren<Renderer>(true))
+                {
+                    if (r.gameObject.layer != LayerThermal) continue;
+                    var m = r.sharedMaterial;
+                    if (m == null) continue;
+                    var mn = m.name;
+                    if (mn == "Thermal_Body" || mn == "Thermal_Skin" || mn == "Thermal_Burning")
+                        bodies.Add(r);
+                }
+
+                var holderName = "ThermalDrift";
+                var existing = room.Find(holderName);
+                if (bodies.Count == 0)
+                {
+                    if (existing != null) Object.DestroyImmediate(existing.gameObject);
+                    continue;
+                }
+
+                if (existing != null) Object.DestroyImmediate(existing.gameObject);
+                var go = new GameObject(holderName);
+                go.transform.SetParent(room, false);
+
+                var beh = AddUdonComponent(go, driftType);
+                if (beh == null) continue;
+
+                var so = new SerializedObject(beh);
+                var arr = so.FindProperty("targets");
+                arr.arraySize = bodies.Count;
+                for (int i = 0; i < bodies.Count; i++)
+                    arr.GetArrayElementAtIndex(i).objectReferenceValue = bodies[i];
+
+                // 「暖かい個体」を1体選ぶ。名前から決めるので作り直しても同じ個体が選ばれる。
+                int warm = bodies.Count >= 3 ? StableIndex(room.name, bodies.Count) : -1;
+                so.FindProperty("warmIndex").intValue = warm;
+                so.ApplyModifiedProperties();
+
+                var usb = beh as UdonSharp.UdonSharpBehaviour;
+                if (usb != null && UdonSharpEditor.UdonSharpEditorUtility.GetBackingUdonBehaviour(usb) != null)
+                    UdonSharpEditor.UdonSharpEditorUtility.CopyProxyToUdon(usb);
+
+                report.AppendLine("  " + room.name + ": 体温の揺らぎ " + bodies.Count + "体"
+                                + (warm >= 0 ? " (暖かい個体= #" + warm + ")" : ""));
+            }
+            return report.Length > 0 ? report.ToString().TrimEnd() : "";
+        }
+
+        /// <summary>U# の付与。素の AddComponent だと実機で動く UdonBehaviour が作られない。</summary>
+        static Component AddUdonComponent(GameObject go, System.Type t)
+        {
+            var undoType = System.Type.GetType("UdonSharpEditor.UdonSharpUndo, UdonSharp.Editor");
+            if (undoType != null)
+            {
+                var mi = undoType.GetMethod("AddComponent", new[] { typeof(GameObject), typeof(System.Type) });
+                if (mi != null) return mi.Invoke(null, new object[] { go, t }) as Component;
+            }
+            return go.AddComponent(t);
         }
 
         const string EchoBigDir = "Assets/_BLIND/Art/Materials/Echo";

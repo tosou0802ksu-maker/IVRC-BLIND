@@ -26,6 +26,16 @@ Shader "BLIND/ThermalSurface"
         _Dim          ("Dim (1=そのまま 0=真っ黒)", Range(0.0, 1.0)) = 1.0
         _FadeNear     ("Fade Range at Dim=0 (m)", Float) = 5.0
         _FadeFar      ("Fade Range at Dim=1 (m)", Float) = 200.0
+
+        // --- 人体プロファイル（Body / Skin 用。0 なら完全に無効で従来どおり） ---
+        _BodyProfile  ("Body Profile (0=off 1=on)", Range(0.0, 1.0)) = 0.0
+        _BodyCoreness ("Use Baked Vertex Coreness (0=height)", Range(0.0, 1.0)) = 0.0
+        _BodyPow      ("Coreness Falloff Curve", Range(0.4, 3.0)) = 1.0
+        _BodyCoreY    ("Body Core Height (world Y, m)", Float) = 1.15
+        _BodySpread   ("Body Falloff (m)", Float) = 0.85
+        _BodyDrop     ("Extremity Temp Drop (C)", Float) = 7.0
+        _BodyMottle   ("Mottling (C)", Float) = 1.6
+        _BodyVein     ("Vein/Hot-spot Strength (C)", Float) = 2.2
     }
 
     SubShader
@@ -41,17 +51,20 @@ Shader "BLIND/ThermalSurface"
             #pragma fragment frag
             #include "UnityCG.cginc"
 
-            struct appdata { float4 vertex : POSITION; float3 normal : NORMAL; };
+            struct appdata { float4 vertex : POSITION; float3 normal : NORMAL; float4 color : COLOR; };
             struct v2f
             {
                 float4 vertex : SV_POSITION;
                 float3 worldNormal : TEXCOORD0;
                 float3 worldPos : TEXCOORD1;
+                float4 vcol : TEXCOORD2;
             };
 
             float _TempC, _TempMin, _TempMax, _TempGamma;
             float _HeatIntensity, _EdgeCool, _Noise, _Grain, _Dim;
             float _FadeNear, _FadeFar;
+            float _BodyProfile, _BodyCoreness, _BodyPow;
+            float _BodyCoreY, _BodySpread, _BodyDrop, _BodyMottle, _BodyVein;
 
             v2f vert (appdata v)
             {
@@ -59,6 +72,9 @@ Shader "BLIND/ThermalSurface"
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.worldNormal = UnityObjectToWorldNormal(v.normal);
                 o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
+                // 頂点カラーを持たないメッシュには GPU が (1,1,1,1) を入れる。
+                // 焼き込み済みのメッシュは a=0.5 にしてあるので、a で見分けられる。
+                o.vcol = v.color;
                 return o;
             }
 
@@ -117,6 +133,34 @@ Shader "BLIND/ThermalSurface"
                 return (hash13(floor(p * cells)) - 0.5) * fade;
             }
 
+            // 上のノイズはマス目ごとに値が一定なので、面に当てると立方体の面が
+            // そのまま出る（体に 8cm 角の市松模様が浮いて、圧縮ノイズのように見えた）。
+            // センサーの固定パターンノイズはそれで正しいが、体表の温度ムラは
+            // 血流と発汗の分布なので、境目のない滑らかな濃淡でなければならない。
+            // 8隅を補間して滑らかにした版。人体プロファイルでだけ使う。
+            float ValueNoise(float3 p)
+            {
+                float3 c = floor(p);
+                float3 f = frac(p);
+                f = f * f * (3.0 - 2.0 * f);   // なめらかに繋ぐ
+
+                float n000 = hash13(c + float3(0,0,0)), n100 = hash13(c + float3(1,0,0));
+                float n010 = hash13(c + float3(0,1,0)), n110 = hash13(c + float3(1,1,0));
+                float n001 = hash13(c + float3(0,0,1)), n101 = hash13(c + float3(1,0,1));
+                float n011 = hash13(c + float3(0,1,1)), n111 = hash13(c + float3(1,1,1));
+
+                float x00 = lerp(n000, n100, f.x), x10 = lerp(n010, n110, f.x);
+                float x01 = lerp(n001, n101, f.x), x11 = lerp(n011, n111, f.x);
+                return lerp(lerp(x00, x10, f.y), lerp(x01, x11, f.y), f.z);
+            }
+
+            float NoiseSmooth(float3 p, float cells, float fp)
+            {
+                float fade = saturate(1.0 - fp * cells * 2.0);
+                if (fade <= 0.0) return 0.0;
+                return (ValueNoise(p * cells) - 0.5) * fade;
+            }
+
             fixed4 frag (v2f i) : SV_Target
             {
                 float3 n = normalize(i.worldNormal);
@@ -133,6 +177,68 @@ Shader "BLIND/ThermalSurface"
 
                 // 同じ材質でも表面には温度ムラがある（16cm マス）
                 tempC += NoiseOct(i.worldPos, 6.0, fp) * _Grain;
+
+                // --- 人体プロファイル ---
+                //
+                // 人体を一様な温度で塗ると、サーモ視点では「黄色い人型のシール」にしか
+                // 見えない。実際のサーモグラフィで人が不気味に写るのは、体の中に
+                // 温度の構造があるからで、平面ではなく塊として立ち上がって見える。
+                //
+                // 現実の人体の分布：
+                //   胴と頭が最も高く(36℃前後)、手足の先は血流が細いので 28〜30℃まで落ちる。
+                //   表面は汗腺・血管・服の張り付きでまだらになり、頸動脈や
+                //   脇のあたりに局所的な高温点が出る。
+                //
+                // 体表の温度は、その場所の「肉の厚み」でほぼ決まる。発熱するのは体積で
+                // 放熱するのは表面なので、細い所ほど冷える。実測でだいたい
+                // 胴 22cm / 太もも 13cm / 上腕 9cm / 前腕 6cm / 手 2cm、
+                // これが体温分布図の 赤(胴) → 黄緑(太もも) → 水色(手足先) の並びと一致する。
+                // その厚みを BlindBodyThermalBake がメッシュに焼き込み、頂点カラー r に
+                // 「芯からの遠さ」として入れてある。向きにもポーズにも依存しないので、
+                // 寝ている人形も逆立ちしている人形も正しく色が分かれる。
+                //
+                // 焼き込みのないメッシュ（頂点カラー無し＝GPU が a=1 を渡す）は、
+                // 従来どおり高さ(world Y)を体の軸の代わりに使う方式へ自動的に落ちる。
+                //
+                // _BodyProfile が 0 のマテリアル（壁・床・配管など）は
+                // この行を通っても値が変わらないので、従来の見え方のまま。
+                if (_BodyProfile > 0.0)
+                {
+                    // --- 高さ基準（焼き込みが無いとき用のたね）---
+                    // 人体の温度分布は胴を中心に上下対称ではない。頭部は
+                    // 血流が多く体で最も高温(36〜37℃)になる一方、足先は
+                    // 心臓から遠く血流が細いので 28℃ 前後まで落ちる。
+                    // 対称に落とすと頭が足と同じ色になり「顔だけ冷たい人形」という
+                    // 現実にはあり得ない絵になる（実際そう見えていた）。
+                    // 上方向は落ち幅を 2.4 倍緩くして、頭を胴と同じ帯に残す。
+                    float dy = i.worldPos.y - _BodyCoreY;
+                    float spread = max(_BodySpread, 0.01);
+                    float d = (dy < 0.0) ? (-dy / spread) : (dy / (spread * 2.4));
+                    float heightFall = saturate(d * d);        // 二乗＝足先だけ急に冷える
+
+                    // --- 焼き込み基準 ---
+                    // vcol.a が 0.5 なら焼き込み済み。頂点カラーの無いメッシュには
+                    // GPU が (1,1,1,1) を渡すので、a=1 を見て自動的に高さ基準へ落ちる。
+                    float baked = _BodyCoreness * (1.0 - step(0.75, i.vcol.a));
+                    float coreFall = pow(saturate(1.0 - i.vcol.r), _BodyPow);
+
+                    coreFall = lerp(heightFall, coreFall, baked);
+
+                    // 表面のまだら。10cm 相当。血管や汗の分布に相当する。
+                    // マス目のままだと体に市松模様が出るので、補間したノイズを使う。
+                    float mottle = NoiseSmooth(i.worldPos, 10.0, fp) * 2.0;
+
+                    // 局所的な高温点（頸動脈・脇など）。まばらに強く出したいので
+                    // 粗いノイズを一方向に振ってから正の側だけ拾う。
+                    float vein = saturate(NoiseSmooth(i.worldPos, 2.5, fp) * 2.0 + 0.30);
+                    vein = vein * vein;
+
+                    float bodyDelta = -coreFall * _BodyDrop
+                                    + mottle * _BodyMottle
+                                    + vein * _BodyVein;
+
+                    tempC += bodyDelta * _BodyProfile;
+                }
 
                 float h = saturate((tempC - _TempMin) / max(_TempMax - _TempMin, 0.001));
                 h = pow(h, _TempGamma);
