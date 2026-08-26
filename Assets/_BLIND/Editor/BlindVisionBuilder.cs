@@ -322,6 +322,21 @@ namespace BLIND.EditorTools
             bool readable = src != null && src.isReadable;
             int tris = readable ? src.triangles.Length / 3 : int.MaxValue;
 
+            // 体温を持つ物は結合しない。1体ずつ独立したレンダラーにする。
+            //
+            // 結合すると16体が1枚のメッシュになり、MaterialPropertyBlock は
+            // レンダラー単位でしか効かないので「16体が完全に同じ呼吸をする」ことしかできない。
+            // ThermalBodyDrift で1体ずつ違う周期で体温を揺らし、さらに1体だけを
+            // 「暖かい個体」にするには、個体が別々のレンダラーである必要がある。
+            //
+            // 軽い物でも結合側へ落とさないよう、三角形数の判定より先に置いている。
+            // 代償はドローコール +16 程度。サーモ層は元々レンダラーが少ないので許容範囲。
+            if (readable && (key == "Body" || key == "Skin" || key == "Burning"))
+            {
+                standalone = true;
+                return false;
+            }
+
             if (readable && tris <= MaxPropTris)
             {
                 ci.mesh = src;
@@ -339,7 +354,7 @@ namespace BLIND.EditorTools
             // この部屋の意味そのもの（人形部屋に体温のある人形が混ざっている）で、
             // 箱にした瞬間その情報が消える。重ければ粗くしてでも輪郭を残す。
             bool silhouette = IsSilhouetteProp(mr);
-            if (readable && (key == "Body" || key == "Skin" || key == "Burning" || silhouette))
+            if (readable && silhouette)
             {
                 var lite = BlindMeshReducer.SaveLite(src, silhouette ? SilhouetteTris : HeatShapeTris, "_heat");
 
@@ -359,6 +374,12 @@ namespace BLIND.EditorTools
             var local = room.worldToLocalMatrix * Matrix4x4.TRS(b.center, Quaternion.identity, b.size);
             ci.transform = local;
             return true;
+        }
+
+        /// <summary>体温を持つ＝人体プロファイルを効かせる分類キーか。</summary>
+        static bool IsBodyKey(string key)
+        {
+            return key == "Body" || key == "Skin" || key == "Burning";
         }
 
         /// <summary>エコロケ用に素の形を使うときの上限。これを超えたら簡略版を作る。</summary>
@@ -696,7 +717,7 @@ namespace BLIND.EditorTools
             if (echoMat == null) return "EchoMaterial.mat が無い";
 
             var log = new System.Text.StringBuilder();
-            long totalTris = 0; int totalRend = 0;
+            long totalTris = 0; int totalRend = 0; int baked = 0;
 
             foreach (var rn in roomNames)
             {
@@ -896,6 +917,7 @@ namespace BLIND.EditorTools
                     var bm = BlindThermalTable.Mat(kv.Value);
                     var go = CloneReal(kv.Key, tRoot.transform, LayerThermal, bm, "T_");
                     if (go == null) continue;
+                    if (IsBodyKey(kv.Value) && BlindBodyThermalBake.Apply(go)) baked++;
                     tTris += TriCount(kv.Key); tRend++;
                 }
                 // 動く物は元オブジェクトの子に置く。バケツに入れると開閉ギミックで置き去りになる。
@@ -905,6 +927,7 @@ namespace BLIND.EditorTools
                     var bm = BlindThermalTable.Mat(kv.Value);
                     var go = CloneReal(kv.Key, kv.Key.transform, LayerThermal, bm, FxPrefix + "T_");
                     if (go == null) continue;
+                    if (IsBodyKey(kv.Value) && BlindBodyThermalBake.Apply(go)) baked++;
                     tTris += TriCount(kv.Key); tRend++;
                 }
 
@@ -1014,8 +1037,95 @@ namespace BLIND.EditorTools
             }
 
             AssetDatabase.SaveAssets();
+            log.AppendLine(WireBodyDrift());
+            if (baked > 0)
+                log.AppendLine("  肉の厚みを焼き込んだ人体メッシュ " + baked + " 体 / 最後の1体: "
+                             + BlindBodyThermalBake.LastReport);
             log.AppendLine("\n合計 " + totalRend + " レンダラー / " + totalTris.ToString("N0") + " tri を追加");
             return log.ToString();
+        }
+
+        /// <summary>
+        /// 体温を持つレンダラーを部屋ごとに集めて ThermalBodyDrift に繋ぐ。
+        ///
+        /// 温度が固定だと、サーモ役の画面で人形は「止まった絵」にしかならない。
+        /// 一度見れば以降は情報が増えず、二度目からはただの背景になる。
+        /// 本物のサーモグラフィが不気味なのは、生きている物の温度が絶えず動くからで、
+        /// その「動いている」という手がかりを与えるのがこの処理。
+        ///
+        /// 「暖かい個体」は部屋ごとに1体だけ選ぶ。16体のうち1体だけ体温が高く、
+        /// 他と違うリズムで脈打つ ―― サーモ役だけが気付ける異常として置いている。
+        /// どの個体になるかは名前から決まるので、作り直しても入れ替わらない。
+        /// </summary>
+        static string WireBodyDrift()
+        {
+            var driftType = System.Type.GetType("ThermalBodyDrift, Assembly-CSharp");
+            if (driftType == null) return "  ThermalBodyDrift が未コンパイル。体温の揺らぎは未設定。";
+
+            var rooms = GameObject.Find("=== ROOMS ===");
+            if (rooms == null) return "";
+
+            var report = new System.Text.StringBuilder();
+            foreach (Transform room in rooms.transform)
+            {
+                // この部屋のサーモ層にある体温レンダラーを集める
+                var bodies = new List<Renderer>();
+                foreach (var r in room.GetComponentsInChildren<Renderer>(true))
+                {
+                    if (r.gameObject.layer != LayerThermal) continue;
+                    var m = r.sharedMaterial;
+                    if (m == null) continue;
+                    var mn = m.name;
+                    if (mn == "Thermal_Body" || mn == "Thermal_Skin" || mn == "Thermal_Burning")
+                        bodies.Add(r);
+                }
+
+                var holderName = "ThermalDrift";
+                var existing = room.Find(holderName);
+                if (bodies.Count == 0)
+                {
+                    if (existing != null) Object.DestroyImmediate(existing.gameObject);
+                    continue;
+                }
+
+                if (existing != null) Object.DestroyImmediate(existing.gameObject);
+                var go = new GameObject(holderName);
+                go.transform.SetParent(room, false);
+
+                var beh = AddUdonComponent(go, driftType);
+                if (beh == null) continue;
+
+                var so = new SerializedObject(beh);
+                var arr = so.FindProperty("targets");
+                arr.arraySize = bodies.Count;
+                for (int i = 0; i < bodies.Count; i++)
+                    arr.GetArrayElementAtIndex(i).objectReferenceValue = bodies[i];
+
+                // 「暖かい個体」を1体選ぶ。名前から決めるので作り直しても同じ個体が選ばれる。
+                int warm = bodies.Count >= 3 ? StableIndex(room.name, bodies.Count) : -1;
+                so.FindProperty("warmIndex").intValue = warm;
+                so.ApplyModifiedProperties();
+
+                var usb = beh as UdonSharp.UdonSharpBehaviour;
+                if (usb != null && UdonSharpEditor.UdonSharpEditorUtility.GetBackingUdonBehaviour(usb) != null)
+                    UdonSharpEditor.UdonSharpEditorUtility.CopyProxyToUdon(usb);
+
+                report.AppendLine("  " + room.name + ": 体温の揺らぎ " + bodies.Count + "体"
+                                + (warm >= 0 ? " (暖かい個体= #" + warm + ")" : ""));
+            }
+            return report.Length > 0 ? report.ToString().TrimEnd() : "";
+        }
+
+        /// <summary>U# の付与。素の AddComponent だと実機で動く UdonBehaviour が作られない。</summary>
+        static Component AddUdonComponent(GameObject go, System.Type t)
+        {
+            var undoType = System.Type.GetType("UdonSharpEditor.UdonSharpUndo, UdonSharp.Editor");
+            if (undoType != null)
+            {
+                var mi = undoType.GetMethod("AddComponent", new[] { typeof(GameObject), typeof(System.Type) });
+                if (mi != null) return mi.Invoke(null, new object[] { go, t }) as Component;
+            }
+            return go.AddComponent(t);
         }
 
         const string EchoBigDir = "Assets/_BLIND/Art/Materials/Echo";
