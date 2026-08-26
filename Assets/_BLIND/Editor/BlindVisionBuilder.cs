@@ -1037,6 +1037,19 @@ namespace BLIND.EditorTools
             }
 
             AssetDatabase.SaveAssets();
+            // エコロケ層を作り直した以上、必ず受信機を登録し直す。
+            //
+            // EchoEmitter は「パルスを届ける相手」を receivers 配列で持っている。
+            // この関数はエコロケ層(Vision_Echo)をまるごと作り直すので、
+            // 前の EchoReceiver は破棄され、配列には欠損参照だけが残る。
+            // 実際にそれが起きて、1部屋を作り直しただけで
+            // 「エコロケ視点が全部の部屋で真っ暗」になった（719個中56個が欠損）。
+            //
+            // 手で [BLIND]→[エコロケ受信機を集め直す] を回す運用にしていたが、
+            // 作り直すたびに必要な手順を人間の記憶に預けてはいけない。
+            // 部屋を1つだけ作り直したときも、他の部屋の受信機ごと入れ直す。
+            log.AppendLine("  " + EchoReceiverCollector.Collect());
+
             log.AppendLine(WireBodyDrift());
             if (baked > 0)
                 log.AppendLine("  肉の厚みを焼き込んだ人体メッシュ " + baked + " 体 / 最後の1体: "
