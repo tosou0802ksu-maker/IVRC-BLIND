@@ -349,6 +349,25 @@ namespace BLIND.EditorTools
             var b = mr.bounds;
             if (b.size.sqrMagnitude < 1e-6f) return false;
 
+            // 配管・配線を箱にしてはいけない。
+            //
+            // room10 の配線束は1個 72,024 三角形あり、上限(180)を大きく超えるので
+            // バウンディングボックス（2.5×1.3×2.9m の中身の詰まった箱）に置き換えられていた。
+            // それが19個ぶん天井に並んだ結果、**サーモ視点の 74% が巨大な板で埋まり**、
+            // 「熱源しか見えない」という前提そのものが壊れていた。
+            //
+            // 配管はサーモ役にとって数少ない道しるべなので、重くても形を残す。
+            // 頂点クラスタリングで落とすと絡まった線がやや団子になるが、
+            // 箱になるよりは遥かにましで、天井を走る線として読める。
+            if (readable && IsDuctKey(key))
+            {
+                var liteDuct = BlindMeshReducer.SaveLite(src, DuctShapeTris, "_duct");
+                ci.mesh = liteDuct != null ? liteDuct : src;
+                ci.subMeshIndex = 0;
+                ci.transform = room.worldToLocalMatrix * mr.transform.localToWorldMatrix;
+                return true;
+            }
+
             // 人体・体温を持つ物だけは箱に潰してはいけない。
             // サーモ役の画面で緑に光る塊が「人の形」なのか「ただの箱」なのかは
             // この部屋の意味そのもの（人形部屋に体温のある人形が混ざっている）で、
@@ -381,6 +400,21 @@ namespace BLIND.EditorTools
         {
             return key == "Body" || key == "Skin" || key == "Burning";
         }
+
+        /// <summary>配管・配線か。箱に潰してはいけない物の判定。</summary>
+        static bool IsDuctKey(string key)
+        {
+            return key == "Duct" || key == "DuctHot" || key == "DuctWarm" || key == "DuctDead";
+        }
+
+        /// <summary>
+        /// 配管・配線を減面するときの目標三角形数。
+        ///
+        /// 元が 72,000 三角形もある配線束を 300 まで落とすと絡まりが団子になって
+        /// 「天井に何か塊がある」としか読めなくなる。1,200 残せば線の走り方が分かる。
+        /// 19個で 22,800 三角形。マップ全体に対しては誤差。
+        /// </summary>
+        const int DuctShapeTris = 1200;
 
         /// <summary>エコロケ用に素の形を使うときの上限。これを超えたら簡略版を作る。</summary>
         const int EchoShapeTris = 300;
@@ -582,10 +616,13 @@ namespace BLIND.EditorTools
             {
                 for (var tr = go.transform; tr != null; tr = tr.parent)
                 {
+                    // ⚠️ 部屋番号は振り直されている（§1.5）。天井が配線だらけの部屋は
+                    //    現在 room10。以前ここに書いてあった room11 は今はだるま部屋で、
+                    //    配線が1本も無いため4段階の散らしが効かなくなっていた。
                     // room8（ロッカー部屋）も同じ扱いにする。
                     // ここはサーモ視点が点灯0.4%＝ほぼ真っ黒だった部屋で、
-                    // 壁に配線を追加して「生きている線と死んだ線が混じった壁」にする。
-                    if (tr.name != "room11" && tr.name != "room8") continue;
+                    // 壁と天井に配線を追加して「生きている線と死んだ線が混じった天井」にする。
+                    if (tr.name != "room10" && tr.name != "room8") continue;
                     switch (StableIndex(n, 4))
                     {
                         case 0: return "DuctDead";

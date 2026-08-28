@@ -98,7 +98,19 @@ namespace BLIND.EditorTools
             public int seed;
             public int entryCol, exitCol;      // 入口側(+Z)と出口側(-Z)の安全な列
             public float density;              // 安全な道以外を穴にする確率
+
+            // 通したくない扉の前を強制的に穴にする矩形(world)。
+            // 使わないときは全部 0 のままでよい。
+            public float bx0, bx1, bz0, bz1;
+            public string blockNote;
+
             public string note;
+
+            public bool HasBlock { get { return bx1 > bx0 && bz1 > bz0; } }
+            public bool InBlock(float wx, float wz)
+            {
+                return HasBlock && wx >= bx0 && wx <= bx1 && wz >= bz0 && wz <= bz1;
+            }
         }
 
         static readonly PitSpec[] Pits =
@@ -116,11 +128,19 @@ namespace BLIND.EditorTools
                                "3部屋で密度を変えて単調さを避ける（ここが一番薄い）" },
 
             // room9 : 北(z=-20.5, x≈-4.45)から入って南(z=-47.7, x≈-4.55)へ。
-            //          西の扉(z≈-45.3)は穴フィールドの外側なので安全に回れる。
-            new PitSpec { room="room9",  fx0=-9.1f, fx1= 0.1f, fz0=-42.0f, fz1=-26.0f,
-                          nx=6, nz=10, rx0=-9.1f, rx1=0.1f, rz0=-47.7f, rz1=-20.5f,
+            //
+            // 穴フィールドを南へ伸ばして z=-46.8 まで覆う（以前は -42.0 まで）。
+            // room8（ロッカー部屋）へ抜ける西の開口が x=-9.1 / z=-46.0〜-44.4 にあり、
+            // 以前はフィールドの外側だったので**穴を全部避けて room8 へ回れてしまった**。
+            // マップの動線としては room8 へはアヒル部屋(room7)側から入らせたいので、
+            // この開口の前を強制的に穴にして room9 側からは渡れなくする。
+            // room8 は room7 との北の開口(z=-40.7, x≈-19.2)から入れるので孤立はしない。
+            new PitSpec { room="room9",  fx0=-9.1f, fx1= 0.1f, fz0=-46.8f, fz1=-26.0f,
+                          nx=6, nz=13, rx0=-9.1f, rx1=0.1f, rz0=-47.7f, rz1=-20.5f,
                           seed=10007, entryCol=3, exitCol=3, density=0.80f,
-                          note="南ルート(青)の長い廊下。16mぶん歩き通す最大の難所（密度も最大）" },
+                          bx0=-9.1f, bx1=-6.4f, bz0=-46.4f, bz1=-44.0f,
+                          blockNote="room8 への西の開口。ここは渡らせない",
+                          note="南ルート(青)の長い廊下。20mぶん歩き通す最大の難所（密度も最大）" },
 
             // room14 : 南北とも扉は x≈17.95
             new PitSpec { room="room14", fx0=13.9f, fx1=22.1f, fz0=-35.6f, fz1=-24.6f,
@@ -475,6 +495,12 @@ namespace BLIND.EditorTools
                 {
                     float t = (z0 == z1) ? 1f : (float)(z0 - z) / (z0 - z1);
                     int col = Mathf.Clamp(Mathf.RoundToInt(Mathf.Lerp(a.x, b.x, t)), 0, s.nx - 1);
+
+                    // 通したくない矩形（扉の前など）に道が入らないよう、
+                    // 入ってしまう行だけ列を外へ押し出す。
+                    // 押し出せない（行がまるごと封鎖）ときはその行を諦める＝
+                    // そもそもそんな指定はしないこと。
+                    col = PushOutOfBlock(s, col, z);
                     safe[col, z] = true;
 
                     // 列が変わる行は横にも繋ぐ。斜めに1マスずつずらすだけだと
@@ -482,7 +508,8 @@ namespace BLIND.EditorTools
                     if (prevCol >= 0 && prevCol != col)
                     {
                         int c0 = Mathf.Min(prevCol, col), c1 = Mathf.Max(prevCol, col);
-                        for (int x = c0; x <= c1; x++) safe[x, z] = true;
+                        for (int x = c0; x <= c1; x++)
+                            if (!InBlockCell(s, x, z)) safe[x, z] = true;
                     }
                     prevCol = col;
                 }
@@ -497,7 +524,10 @@ namespace BLIND.EditorTools
                 for (int x = 0; x < s.nx; x++)
                 {
                     owner[x, z] = -1;
-                    if (!safe[x, z] && rnd.NextDouble() < s.density) holes.Add(new Vector2Int(x, z));
+                    if (safe[x, z]) continue;
+                    // 封鎖したい矩形の中は確率を通さず必ず穴にする
+                    if (InBlockCell(s, x, z) || rnd.NextDouble() < s.density)
+                        holes.Add(new Vector2Int(x, z));
                 }
 
             for (int i = holes.Count - 1; i > 0; i--)
@@ -574,7 +604,57 @@ namespace BLIND.EditorTools
                 used[least]++;
             }
 
+            // ------------------------------------------------------------
+            // 5. 「穴がゼロの行」も作らない
+            // ------------------------------------------------------------
+            // 列だけ保証しても、行がまるごと安全だとその行は横に素通りできる。
+            // 実際 room4 の出口の行が 6マス中5マス安全で、ほぼ素通りだった。
+            // 進むほうの向き(行)にも必ず1つは判断を挟ませる。
+            for (int z = 0; z < s.nz; z++)
+            {
+                bool any = false;
+                for (int x = 0; x < s.nx; x++) if (owner[x, z] >= 0) { any = true; break; }
+                if (any) continue;
+
+                int pick = -1, bestD = -1;
+                for (int x = 0; x < s.nx; x++)
+                {
+                    if (safe[x, z]) continue;
+                    int d = int.MaxValue;
+                    for (int x2 = 0; x2 < s.nx; x2++)
+                        if (safe[x2, z]) d = Mathf.Min(d, Mathf.Abs(x2 - x));
+                    if (d > bestD) { bestD = d; pick = x; }
+                }
+                if (pick < 0) continue;   // 行がまるごと安全な道＝通路なのでそのままでよい
+
+                int least = 0;
+                for (int r = 1; r < 3; r++) if (used[r] < used[least]) least = r;
+                owner[pick, z] = least;
+                used[least]++;
+            }
+
             return owner;
+        }
+
+        /// <summary>そのマスが「通したくない矩形」の中か。</summary>
+        static bool InBlockCell(PitSpec s, int x, int z)
+        {
+            if (!s.HasBlock) return false;
+            float cw = (s.fx1 - s.fx0) / s.nx;
+            float cd = (s.fz1 - s.fz0) / s.nz;
+            return s.InBlock(s.fx0 + cw * (x + 0.5f), s.fz0 + cd * (z + 0.5f));
+        }
+
+        /// <summary>安全な道が封鎖矩形に入ってしまう行で、列を矩形の外へ押し出す。</summary>
+        static int PushOutOfBlock(PitSpec s, int col, int z)
+        {
+            if (!InBlockCell(s, col, z)) return col;
+            for (int d = 1; d < s.nx; d++)
+            {
+                if (col + d < s.nx && !InBlockCell(s, col + d, z)) return col + d;
+                if (col - d >= 0 && !InBlockCell(s, col - d, z)) return col - d;
+            }
+            return col;   // 行がまるごと封鎖されている。そんな指定はしないこと
         }
 
         /// <summary>元の床（Default / Thermal / Echo の3系統）を止める。</summary>
