@@ -50,6 +50,186 @@ namespace BLIND.EditorTools
         static Mesh _boxProxy, _blobProxy;
 
         /// <summary>
+        /// ギミック側が3層ぶん自分で作っている物か。ここは材料にしてはいけない。
+        ///
+        /// ⚠️ この判定が無いと落とし穴が塞がる。
+        /// `BlindGimmickBuilder` は PitField_Generated の下に
+        /// D_（過去人）/ T_（サーモ）/ E_（エコロケ）の3層を**自分で**作る。
+        /// D_ は Default レイヤーなので、この関数が無いと vision/2 がそれを
+        /// 「まだ複製していない普通の床」とみなして拾い、22℃の床として
+        /// サーモ層に複製してしまう。結果、45℃の熱の蓋の上に22℃の床が乗り、
+        /// **サーモ視点で穴が完全に消える**（実際にそうなった）。
+        ///
+        /// ギミック→vision の順で作れば起きないが、順番に依存する仕様は必ず壊れる。
+        /// 順番によらず安全になるよう、ここで material として除外する。
+        /// </summary>
+        static bool IsGimmickOwned(Transform t)
+        {
+            for (var p = t; p != null; p = p.parent)
+                if (p.name == "PitField_Generated") return true;
+            return false;
+        }
+
+        // ------------------------------------------------------------
+        // 床に開いている穴
+        // ------------------------------------------------------------
+        /// <summary>
+        /// エコロケの床板を張ってはいけない矩形(world)。
+        ///
+        /// 床板は BoxProxy を引き伸ばしただけの一枚板なので、元の床メッシュに
+        /// 開いている穴を知らない。ここに書いた矩形だけ板を切り抜き、
+        /// 代わりに縁と深さを線で描く。
+        /// </summary>
+        class FloorHole
+        {
+            public string room;
+            public float x0, x1, z0, z1;   // 穴の範囲(world)
+            public float depth;            // 床面からの深さ(m)
+            public string note;
+        }
+
+        static readonly FloorHole[] FloorHoles =
+        {
+            // room6（アヒル部屋）のプール。PoolBasin の上端の実測値。
+            // 深さ 2.0m。落ちると出られないので、エコロケ役には必ず縁を見せる。
+            new FloorHole { room="room6", x0=-27.50f, x1=-14.10f, z0=-20.50f, z1=-8.90f,
+                            depth=2.01f, note="アヒル部屋のプール" },
+        };
+
+        static List<FloorHole> FloorHolesFor(string room)
+        {
+            var list = new List<FloorHole>();
+            foreach (var h in FloorHoles) if (h.room == room) list.Add(h);
+            return list;
+        }
+
+        /// <summary>
+        /// 矩形から穴の矩形を引く。残りを最大4枚の矩形で返す。
+        /// 戻り値の Vector4 は (x0, z0, x1, z1)。
+        /// </summary>
+        static List<Vector4> SubtractHoles(float x0, float x1, float z0, float z1, List<FloorHole> holes)
+        {
+            var cur = new List<Vector4> { new Vector4(x0, z0, x1, z1) };
+            foreach (var h in holes)
+            {
+                var next = new List<Vector4>();
+                foreach (var r in cur)
+                {
+                    float ax0 = r.x, az0 = r.y, ax1 = r.z, az1 = r.w;
+                    // 交差しないならそのまま残す
+                    if (h.x1 <= ax0 || h.x0 >= ax1 || h.z1 <= az0 || h.z0 >= az1)
+                    { next.Add(r); continue; }
+
+                    float cx0 = Mathf.Max(ax0, h.x0), cx1 = Mathf.Min(ax1, h.x1);
+                    float cz0 = Mathf.Max(az0, h.z0), cz1 = Mathf.Min(az1, h.z1);
+
+                    if (cz0 > az0) next.Add(new Vector4(ax0, az0, ax1, cz0));   // 手前
+                    if (cz1 < az1) next.Add(new Vector4(ax0, cz1, ax1, az1));   // 奥
+                    if (cx0 > ax0) next.Add(new Vector4(ax0, cz0, cx0, cz1));   // 左
+                    if (cx1 < ax1) next.Add(new Vector4(cx1, cz0, ax1, cz1));   // 右
+                }
+                cur = next;
+            }
+            // 潰れた欠片は捨てる（板として見えないうえ Combine が壊れる）
+            var outp = new List<Vector4>();
+            foreach (var r in cur) if (r.z - r.x > 0.05f && r.w - r.y > 0.05f) outp.Add(r);
+            return outp;
+        }
+
+        /// <summary>
+        /// 床の穴の縁と深さを描くメッシュ（部屋ローカル空間）。
+        ///
+        /// 落とし穴部屋と同じ考え方。四角形1枚ごとに 0〜1 の UV を貼るので、
+        /// EchoHighlight はその1枚ずつを輪郭として光らせる。
+        ///   ・縁の帯   : 床の上に置く平らな枠。遠くからでも「ここで床が終わる」と分かる
+        ///   ・内壁の横縞: 深さを段で伝える。落とし穴の PitRings と同じ役目
+        /// </summary>
+        static Mesh BuildHoleRimMesh(FloorHole h, float floorTopY, Transform room, string name)
+        {
+            const float LipWidth = 0.40f;   // 縁の帯の幅(m)
+            const float SegLen   = 1.20f;   // 帯を区切る長さ(m)。1枚が1本の線になる
+            const int   Rings    = 4;       // 内壁の横縞の数
+
+            var verts = new List<Vector3>();
+            var uvs   = new List<Vector2>();
+            var tris  = new List<int>();
+
+            System.Action<Vector3, Vector3, Vector3, Vector3> quad = (a, b, c, d) =>
+            {
+                int i0 = verts.Count;
+                verts.Add(room.InverseTransformPoint(a));
+                verts.Add(room.InverseTransformPoint(b));
+                verts.Add(room.InverseTransformPoint(c));
+                verts.Add(room.InverseTransformPoint(d));
+                uvs.Add(new Vector2(0, 0)); uvs.Add(new Vector2(0, 1));
+                uvs.Add(new Vector2(1, 1)); uvs.Add(new Vector2(1, 0));
+                tris.Add(i0); tris.Add(i0 + 1); tris.Add(i0 + 2);
+                tris.Add(i0); tris.Add(i0 + 2); tris.Add(i0 + 3);
+                // 裏からも見えるようにする。プールの縁は中に落ちてから見上げることもある
+                tris.Add(i0 + 2); tris.Add(i0 + 1); tris.Add(i0);
+                tris.Add(i0 + 3); tris.Add(i0 + 2); tris.Add(i0);
+            };
+
+            float lipY = floorTopY + 0.03f;   // 床板(上面 floorTopY)より上に出す
+
+            // --- 4辺を SegLen ごとに区切って、縁の帯と内壁の縞を作る ---
+            // 辺は (始点, 方向, 長さ, 内向き) で表す
+            var sides = new[]
+            {
+                new { px = h.x0, pz = h.z0, dx = 1f, dz = 0f, len = h.x1 - h.x0, ix =  0f, iz =  1f },
+                new { px = h.x0, pz = h.z1, dx = 1f, dz = 0f, len = h.x1 - h.x0, ix =  0f, iz = -1f },
+                new { px = h.x0, pz = h.z0, dx = 0f, dz = 1f, len = h.z1 - h.z0, ix =  1f, iz =  0f },
+                new { px = h.x1, pz = h.z0, dx = 0f, dz = 1f, len = h.z1 - h.z0, ix = -1f, iz =  0f },
+            };
+
+            foreach (var s in sides)
+            {
+                int n = Mathf.Max(1, Mathf.RoundToInt(s.len / SegLen));
+                float step = s.len / n;
+                for (int k = 0; k < n; k++)
+                {
+                    float t0 = step * k, t1 = t0 + step * 0.86f;   // 少し隙間を空けて1枚ずつ独立させる
+                    var a0 = new Vector3(s.px + s.dx * t0, lipY, s.pz + s.dz * t0);
+                    var a1 = new Vector3(s.px + s.dx * t1, lipY, s.pz + s.dz * t1);
+                    var off = new Vector3(-s.ix * LipWidth, 0f, -s.iz * LipWidth);   // 床側へ広げる
+
+                    // 縁の帯（床の上）
+                    quad(a0, a1, a1 + off, a0 + off);
+
+                    // 内壁の横縞
+                    for (int r = 0; r < Rings; r++)
+                    {
+                        float y0 = floorTopY - h.depth * (r + 0.15f) / Rings;
+                        float y1 = floorTopY - h.depth * (r + 0.55f) / Rings;
+                        var b0 = new Vector3(a0.x, y0, a0.z);
+                        var b1 = new Vector3(a1.x, y0, a1.z);
+                        var c1 = new Vector3(a1.x, y1, a1.z);
+                        var c0 = new Vector3(a0.x, y1, a0.z);
+                        quad(b0, b1, c1, c0);
+                    }
+                }
+            }
+
+            if (verts.Count == 0) return null;
+
+            var m = new Mesh { name = name };
+            if (verts.Count > 65000) m.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+            m.SetVertices(verts);
+            m.SetUVs(0, uvs);
+            m.SetTriangles(tris, 0);
+            m.RecalculateNormals();
+            m.RecalculateBounds();
+
+            // Combine と同じくアセットとして残す。シーンに新規メッシュを持たせると
+            // 保存のたびにシーンが太り、作り直しで参照が切れる。
+            var path = MeshDir + "/" + name + ".asset";
+            var ex = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+            if (ex != null) { EditorUtility.CopySerialized(m, ex); EditorUtility.SetDirty(ex); return ex; }
+            AssetDatabase.CreateAsset(m, path);
+            return m;
+        }
+
+        /// <summary>
         /// エコロケ用にUVを貼り直したメッシュを作る。
         ///
         /// EchoHighlight は「UVが0か1に近い所＝輪郭」として光らせる。ところが床タイルや
@@ -844,6 +1024,7 @@ namespace BLIND.EditorTools
                     if (!mr.gameObject.activeInHierarchy) continue;
                     if (mr.gameObject.layer == LayerThermal || mr.gameObject.layer == LayerEcho) continue;
                     if (mr.name.StartsWith(FxPrefix)) continue;   // 前回の複製を材料にしない
+                    if (IsGimmickOwned(mr.transform)) continue;   // 下のコメント参照
 
                     bool echo;
                     var key = Classify(mr, out echo);
@@ -980,6 +1161,14 @@ namespace BLIND.EditorTools
                 // 「反響が広がっていく」感じが出ないので、ブロックと同じ大きさに割る。
                 if (hasFloor)
                 {
+                    // ⚠️ 床に開いている穴（アヒル部屋のプールなど）を板でふさがないこと。
+                    //   この板は BoxProxy をブロックの大きさに引き伸ばした「ただの一枚板」で、
+                    //   元の床メッシュの形は見ていない。プールのように床が抜けている部屋でも
+                    //   板は矩形のまま張られるので、**エコロケ視点ではプールが床で埋まり、
+                    //   ふちがどこにも出ない**（実際にそうなって落ちた）。
+                    //   板を穴の矩形で切り抜き、代わりに縁と深さを線で描く。
+                    var fholes = FloorHolesFor(rn);
+
                     int nx = Mathf.Max(1, Mathf.RoundToInt(floorBounds.size.x / EchoChunk));
                     int nz = Mathf.Max(1, Mathf.RoundToInt(floorBounds.size.z / EchoChunk));
                     float sx = floorBounds.size.x / nx, sz = floorBounds.size.z / nz;
@@ -988,18 +1177,25 @@ namespace BLIND.EditorTools
                         {
                             var slab = Object.Instantiate(BoxProxy());
                             var uvSlab = EchoUv(slab);
-                            var center = new Vector3(
-                                floorBounds.min.x + sx * (ix + 0.5f),
-                                floorBounds.max.y - 0.02f,
-                                floorBounds.min.z + sz * (iz + 0.5f));
-                            var ci2 = new CombineInstance
-                            {
-                                mesh = uvSlab,
-                                subMeshIndex = 0,
-                                transform = room.worldToLocalMatrix * Matrix4x4.TRS(
-                                    center, Quaternion.identity, new Vector3(sx, 0.04f, sz)),
-                            };
-                            var fm = Combine(new List<CombineInstance> { ci2 }, rn + "_Echo_Floor_" + ix + "_" + iz);
+                            float bx0 = floorBounds.min.x + sx * ix,       bx1 = bx0 + sx;
+                            float bz0 = floorBounds.min.z + sz * iz,       bz1 = bz0 + sz;
+                            float slabY = floorBounds.max.y - 0.02f;
+
+                            var parts = SubtractHoles(bx0, bx1, bz0, bz1, fholes);
+                            var cis = new List<CombineInstance>();
+                            foreach (var p in parts)
+                                cis.Add(new CombineInstance
+                                {
+                                    mesh = uvSlab,
+                                    subMeshIndex = 0,
+                                    transform = room.worldToLocalMatrix * Matrix4x4.TRS(
+                                        new Vector3((p.x + p.z) * 0.5f, slabY, (p.y + p.w) * 0.5f),
+                                        Quaternion.identity,
+                                        new Vector3(p.z - p.x, 0.04f, p.w - p.y)),
+                                });
+
+                            var fm = cis.Count > 0
+                                ? Combine(cis, rn + "_Echo_Floor_" + ix + "_" + iz) : null;
                             Object.DestroyImmediate(slab);
                             Object.DestroyImmediate(uvSlab);
                             if (fm == null) continue;
@@ -1018,6 +1214,34 @@ namespace BLIND.EditorTools
                             AddReceiver(fg, fmr);
                             eTris += fm.triangles.Length / 3; eRend++;
                         }
+
+                    // 切り抜いた穴の「ふち」と「深さ」を描く。
+                    // 板を抜いただけだと、そこは何も描かれない＝暗闇と同じになり、
+                    // 「床の続き」なのか「落ちる所」なのか判断できない。
+                    // 落とし穴部屋と同じ作りにする：縁に沿った帯＋内壁の横縞。
+                    // 帯を細かく区切って1枚ごとに 0〜1 の UV を貼るので、
+                    // 輪郭しか描かないエコロケでも点線状の線として確実に出る。
+                    for (int hi2 = 0; hi2 < fholes.Count; hi2++)
+                    {
+                        var hole = fholes[hi2];
+                        var hm = BuildHoleRimMesh(hole, floorBounds.max.y, room,
+                                                  rn + "_Echo_HoleRim_" + hi2);
+                        if (hm == null) continue;
+
+                        var hg = new GameObject("E_FloorHole_" + hi2);
+                        hg.transform.SetParent(eRoot.transform, false);
+                        hg.layer = LayerEcho;
+                        hg.AddComponent<MeshFilter>().sharedMesh = hm;
+                        var hmr = hg.AddComponent<MeshRenderer>();
+                        hmr.sharedMaterial = echoMat;
+                        hmr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                        hmr.receiveShadows = false;
+                        hmr.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
+                        hmr.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+                        Recenter(hm, hg.transform);
+                        AddReceiver(hg, hmr);
+                        eTris += hm.triangles.Length / 3; eRend++;
+                    }
                 }
                 var propMat = EchoPropMaterial(echoMat);
                 foreach (var pair in new[] {
@@ -1386,7 +1610,12 @@ namespace BLIND.EditorTools
             // 箱投影だけだと有機的な形（アヒル・腕）にはほとんど線が出ないので
             // シルエットを足す。反響定位で返るのは外形なので理屈にも合う。
             m.SetFloat("_RimWeight", 1f);
-            m.SetFloat("_RimPower", 3.5f);
+            // 数メートルを超える物にシルエット発光を素の強さで掛けると、
+            // 視線に対して寝ている面が全部光ってベタ塗りの塊になる。
+            // プールの内壁や巨大アヒルがそうなって、**プールのふちがどこか分からなかった**。
+            // 大きい物ほど鋭くして、本当に縁になっている所だけ光らせる。
+            float span = Mathf.Max(b.size.x, Mathf.Max(b.size.y, b.size.z));
+            m.SetFloat("_RimPower", span > 5f ? 9f : 3.5f);
             m.SetFloat("_GlowIntensity", 0f);
             EditorUtility.SetDirty(m);
             return m;

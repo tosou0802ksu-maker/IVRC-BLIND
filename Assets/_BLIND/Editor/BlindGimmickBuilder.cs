@@ -104,12 +104,23 @@ namespace BLIND.EditorTools
             public float bx0, bx1, bz0, bz1;
             public string blockNote;
 
+            // 封鎖矩形の中でも、ここだけは必ず床にする矩形(world)。
+            // 扉から出た所に置く「踏み場」用。封鎖より後に適用する。
+            public float sx0, sx1, sz0, sz1;
+            public string safeNote;
+
             public string note;
 
             public bool HasBlock { get { return bx1 > bx0 && bz1 > bz0; } }
             public bool InBlock(float wx, float wz)
             {
                 return HasBlock && wx >= bx0 && wx <= bx1 && wz >= bz0 && wz <= bz1;
+            }
+
+            public bool HasLedge { get { return sx1 > sx0 && sz1 > sz0; } }
+            public bool InLedge(float wx, float wz)
+            {
+                return HasLedge && wx >= sx0 && wx <= sx1 && wz >= sz0 && wz <= sz1;
             }
         }
 
@@ -135,11 +146,21 @@ namespace BLIND.EditorTools
             // マップの動線としては room8 へはアヒル部屋(room7)側から入らせたいので、
             // この開口の前を強制的に穴にして room9 側からは渡れなくする。
             // room8 は room7 との北の開口(z=-40.7, x≈-19.2)から入れるので孤立はしない。
+            //
+            // ただし扉の前を一様に穴にすると、**room8 から出た瞬間に落ちる**。
+            // room8 は袋小路ではなく通り道なので、出口が即死では部屋として成立しない。
+            // そこで扉の前の1列(sx0..sz1)だけ床を残す。この踏み場は
+            // 南の外周床(z=-47.7〜-46.8)としか繋がっていないので、
+            //   room8 → 踏み場 → 南の出口   … 通れる
+            //   room9 の北 → 踏み場          … 通れない（周りは全部穴）
+            // という一方通行になり、動線の意図は保ったまま即死だけが無くなる。
             new PitSpec { room="room9",  fx0=-9.1f, fx1= 0.1f, fz0=-46.8f, fz1=-26.0f,
                           nx=6, nz=13, rx0=-9.1f, rx1=0.1f, rz0=-47.7f, rz1=-20.5f,
                           seed=10007, entryCol=3, exitCol=3, density=0.80f,
-                          bx0=-9.1f, bx1=-6.4f, bz0=-46.4f, bz1=-44.0f,
-                          blockNote="room8 への西の開口。ここは渡らせない",
+                          bx0=-9.1f, bx1=-6.0f, bz0=-46.8f, bz1=-42.0f,
+                          blockNote="room8 への西の開口とその北側。room9 側からは渡らせない",
+                          sx0=-9.1f, sx1=-7.5f, sz0=-46.8f, sz1=-43.9f,
+                          safeNote="room8 の扉を出た所の踏み場。南の外周床にだけ繋がる",
                           note="南ルート(青)の長い廊下。20mぶん歩き通す最大の難所（密度も最大）" },
 
             // room14 : 南北とも扉は x≈17.95
@@ -513,6 +534,23 @@ namespace BLIND.EditorTools
                     }
                     prevCol = col;
                 }
+            }
+
+            // ------------------------------------------------------------
+            // 1.5 扉の前の「踏み場」を床にする
+            // ------------------------------------------------------------
+            // 封鎖矩形の後に適用する。封鎖で扉の前をまるごと穴にすると
+            // その扉から出た瞬間に落ちるので、出た所の1列だけ床に戻す。
+            // 道の生成には参加させないので、周りは封鎖されたまま＝
+            // 反対側からは渡ってこられない。
+            if (s.HasLedge)
+            {
+                float lcw = (s.fx1 - s.fx0) / s.nx;
+                float lcd = (s.fz1 - s.fz0) / s.nz;
+                for (int x = 0; x < s.nx; x++)
+                    for (int z = 0; z < s.nz; z++)
+                        if (s.InLedge(s.fx0 + lcw * (x + 0.5f), s.fz0 + lcd * (z + 0.5f)))
+                            safe[x, z] = true;
             }
 
             // ------------------------------------------------------------
