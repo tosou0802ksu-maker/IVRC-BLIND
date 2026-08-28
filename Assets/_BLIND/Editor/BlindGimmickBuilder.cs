@@ -109,6 +109,11 @@ namespace BLIND.EditorTools
             public float sx0, sx1, sz0, sz1;
             public string safeNote;
 
+            // 部屋を横切る「全員に見える完全な穴」の帯(world の z 範囲)。
+            // 3役の誰にとっても穴なので誰も渡れない。動線を断ち切って迂回させるための物。
+            public float gz0, gz1;
+            public string gapNote;
+
             public string note;
 
             public bool HasBlock { get { return bx1 > bx0 && bz1 > bz0; } }
@@ -122,6 +127,8 @@ namespace BLIND.EditorTools
             {
                 return HasLedge && wx >= sx0 && wx <= sx1 && wz >= sz0 && wz <= sz1;
             }
+
+            public bool HasGap { get { return gz1 > gz0; } }
         }
 
         static readonly PitSpec[] Pits =
@@ -138,30 +145,36 @@ namespace BLIND.EditorTools
                           note="西ルート(赤)の入口。最初に出会う落とし穴なので小さめ・易しめ。" +
                                "3部屋で密度を変えて単調さを避ける（ここが一番薄い）" },
 
-            // room9 : 北(z=-20.5, x≈-4.45)から入って南(z=-47.7, x≈-4.55)へ。
+            // room9 : 北(z=-20.5, x≈-4.45)から入る。南(z=-47.7, x≈-4.55)へは**直接抜けられない**。
             //
-            // 穴フィールドを南へ伸ばして z=-46.8 まで覆う（以前は -42.0 まで）。
-            // room8（ロッカー部屋）へ抜ける西の開口が x=-9.1 / z=-46.0〜-44.4 にあり、
-            // 以前はフィールドの外側だったので**穴を全部避けて room8 へ回れてしまった**。
-            // マップの動線としては room8 へはアヒル部屋(room7)側から入らせたいので、
-            // この開口の前を強制的に穴にして room9 側からは渡れなくする。
-            // room8 は room7 との北の開口(z=-40.7, x≈-19.2)から入れるので孤立はしない。
+            // 部屋を3つに割る（手描きの部屋図どおり）:
             //
-            // ただし扉の前を一様に穴にすると、**room8 から出た瞬間に落ちる**。
-            // room8 は袋小路ではなく通り道なので、出口が即死では部屋として成立しない。
-            // そこで扉の前の1列(sx0..sz1)だけ床を残す。この踏み場は
-            // 南の外周床(z=-47.7〜-46.8)としか繋がっていないので、
-            //   room8 → 踏み場 → 南の出口   … 通れる
-            //   room9 の北 → 踏み場          … 通れない（周りは全部穴）
-            // という一方通行になり、動線の意図は保ったまま即死だけが無くなる。
-            new PitSpec { room="room9",  fx0=-9.1f, fx1= 0.1f, fz0=-46.8f, fz1=-26.0f,
-                          nx=6, nz=13, rx0=-9.1f, rx1=0.1f, rz0=-47.7f, rz1=-20.5f,
+            //   z=-20.5 ┃ 北の入口
+            //           ┃  役職別の落とし穴フィールド (fz1=-22.0 〜 fz0=-39.3) …… 17.3m
+            //   z=-39.3 ┃━━━━━━━━━━━━━━━━━━━━
+            //           ┃  【全員に見える完全な穴】gz1=-39.3 〜 gz0=-43.3（幅4m・全幅）
+            //   z=-43.3 ┃━━━━━━━━━━━━━━━━━━━━
+            //           ┃  安全地帯（room8 の扉 z=-46.3〜-44.3 と南の出口を含む）
+            //   z=-47.7 ┃ 南の出口
+            //
+            // 帯は room8 の扉のすぐ北まで下げてある。扉の北の枠(-44.3)から
+            // 帯の南の縁(-43.3)まで **1.0m** しか無いので、これ以上下げないこと。
+            // 扉を出た所に立つ余地が消えて、また即死に戻る。
+            //
+            // 真ん中の帯は**3役の誰から見ても穴**なので誰も渡れない。
+            // ここで南ルートは物理的に断ち切られていて、看板を見て
+            // アヒル部屋(room7) → room8 → room9 の南側、と迂回させるのが狙い。
+            //
+            // ⚠️ 以前は「扉の前だけ穴にして塞ぐ」という作りにしていたが、
+            //    room8 から出た瞬間に落ちる／一方通行が完全でない、という問題があった。
+            //    帯で断ち切る方式ならその両方が起きない。封鎖矩形(bx/bz)と
+            //    踏み場(sx/sz)はもう要らないので外した。
+            new PitSpec { room="room9",  fx0=-9.1f, fx1= 0.1f, fz0=-39.3f, fz1=-22.0f,
+                          nx=6, nz=11, rx0=-9.1f, rx1=0.1f, rz0=-47.7f, rz1=-20.5f,
                           seed=10007, entryCol=3, exitCol=3, density=0.80f,
-                          bx0=-9.1f, bx1=-6.0f, bz0=-46.8f, bz1=-42.0f,
-                          blockNote="room8 への西の開口とその北側。room9 側からは渡らせない",
-                          sx0=-9.1f, sx1=-7.5f, sz0=-46.8f, sz1=-43.9f,
-                          safeNote="room8 の扉を出た所の踏み場。南の外周床にだけ繋がる",
-                          note="南ルート(青)の長い廊下。20mぶん歩き通す最大の難所（密度も最大）" },
+                          gz0=-43.3f, gz1=-39.3f,
+                          gapNote="南ルートを断ち切る全員共通の穴。看板を見て room8 側へ迂回させる",
+                          note="南ルート(青)。北半分が役職別の落とし穴、その南が渡れない帯" },
 
             // room14 : 南北とも扉は x≈17.95
             new PitSpec { room="room14", fx0=13.9f, fx1=22.1f, fz0=-35.6f, fz1=-24.6f,
@@ -403,13 +416,43 @@ namespace BLIND.EditorTools
                     }
 
                     // --- 穴フィールドの外側（扉まわりの安全地帯）---
+                    // 全員共通の穴の帯があるときは、そこに床を張らないよう南側を2つに割る。
                     var outer = new MeshBuild();
                     if (s.rz0 < s.fz0)
-                        outer.Box(new Vector3(s.rx0, -DeckThickness, s.rz0), new Vector3(s.rx1, 0f, s.fz0));
+                    {
+                        if (s.HasGap)
+                        {
+                            if (s.rz0 < s.gz0)
+                                outer.Box(new Vector3(s.rx0, -DeckThickness, s.rz0), new Vector3(s.rx1, 0f, s.gz0));
+                            if (s.gz1 < s.fz0)
+                                outer.Box(new Vector3(s.rx0, -DeckThickness, s.gz1), new Vector3(s.rx1, 0f, s.fz0));
+                        }
+                        else outer.Box(new Vector3(s.rx0, -DeckThickness, s.rz0), new Vector3(s.rx1, 0f, s.fz0));
+                    }
                     if (s.rz1 > s.fz1)
                         outer.Box(new Vector3(s.rx0, -DeckThickness, s.fz1), new Vector3(s.rx1, 0f, s.rz1));
                     if (outer.Count > 0)
                         meshes.Add(Emit(rootGo.transform, tag + "_OuterFloor", layer, outer, deckMat, pass == 2));
+
+                    // --- 全員共通の穴の帯 ---
+                    // 3役の誰から見ても穴なので、3層すべてに同じ物を描く。
+                    // 縦坑＋横縞で「深い」ことを伝え、サーモには熱の蓋、
+                    // エコロケにも横縞を出す（幅4mの帯なので、マス目の穴と紛れる心配がない）。
+                    if (s.HasGap)
+                    {
+                        var gap = new MeshBuild();
+                        gap.BoxOpenTop(new Vector3(s.fx0 + PitInset, -PitDepth, s.gz0 + PitInset),
+                                       new Vector3(s.fx1 - PitInset, 0f, s.gz1 - PitInset), PitRings);
+                        if (isThermal)
+                        {
+                            float qy = -PitCapDepth;
+                            gap.Quad(new Vector3(s.fx0 + PitInset, qy, s.gz0 + PitInset),
+                                     new Vector3(s.fx0 + PitInset, qy, s.gz1 - PitInset),
+                                     new Vector3(s.fx1 - PitInset, qy, s.gz1 - PitInset),
+                                     new Vector3(s.fx1 - PitInset, qy, s.gz0 + PitInset), Vector3.up);
+                        }
+                        meshes.Add(Emit(rootGo.transform, tag + "_Gap", layer, gap, pitMat, pass == 2));
+                    }
                 }
 
                 // --- 当たり判定 ---
@@ -427,8 +470,19 @@ namespace BLIND.EditorTools
                             float z0 = s.fz0 + cd * z, z1 = z0 + cd;
                             col.Box(new Vector3(x0, -DeckThickness, z0), new Vector3(x1, 0f, z1));
                         }
+                    // 全員共通の穴の帯には当たり判定を置かない。ここが埋まっていると
+                    // 「見た目は穴なのに歩ける」帯になって、断ち切る意味が消える。
                     if (s.rz0 < s.fz0)
-                        col.Box(new Vector3(s.rx0, -DeckThickness, s.rz0), new Vector3(s.rx1, 0f, s.fz0));
+                    {
+                        if (s.HasGap)
+                        {
+                            if (s.rz0 < s.gz0)
+                                col.Box(new Vector3(s.rx0, -DeckThickness, s.rz0), new Vector3(s.rx1, 0f, s.gz0));
+                            if (s.gz1 < s.fz0)
+                                col.Box(new Vector3(s.rx0, -DeckThickness, s.gz1), new Vector3(s.rx1, 0f, s.fz0));
+                        }
+                        else col.Box(new Vector3(s.rx0, -DeckThickness, s.rz0), new Vector3(s.rx1, 0f, s.fz0));
+                    }
                     if (s.rz1 > s.fz1)
                         col.Box(new Vector3(s.rx0, -DeckThickness, s.fz1), new Vector3(s.rx1, 0f, s.rz1));
                     meshes.Add(EmitCollider(rootGo.transform, "Collision", col));
@@ -445,6 +499,22 @@ namespace BLIND.EditorTools
                 bc.size = new Vector3(s.fx1 - s.fx0, PitDepth * 0.8f, s.fz1 - s.fz0);
                 var hz = AddUdon(fall, "HazardZone");
                 if (hz != null) { SetObj(hz, "checkpointManager", cm); PushUdon(hz); }
+
+                // 全員共通の穴の帯にも落下判定を置く。フィールドとは離れているので別に作る。
+                if (s.HasGap)
+                {
+                    var gfall = new GameObject("FallZone_Gap");
+                    Undo.RegisterCreatedObjectUndo(gfall, "fall zone gap");
+                    gfall.transform.SetParent(rootGo.transform, false);
+                    gfall.layer = LayerDefault;
+                    gfall.transform.position = new Vector3((s.fx0 + s.fx1) * 0.5f, -PitDepth * 0.6f,
+                                                           (s.gz0 + s.gz1) * 0.5f);
+                    var gbc = gfall.AddComponent<BoxCollider>();
+                    gbc.isTrigger = true;
+                    gbc.size = new Vector3(s.fx1 - s.fx0, PitDepth * 0.8f, s.gz1 - s.gz0);
+                    var ghz = AddUdon(gfall, "HazardZone");
+                    if (ghz != null) { SetObj(ghz, "checkpointManager", cm); PushUdon(ghz); }
+                }
 
                 SaveMeshes(meshes, s.room);
 

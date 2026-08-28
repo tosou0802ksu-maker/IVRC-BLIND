@@ -674,7 +674,7 @@ namespace BLIND.EditorTools
         /// <summary>ブラウン管か。前面ガラスと筐体で温度が違うので、形が要る。</summary>
         static bool IsCrtKey(string key)
         {
-            return key == "CRTOn" || key == "CRTOff";
+            return key == "CRTOn" || key == "CRTOff" || key == "CRTWarm" || key == "CRTHot";
         }
 
         /// <summary>
@@ -905,7 +905,25 @@ namespace BLIND.EditorTools
             // 筐体(back/top)は室温のままにして、前面のガラスだけ熱くする。
             // 画面だけが光っていると、サーモ役には「山積みの機械のうち
             // どれがこちらを向いているか」まで分かる。
-            if (n.StartsWith("front_case_low")) return "CRTOn";
+            //
+            // 画面の温度は4段階に散らす。全部同じにすると、山積みのテレビが
+            // 「同じ黄色い板の群れ」にしかならず、サーモ役に伝えられることが何も無い。
+            // 生きている台と死んでいる台が混ざっていれば、
+            // 「右から3番目だけ熱い」のように場所を指せる。
+            //
+            // ⚠️ 名前だけで振り分けないこと。front_case_low という名前は
+            // CRT_final のグループごとに重複していて、同じ名前は同じ段になる。
+            // 親の名前を混ぜて、台ごとにばらけるようにする。
+            if (n.StartsWith("front_case_low"))
+            {
+                switch (StableIndex(p + "/" + n, 4))
+                {
+                    case 0: return "CRTOff";    // 画面も筐体と同じ室温＝完全に死んでいる
+                    case 1: return "CRTWarm";
+                    case 2: return "CRTOn";
+                    default: return "CRTHot";
+                }
+            }
 
             // --- レーザー（room14）: サーモ役だけの領分 ---
             // ビームも天井の発射装置も、まとめてサーモ専用にする。

@@ -37,11 +37,24 @@ namespace BLIND.EditorTools
             /// </summary>
             public float displayMax;
 
+            /// <summary>
+            /// この材質だけ表示レンジの下限を変える。Unset なら共通の DisplayMin を使う。
+            ///
+            /// 冷たい物を「冷たい色」で強く見せたいときに使う。共通レンジ(12〜70℃)だと
+            /// 12℃以下は全部いちばん暗い紫に潰れてしまい、**冷たさが情報にならない**。
+            /// 下限を下げると、その材質だけ紫〜青の帯を使い切れる。
+            /// </summary>
+            public float displayMin;
+            public const float Unset = -999f;
+
             public Temp(string k, float c, float d, string n)
-            { key = k; celsius = c; dim = d; note = n; displayMax = 0f; }
+            { key = k; celsius = c; dim = d; note = n; displayMax = 0f; displayMin = Unset; }
 
             public Temp(string k, float c, float d, float dmax, string n)
-            { key = k; celsius = c; dim = d; note = n; displayMax = dmax; }
+            { key = k; celsius = c; dim = d; note = n; displayMax = dmax; displayMin = Unset; }
+
+            public Temp(string k, float c, float d, float dmin, float dmax, string n)
+            { key = k; celsius = c; dim = d; note = n; displayMax = dmax; displayMin = dmin; }
         }
 
         /// <summary>
@@ -92,7 +105,16 @@ namespace BLIND.EditorTools
             // 踏み板は周囲の床と同じ温度・暗さにし、穴の中だけが異常な熱（または冷気）を発しているようにする。
             // これにより、サーモ役には「穴だけがくっきりと色付きで見える」ようになる。
             new Temp("PitDeck",     15.0f, 0.022f, "落とし穴の安全な床。周囲の床(FloorStone)と完全に同化させる"),
-            new Temp("PitVoid",     45.0f, 1.000f, "落とし穴の内側。異常な熱を持たせてサーモにだけ真っ赤(または橙)に見せる"),
+            // 落とし穴は「冷たい」で見せる。
+            //
+            // 45℃の熱源にしていたときは、CRT(47℃)・温水管(46℃)と同じ黄色に並んでしまい、
+            // **サーモ視点が黄色一色**になっていた（穴も機械も配管も同じ色）。
+            // 5m の縦坑は熱源が無く下から冷気が上がってくるので、
+            // 室内でいちばん冷たい面になるのが本来。表示レンジの下限だけ 0℃ に下げて、
+            // 誰も使っていない紫〜青の帯を穴に割り当てる。
+            // 暖色の物と色相で完全に分かれるので、遠くからでも穴だと分かる。
+            new Temp("PitVoid",      3.0f, 1.000f, 0f, DisplayMax,
+                     "落とし穴の内側。冷気の溜まった縦坑。青紫で暖色の熱源と色相を分ける"),
 
             // --- 赤・青・緑のゲートボタン ---
             // 通電している操作盤。サーモ役にも「押すべき物」として見えないと
@@ -130,7 +152,13 @@ namespace BLIND.EditorTools
             new Temp("Body",        36.5f, 1.00f, 37.8f, "人体の胴の芯。手足の先は肉の厚みに応じて26.5℃まで落ちる"),
             new Temp("Skin",        36.6f, 1.00f, 37.8f, "人体の露出した肌。芯は37℃弱、末端は肉の厚み次第で下がる"),
             new Temp("LampDim",     32.0f, 0.85f, "ちらついている・調光された照明パネル。生きてはいるが出力が落ちている"),
-            new Temp("CRTOn",       47.0f, 1.00f, "通電中のCRTの筐体。ブラウン管の排熱で 45〜50℃"),
+            // ブラウン管の画面は4段階に散らす。全部 47℃ にしていたら
+            // 山積みのテレビが「同じ黄色い板の群れ」にしかならなかった。
+            // 停電したビルで何台か生き残っている、という絵にしたほうが情報量が多く、
+            // サーモ役が「どれが生きているか」を伝えられる。
+            new Temp("CRTWarm",     30.0f, 1.00f, "かろうじて通電している画面。緑。ついさっきまで映っていた程度"),
+            new Temp("CRTOn",       47.0f, 1.00f, "通電中のCRTの画面。ブラウン管の排熱で 45〜50℃"),
+            new Temp("CRTHot",      60.0f, 1.00f, "長時間つけっぱなしの画面。橙〜赤。この部屋でいちばん熱い機械"),
             // 生きている照明は白く振り切れさせる。
             // 人体を 40℃ 目盛りに移した結果、52℃ の照明と 34℃ の人体が
             // どちらも橙になり、ぱっと見で区別がつかなくなった。
@@ -206,7 +234,8 @@ namespace BLIND.EditorTools
                 // 「人体しか熱源が無い部屋ではカメラが体温帯に合わせる」という解釈で
                 // 現実とも矛盾しない。displayMax を分けているのと同じ考え方。
                 bool bodyKey = t.key == "Body" || t.key == "Skin";
-                m.SetFloat("_TempMin", bodyKey ? 25.5f : DisplayMin);
+                m.SetFloat("_TempMin", bodyKey ? 25.5f
+                                     : (t.displayMin > Temp.Unset + 1f ? t.displayMin : DisplayMin));
                 m.SetFloat("_TempMax", t.displayMax > 0f ? t.displayMax : DisplayMax);
                 m.SetFloat("_TempGamma", Gamma);
                 m.SetFloat("_HeatIntensity", 1f);
