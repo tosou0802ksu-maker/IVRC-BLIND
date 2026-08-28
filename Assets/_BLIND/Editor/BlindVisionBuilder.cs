@@ -582,7 +582,10 @@ namespace BLIND.EditorTools
             {
                 for (var tr = go.transform; tr != null; tr = tr.parent)
                 {
-                    if (tr.name != "room11") continue;
+                    // room8（ロッカー部屋）も同じ扱いにする。
+                    // ここはサーモ視点が点灯0.4%＝ほぼ真っ黒だった部屋で、
+                    // 壁に配線を追加して「生きている線と死んだ線が混じった壁」にする。
+                    if (tr.name != "room11" && tr.name != "room8") continue;
                     switch (StableIndex(n, 4))
                     {
                         case 0: return "DuctDead";

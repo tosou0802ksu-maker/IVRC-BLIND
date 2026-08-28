@@ -228,6 +228,23 @@ namespace BLIND.EditorTools
                 // 実際のサーモグラフィで人が不気味に見える理由（体が塊として
                 // 立ち上がって見えること）が丸ごと失われる。
                 // 芯の高さ・落ち幅は人形の背丈(約1.9m)に合わせてある。
+                // 配管・配線には「熱が流れている」波を乗せる。
+                //
+                // 一様な温度で塗ると、サーモ役の画面では線が引いてあるだけで
+                // 建物が止まって見える。ゆっくり流れる波を足すと、
+                // 建物そのものが動いている＝生きているように見える。
+                //
+                // 電気の来ていない配線(DuctDead)だけは波を乗せない。
+                // 「動いている管」と「死んだ管」が混じることで、
+                // 動いていること自体が情報になる。
+                float flow = 0f, flowLen = 2.5f, flowSpd = 1.2f;
+                if (t.key == "Duct")     { flow = 2.6f; flowLen = 2.8f; flowSpd = 1.1f; }
+                if (t.key == "DuctWarm") { flow = 1.6f; flowLen = 3.6f; flowSpd = 0.7f; }
+                if (t.key == "DuctHot")  { flow = 3.4f; flowLen = 2.0f; flowSpd = 1.8f; }
+                m.SetFloat("_FlowStrength", flow);
+                m.SetFloat("_FlowLength", flowLen);
+                m.SetFloat("_FlowSpeed", flowSpd);
+
                 bool isBody = t.key == "Body" || t.key == "Skin" || t.key == "Burning";
                 m.SetFloat("_BodyProfile", isBody ? 1f : 0f);
                 if (isBody)

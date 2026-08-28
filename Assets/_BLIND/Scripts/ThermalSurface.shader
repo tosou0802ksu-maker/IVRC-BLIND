@@ -27,6 +27,11 @@ Shader "BLIND/ThermalSurface"
         _FadeNear     ("Fade Range at Dim=0 (m)", Float) = 5.0
         _FadeFar      ("Fade Range at Dim=1 (m)", Float) = 200.0
 
+        // --- 熱の流れ（配管・配線用。0 なら完全に無効で従来どおり） ---
+        _FlowStrength ("Heat Flow Amplitude (C)", Float) = 0.0
+        _FlowSpeed    ("Flow Speed (m/s)", Float) = 1.2
+        _FlowLength   ("Flow Wavelength (m)", Float) = 2.5
+
         // --- 人体プロファイル（Body / Skin 用。0 なら完全に無効で従来どおり） ---
         _BodyProfile  ("Body Profile (0=off 1=on)", Range(0.0, 1.0)) = 0.0
         _BodyCoreness ("Use Baked Vertex Coreness (0=height)", Range(0.0, 1.0)) = 0.0
@@ -63,6 +68,7 @@ Shader "BLIND/ThermalSurface"
             float _TempC, _TempMin, _TempMax, _TempGamma;
             float _HeatIntensity, _EdgeCool, _Noise, _Grain, _Dim;
             float _FadeNear, _FadeFar;
+            float _FlowStrength, _FlowSpeed, _FlowLength;
             float _BodyProfile, _BodyCoreness, _BodyPow;
             float _BodyCoreY, _BodySpread, _BodyDrop, _BodyMottle, _BodyVein;
 
@@ -177,6 +183,28 @@ Shader "BLIND/ThermalSurface"
 
                 // 同じ材質でも表面には温度ムラがある（16cm マス）
                 tempC += NoiseOct(i.worldPos, 6.0, fp) * _Grain;
+
+                // --- 熱の流れ ---
+                //
+                // 配管や配線を一様な温度で塗ると、サーモ役の画面では「線が引いてあるだけ」で
+                // 建物が止まって見える。実際の配管は中を通る温水や排気で温度が波打つので、
+                // ゆっくり流れる波を足すと、建物そのものが動いている＝生きているように見える。
+                //
+                // _FlowStrength が 0 のマテリアル（壁・床・人体など）は
+                // この行を通っても値が変わらないので、従来の見え方のまま。
+                //
+                // ⚠️ 時間で動かすのはここだけ。ノイズ（NoiseOct / NoiseSmooth）は
+                // 絶対に時間で動かしてはいけない（VRで左右の目に別々の粒が出て立体視が壊れる）。
+                // これはワールド座標のなめらかな正弦波なので、左右の目で完全に同じ値になり、
+                // その問題は起きない。周波数も低いので画素単位のちらつきも出ない。
+                if (_FlowStrength > 0.0)
+                {
+                    // 斜めの軸にしてあるのは、縦・横・奥行きどの向きの配管にも
+                    // 波が乗るようにするため。軸に平行な管だけ波が止まって見えるのを避ける。
+                    float3 axis = normalize(float3(1.0, 0.35, 0.6));
+                    float phase = (dot(i.worldPos, axis) - _Time.y * _FlowSpeed) / max(_FlowLength, 0.05);
+                    tempC += sin(phase * 6.2831853) * _FlowStrength;
+                }
 
                 // --- 人体プロファイル ---
                 //

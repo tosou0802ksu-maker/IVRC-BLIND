@@ -37,6 +37,9 @@ Material:
     - _EdgeCool: 0.1
     - _FadeFar: 200
     - _FadeNear: 5
+    - _FlowLength: 3.6
+    - _FlowSpeed: 0.7
+    - _FlowStrength: 1.6
     - _Grain: 0.05
     - _HeatIntensity: 1
     - _Noise: 0.015
