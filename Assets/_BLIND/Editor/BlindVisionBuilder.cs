@@ -71,69 +71,147 @@ namespace BLIND.EditorTools
         }
 
         // ------------------------------------------------------------
-        // 床に開いている穴
+        // 床に開いている穴（アヒル部屋のプールなど）
         // ------------------------------------------------------------
-        /// <summary>
-        /// エコロケの床板を張ってはいけない矩形(world)。
-        ///
-        /// 床板は BoxProxy を引き伸ばしただけの一枚板なので、元の床メッシュに
-        /// 開いている穴を知らない。ここに書いた矩形だけ板を切り抜き、
-        /// 代わりに縁と深さを線で描く。
-        /// </summary>
-        class FloorHole
+        /// <summary>エコロケの床タイルの一辺(m)。穴のある部屋だけこの大きさに割る。</summary>
+        const float FloorTile = 1.40f;
+
+        /// <summary>穴の登録。床メッシュとプール本体の名前、深さだけを書く。形はメッシュから取る。</summary>
+        class FloorHoleSpec
         {
             public string room;
-            public float x0, x1, z0, z1;   // 穴の範囲(world)
-            public float depth;            // 床面からの深さ(m)
+            public string deckObject;    // 穴が開いた状態で入っている床メッシュの名前
+            public string basinObject;   // 穴の底（プールの器）。縁の判定に使う
+            public float depth;          // 床面からの深さ(m)
             public string note;
         }
 
-        static readonly FloorHole[] FloorHoles =
+        static readonly FloorHoleSpec[] FloorHoleSpecs =
         {
-            // room6（アヒル部屋）のプール。PoolBasin の上端の実測値。
-            // 深さ 2.0m。落ちると出られないので、エコロケ役には必ず縁を見せる。
-            new FloorHole { room="room6", x0=-27.50f, x1=-14.10f, z0=-20.50f, z1=-8.90f,
-                            depth=2.01f, note="アヒル部屋のプール" },
+            // room6（アヒル部屋）。PoolDeck は「穴の開いた床」として入っている(109三角形)。
+            // 深さは PoolBasin の実測 2.01m。落ちると出られないので必ず縁を見せる。
+            new FloorHoleSpec { room="room6", deckObject="PoolDeck", basinObject="PoolBasin",
+                                depth=2.01f, note="アヒル部屋のプール" },
         };
 
-        static List<FloorHole> FloorHolesFor(string room)
-        {
-            var list = new List<FloorHole>();
-            foreach (var h in FloorHoles) if (h.room == room) list.Add(h);
-            return list;
-        }
-
         /// <summary>
-        /// 矩形から穴の矩形を引く。残りを最大4枚の矩形で返す。
-        /// 戻り値の Vector4 は (x0, z0, x1, z1)。
+        /// 床メッシュから「床がある範囲」と「穴のふち」を取り出したもの。
+        ///
+        /// ⚠️ 穴の形を矩形で近似しないこと。プールの縁は有機的な曲線で、
+        /// バウンズの矩形で抜くと**実際には床がある所まで消え、縁の線も本物のふちから
+        /// 何メートルもずれた所に出る**（実際にやった）。元メッシュの境界辺をそのまま使う。
+        ///
+        /// ⚠️ 「穴＝閉じた輪」だと思わないこと。room6 のプールは部屋の隅まで達していて
+        /// **床の外周と地続きの一本の境界線**になっている。輪に分けようとすると
+        /// 外周とプールが繋がった1本しか出てこない（実際にそうなった）。
+        /// 輪には分けず、境界辺を1本ずつ「外に出た先がプールの器の上か」で判定する。
         /// </summary>
-        static List<Vector4> SubtractHoles(float x0, float x1, float z0, float z1, List<FloorHole> holes)
+        class FloorCutout
         {
-            var cur = new List<Vector4> { new Vector4(x0, z0, x1, z1) };
-            foreach (var h in holes)
+            public float topY;
+            public float depth;
+            public List<Vector3[]> tris = new List<Vector3[]>();   // 床(world)。XZだけ使う
+            public List<Vector3[]> holeEdges = new List<Vector3[]>();  // 穴のふちの線分(world)
+
+            /// <summary>その位置に床があるか（XZ で三角形に含まれるか）。</summary>
+            public bool OnDeck(float x, float z) { return Covers(tris, x, z); }
+
+            static bool Covers(List<Vector3[]> tl, float x, float z)
             {
-                var next = new List<Vector4>();
-                foreach (var r in cur)
+                for (int i = 0; i < tl.Count; i++)
                 {
-                    float ax0 = r.x, az0 = r.y, ax1 = r.z, az1 = r.w;
-                    // 交差しないならそのまま残す
-                    if (h.x1 <= ax0 || h.x0 >= ax1 || h.z1 <= az0 || h.z0 >= az1)
-                    { next.Add(r); continue; }
-
-                    float cx0 = Mathf.Max(ax0, h.x0), cx1 = Mathf.Min(ax1, h.x1);
-                    float cz0 = Mathf.Max(az0, h.z0), cz1 = Mathf.Min(az1, h.z1);
-
-                    if (cz0 > az0) next.Add(new Vector4(ax0, az0, ax1, cz0));   // 手前
-                    if (cz1 < az1) next.Add(new Vector4(ax0, cz1, ax1, az1));   // 奥
-                    if (cx0 > ax0) next.Add(new Vector4(ax0, cz0, cx0, cz1));   // 左
-                    if (cx1 < ax1) next.Add(new Vector4(cx1, cz0, ax1, cz1));   // 右
+                    var t = tl[i];
+                    if (InTri(x, z, t[0], t[1], t[2])) return true;
                 }
-                cur = next;
+                return false;
             }
-            // 潰れた欠片は捨てる（板として見えないうえ Combine が壊れる）
-            var outp = new List<Vector4>();
-            foreach (var r in cur) if (r.z - r.x > 0.05f && r.w - r.y > 0.05f) outp.Add(r);
-            return outp;
+
+            static bool InTri(float px, float pz, Vector3 a, Vector3 b, Vector3 c)
+            {
+                float d1 = (px - b.x) * (a.z - b.z) - (a.x - b.x) * (pz - b.z);
+                float d2 = (px - c.x) * (b.z - c.z) - (b.x - c.x) * (pz - c.z);
+                float d3 = (px - a.x) * (c.z - a.z) - (c.x - a.x) * (pz - a.z);
+                bool neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
+                bool pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+                return !(neg && pos);
+            }
+
+            static List<Vector3[]> WorldTris(Transform room, string objName)
+            {
+                Transform t = null;
+                foreach (var x in room.GetComponentsInChildren<Transform>(true))
+                    if (x.name == objName) { t = x; break; }
+                if (t == null) return null;
+                var mf = t.GetComponent<MeshFilter>();
+                if (mf == null || mf.sharedMesh == null || !mf.sharedMesh.isReadable) return null;
+
+                var vs = mf.sharedMesh.vertices;
+                var ts = mf.sharedMesh.triangles;
+                var w = new Vector3[vs.Length];
+                for (int i = 0; i < vs.Length; i++) w[i] = t.TransformPoint(vs[i]);
+                var outp = new List<Vector3[]>();
+                for (int i = 0; i < ts.Length; i += 3)
+                    outp.Add(new[] { w[ts[i]], w[ts[i + 1]], w[ts[i + 2]] });
+                return outp;
+            }
+
+            public static FloorCutout For(Transform room, string roomName)
+            {
+                FloorHoleSpec spec = null;
+                foreach (var s in FloorHoleSpecs) if (s.room == roomName) { spec = s; break; }
+                if (spec == null) return null;
+
+                var deckTris = WorldTris(room, spec.deckObject);
+                var basinTris = WorldTris(room, spec.basinObject);
+                if (deckTris == null || basinTris == null) return null;
+
+                var cut = new FloorCutout { depth = spec.depth, topY = -9e9f, tris = deckTris };
+                foreach (var t in deckTris)
+                    cut.topY = Mathf.Max(cut.topY, Mathf.Max(t[0].y, Mathf.Max(t[1].y, t[2].y)));
+
+                // --- 境界辺（三角形1枚にしか使われていない辺）を集める ---
+                // 頂点は三角形ごとに複製されているので、位置を丸めた値で数える。
+                var count = new Dictionary<long, int>();
+                var seg = new Dictionary<long, Vector3[]>();
+                System.Func<Vector3, long> key = p =>
+                    ((long)Mathf.RoundToInt(p.x * 500f) << 21) ^ (long)Mathf.RoundToInt(p.z * 500f);
+                foreach (var t in deckTris)
+                    for (int e = 0; e < 3; e++)
+                    {
+                        var p0 = t[e]; var p1 = t[(e + 1) % 3];
+                        long k0 = key(p0), k1 = key(p1);
+                        if (k0 == k1) continue;
+                        long ek = k0 < k1 ? (k0 * 1000003L + k1) : (k1 * 1000003L + k0);
+                        if (!count.ContainsKey(ek)) { count[ek] = 0; seg[ek] = new[] { p0, p1 }; }
+                        count[ek]++;
+                    }
+
+                // --- 境界辺のうち「外に出た先がプールの器の上」の物だけ拾う ---
+                // 部屋の壁際の境界は外に出ると器が無いので落ちる。
+                foreach (var kv in count)
+                {
+                    if (kv.Value != 1) continue;
+                    var e = seg[kv.Key];
+                    var d = new Vector3(e[1].x - e[0].x, 0f, e[1].z - e[0].z);
+                    if (d.sqrMagnitude < 1e-6f) continue;
+                    d.Normalize();
+                    var mid = (e[0] + e[1]) * 0.5f;
+                    var perp = new Vector3(-d.z, 0f, d.x);
+
+                    // 床がある側を先に決める（辺の向きは当てにならない）
+                    var inSide = mid + perp * 0.25f;
+                    if (!Covers(deckTris, inSide.x, inSide.z)) perp = -perp;
+                    var outSide = mid - perp * 0.25f;
+
+                    // 床の外に出て、かつ器の上 ＝ プールのふち
+                    if (Covers(deckTris, outSide.x, outSide.z)) continue;
+                    if (!Covers(basinTris, outSide.x, outSide.z)) continue;
+
+                    cut.holeEdges.Add(new[] { e[0], e[1], perp });   // perp は床側の向き
+                }
+
+                return cut.holeEdges.Count > 0 ? cut : null;
+            }
         }
 
         /// <summary>
@@ -144,11 +222,12 @@ namespace BLIND.EditorTools
         ///   ・縁の帯   : 床の上に置く平らな枠。遠くからでも「ここで床が終わる」と分かる
         ///   ・内壁の横縞: 深さを段で伝える。落とし穴の PitRings と同じ役目
         /// </summary>
-        static Mesh BuildHoleRimMesh(FloorHole h, float floorTopY, Transform room, string name)
+        static Mesh BuildHoleRimMesh(FloorCutout cut, Transform room, string name)
         {
-            const float LipWidth = 0.40f;   // 縁の帯の幅(m)
-            const float SegLen   = 1.20f;   // 帯を区切る長さ(m)。1枚が1本の線になる
+            const float LipWidth = 0.35f;   // 縁の帯の幅(m)
             const int   Rings    = 4;       // 内壁の横縞の数
+            float floorTopY = cut.topY;
+            float depth = cut.depth;
 
             var verts = new List<Vector3>();
             var uvs   = new List<Vector2>();
@@ -172,41 +251,29 @@ namespace BLIND.EditorTools
 
             float lipY = floorTopY + 0.03f;   // 床板(上面 floorTopY)より上に出す
 
-            // --- 4辺を SegLen ごとに区切って、縁の帯と内壁の縞を作る ---
-            // 辺は (始点, 方向, 長さ, 内向き) で表す
-            var sides = new[]
+            // ふちの線分を1本ずつ帯と縞にする。
+            // 輪に繋がっていなくても成立するので、外周と地続きの穴でも正しく描ける。
+            foreach (var e in cut.holeEdges)
             {
-                new { px = h.x0, pz = h.z0, dx = 1f, dz = 0f, len = h.x1 - h.x0, ix =  0f, iz =  1f },
-                new { px = h.x0, pz = h.z1, dx = 1f, dz = 0f, len = h.x1 - h.x0, ix =  0f, iz = -1f },
-                new { px = h.x0, pz = h.z0, dx = 0f, dz = 1f, len = h.z1 - h.z0, ix =  1f, iz =  0f },
-                new { px = h.x1, pz = h.z0, dx = 0f, dz = 1f, len = h.z1 - h.z0, ix = -1f, iz =  0f },
-            };
+                var a0 = new Vector3(e[0].x, lipY, e[0].z);
+                var a1 = new Vector3(e[1].x, lipY, e[1].z);
+                if ((a1 - a0).sqrMagnitude < 1e-6f) continue;
 
-            foreach (var s in sides)
-            {
-                int n = Mathf.Max(1, Mathf.RoundToInt(s.len / SegLen));
-                float step = s.len / n;
-                for (int k = 0; k < n; k++)
+                // 少し縮めて1枚ずつ独立した四角にする（隣とくっつくと1本の線に融ける）
+                var mid = (a0 + a1) * 0.5f;
+                a0 = mid + (a0 - mid) * 0.86f;
+                a1 = mid + (a1 - mid) * 0.86f;
+
+                var off = e[2] * LipWidth;   // e[2] は床がある側の向き
+
+                quad(a0, a1, a1 + off, a0 + off);
+
+                for (int r = 0; r < Rings; r++)
                 {
-                    float t0 = step * k, t1 = t0 + step * 0.86f;   // 少し隙間を空けて1枚ずつ独立させる
-                    var a0 = new Vector3(s.px + s.dx * t0, lipY, s.pz + s.dz * t0);
-                    var a1 = new Vector3(s.px + s.dx * t1, lipY, s.pz + s.dz * t1);
-                    var off = new Vector3(-s.ix * LipWidth, 0f, -s.iz * LipWidth);   // 床側へ広げる
-
-                    // 縁の帯（床の上）
-                    quad(a0, a1, a1 + off, a0 + off);
-
-                    // 内壁の横縞
-                    for (int r = 0; r < Rings; r++)
-                    {
-                        float y0 = floorTopY - h.depth * (r + 0.15f) / Rings;
-                        float y1 = floorTopY - h.depth * (r + 0.55f) / Rings;
-                        var b0 = new Vector3(a0.x, y0, a0.z);
-                        var b1 = new Vector3(a1.x, y0, a1.z);
-                        var c1 = new Vector3(a1.x, y1, a1.z);
-                        var c0 = new Vector3(a0.x, y1, a0.z);
-                        quad(b0, b1, c1, c0);
-                    }
+                    float y0 = floorTopY - depth * (r + 0.15f) / Rings;
+                    float y1 = floorTopY - depth * (r + 0.55f) / Rings;
+                    quad(new Vector3(a0.x, y0, a0.z), new Vector3(a1.x, y0, a1.z),
+                         new Vector3(a1.x, y1, a1.z), new Vector3(a0.x, y1, a0.z));
                 }
             }
 
@@ -539,10 +606,18 @@ namespace BLIND.EditorTools
             // 配管はサーモ役にとって数少ない道しるべなので、重くても形を残す。
             // 頂点クラスタリングで落とすと絡まった線がやや団子になるが、
             // 箱になるよりは遥かにましで、天井を走る線として読める。
-            if (readable && IsDuctKey(key))
+            //
+            // ブラウン管も同じ理由で箱にしてはいけない。
+            // 1台が back(7,682) / front(2,428) / top(2,406) の3枚で出来ていて全部上限超え。
+            // 箱にすると、いちばん大きい front の箱が他を飲み込んで
+            // **「宙に浮いた黄色い板」** にしか見えなくなる（実際にそうなっていた）。
+            // 前面ガラス(front)だけ 47℃、筐体(back/top)は 17.5℃ と温度を分けてあるので、
+            // 形さえ残れば「積まれた機械のうち、どれがこちらを向いているか」が読める。
+            if (readable && (IsDuctKey(key) || IsCrtKey(key)))
             {
-                var liteDuct = BlindMeshReducer.SaveLite(src, DuctShapeTris, "_duct");
-                ci.mesh = liteDuct != null ? liteDuct : src;
+                int budget = IsCrtKey(key) ? CrtShapeTris : DuctShapeTris;
+                var lite = BlindMeshReducer.SaveLite(src, budget, IsCrtKey(key) ? "_crt" : "_duct");
+                ci.mesh = lite != null ? lite : src;
                 ci.subMeshIndex = 0;
                 ci.transform = room.worldToLocalMatrix * mr.transform.localToWorldMatrix;
                 return true;
@@ -595,6 +670,19 @@ namespace BLIND.EditorTools
         /// 19個で 22,800 三角形。マップ全体に対しては誤差。
         /// </summary>
         const int DuctShapeTris = 1200;
+
+        /// <summary>ブラウン管か。前面ガラスと筐体で温度が違うので、形が要る。</summary>
+        static bool IsCrtKey(string key)
+        {
+            return key == "CRTOn" || key == "CRTOff";
+        }
+
+        /// <summary>
+        /// ブラウン管を減面するときの目標三角形数。
+        /// 1台3枚 × 14台 = 42枚。400 なら合計 16,800 三角形で、
+        /// 画面の平面と筐体の奥行きが区別できる程度には形が残る。
+        /// </summary>
+        const int CrtShapeTris = 400;
 
         /// <summary>エコロケ用に素の形を使うときの上限。これを超えたら簡略版を作る。</summary>
         const int EchoShapeTris = 300;
@@ -1166,8 +1254,12 @@ namespace BLIND.EditorTools
                     //   元の床メッシュの形は見ていない。プールのように床が抜けている部屋でも
                     //   板は矩形のまま張られるので、**エコロケ視点ではプールが床で埋まり、
                     //   ふちがどこにも出ない**（実際にそうなって落ちた）。
-                    //   板を穴の矩形で切り抜き、代わりに縁と深さを線で描く。
-                    var fholes = FloorHolesFor(rn);
+                    //
+                    //   ⚠️ 穴の形を矩形で近似してはいけない。プールの縁は有機的な曲線で、
+                    //   バウンズの矩形で抜くと**実際には床がある所まで消え、
+                    //   縁の線も本物のふちから何メートルもずれた所に出る**（これも実際にやった）。
+                    //   元の床メッシュ（穴が開いた状態で入っている）から輪郭を取り出して使う。
+                    var cut = FloorCutout.For(room, rn);
 
                     int nx = Mathf.Max(1, Mathf.RoundToInt(floorBounds.size.x / EchoChunk));
                     int nz = Mathf.Max(1, Mathf.RoundToInt(floorBounds.size.z / EchoChunk));
@@ -1181,18 +1273,40 @@ namespace BLIND.EditorTools
                             float bz0 = floorBounds.min.z + sz * iz,       bz1 = bz0 + sz;
                             float slabY = floorBounds.max.y - 0.02f;
 
-                            var parts = SubtractHoles(bx0, bx1, bz0, bz1, fholes);
                             var cis = new List<CombineInstance>();
-                            foreach (var p in parts)
+                            System.Action<float, float, float, float> addBox = (ax0, ax1, az0, az1) =>
                                 cis.Add(new CombineInstance
                                 {
                                     mesh = uvSlab,
                                     subMeshIndex = 0,
                                     transform = room.worldToLocalMatrix * Matrix4x4.TRS(
-                                        new Vector3((p.x + p.z) * 0.5f, slabY, (p.y + p.w) * 0.5f),
+                                        new Vector3((ax0 + ax1) * 0.5f, slabY, (az0 + az1) * 0.5f),
                                         Quaternion.identity,
-                                        new Vector3(p.z - p.x, 0.04f, p.w - p.y)),
+                                        new Vector3(ax1 - ax0, 0.04f, az1 - az0)),
                                 });
+
+                            if (cut == null)
+                            {
+                                addBox(bx0, bx1, bz0, bz1);
+                            }
+                            else
+                            {
+                                // 穴のある部屋だけ、板を小さいタイルに割って
+                                // 「床が実際にある所」だけ置く。曲がった縁も階段状に追える。
+                                int tx = Mathf.Max(1, Mathf.RoundToInt(sx / FloorTile));
+                                int tz = Mathf.Max(1, Mathf.RoundToInt(sz / FloorTile));
+                                float dx = sx / tx, dz = sz / tz;
+                                for (int i = 0; i < tx; i++)
+                                    for (int j = 0; j < tz; j++)
+                                    {
+                                        float cx = bx0 + dx * (i + 0.5f), cz = bz0 + dz * (j + 0.5f);
+                                        if (!cut.OnDeck(cx, cz)) continue;
+                                        // 少し内側に寄せて1枚ずつ独立した四角にする。
+                                        // くっついていると格子1枚に見えて縁が読めない（落とし穴部屋と同じ理由）。
+                                        addBox(bx0 + dx * i + 0.05f, bx0 + dx * (i + 1) - 0.05f,
+                                               bz0 + dz * j + 0.05f, bz0 + dz * (j + 1) - 0.05f);
+                                    }
+                            }
 
                             var fm = cis.Count > 0
                                 ? Combine(cis, rn + "_Echo_Floor_" + ix + "_" + iz) : null;
@@ -1221,14 +1335,10 @@ namespace BLIND.EditorTools
                     // 落とし穴部屋と同じ作りにする：縁に沿った帯＋内壁の横縞。
                     // 帯を細かく区切って1枚ごとに 0〜1 の UV を貼るので、
                     // 輪郭しか描かないエコロケでも点線状の線として確実に出る。
-                    for (int hi2 = 0; hi2 < fholes.Count; hi2++)
+                    var hm = cut != null ? BuildHoleRimMesh(cut, room, rn + "_Echo_HoleRim") : null;
+                    if (hm != null)
                     {
-                        var hole = fholes[hi2];
-                        var hm = BuildHoleRimMesh(hole, floorBounds.max.y, room,
-                                                  rn + "_Echo_HoleRim_" + hi2);
-                        if (hm == null) continue;
-
-                        var hg = new GameObject("E_FloorHole_" + hi2);
+                        var hg = new GameObject("E_FloorHole");
                         hg.transform.SetParent(eRoot.transform, false);
                         hg.layer = LayerEcho;
                         hg.AddComponent<MeshFilter>().sharedMesh = hm;
