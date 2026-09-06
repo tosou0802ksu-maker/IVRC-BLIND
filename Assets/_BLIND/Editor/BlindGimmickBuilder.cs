@@ -72,18 +72,22 @@ namespace BLIND.EditorTools
         const float DeckEchoInset = 0.10f;
 
         /// <summary>
-        /// サーモ層で、穴の中に張る「底」の深さ(m)。
+        /// サーモ層で、穴の開口に張る面の深さ(m)。
         ///
-        /// 縦坑は床より下なので、目線の高さからは中がほとんど見えない。
-        /// 何も張らないとサーモ視点で穴が分からなかったので、中に面を1枚張っている。
+        /// ここは「奥行きを出す」より「確実に見える」を優先する。
         ///
-        /// ⚠️ ここを開口のすぐ下(0.05m)にすると、**開口をふさぐ板に見えて
-        /// 「パネルが浮いている」ようにしか読めない**（実際そう言われた）。
-        /// 1m ほど落とすと、遠くからは内壁(PitWall・明るい青)が四角く見え、
-        /// 近づくとその奥に底(PitVoid・濃い青紫)が現れる。
-        /// 本物の穴と同じ見え方の変化をするので、距離を問わず穴として読める。
+        /// ⚠️ 深く落とすと遠くの穴が消える。
+        /// 目線 h・距離 d から幅 w の開口を覗くと、深さ y の面は
+        /// **d &gt; w·h/y で手前の縁に完全に隠れる**。w=1.29m / h=1.6m なら
+        ///   y=0.05 → 41m（部屋の端まで見える）
+        ///   y=0.22 → 9.4m
+        ///   y=1.10 → 1.9m  ← 一度これにして遠くの穴が全部消えた
+        ///
+        /// 縁に棚を作って内側だけ落とす「段付き」も試したが、
+        /// **平らな一枚のほうが読みやすいという判断になった**ので戻してある。
+        /// 触るときはこの経緯を踏まえること。
         /// </summary>
-        const float PitCapDepth = 1.10f;
+        const float PitCapDepth = 0.05f;
         /// <summary>床板の厚み(m)。元の床(0.1)より少し厚くして縁が見えるようにする。</summary>
         const float DeckThickness = 0.15f;
 
@@ -146,7 +150,7 @@ namespace BLIND.EditorTools
             // room4 : 北(z=-4.1, x≈-7.05)から入って南(z=-13.3, x≈-2.05)へ抜ける
             new PitSpec { room="room4",  fx0=-9.1f, fx1= 0.1f, fz0=-12.0f, fz1= -5.4f,
                           nx=6, nz=4, rx0=-9.1f, rx1=0.1f, rz0=-13.3f, rz1=-4.1f,
-                          seed=5001, entryCol=1, exitCol=4, density=0.55f,
+                          seed=5001, entryCol=1, exitCol=4, density=0.80f,
                           note="西ルート(赤)の入口。最初に出会う落とし穴なので小さめ・易しめ。" +
                                "3部屋で密度を変えて単調さを避ける（ここが一番薄い）" },
 
@@ -176,7 +180,7 @@ namespace BLIND.EditorTools
             //    踏み場(sx/sz)はもう要らないので外した。
             new PitSpec { room="room9",  fx0=-9.1f, fx1= 0.1f, fz0=-39.3f, fz1=-22.0f,
                           nx=6, nz=11, rx0=-9.1f, rx1=0.1f, rz0=-47.7f, rz1=-20.5f,
-                          seed=10007, entryCol=3, exitCol=3, density=0.80f,
+                          seed=10007, entryCol=3, exitCol=3, density=0.95f,
                           gz0=-43.3f, gz1=-39.3f,
                           gapNote="南ルートを断ち切る全員共通の穴。看板を見て room8 側へ迂回させる",
                           note="南ルート(青)。北半分が役職別の落とし穴、その南が渡れない帯" },
@@ -184,7 +188,7 @@ namespace BLIND.EditorTools
             // room14 : 南北とも扉は x≈17.95
             new PitSpec { room="room14", fx0=13.9f, fx1=22.1f, fz0=-35.6f, fz1=-24.6f,
                           nx=6, nz=7,  rx0=13.9f, rx1=22.1f, rz0=-37.7f, rz1=-22.5f,
-                          seed=18013, entryCol=2, exitCol=3, density=0.70f,
+                          seed=18013, entryCol=2, exitCol=3, density=0.90f,
                           note="東ルート(緑)の入口。room4 と room9 の中間の密度" },
         };
 
@@ -314,7 +318,6 @@ namespace BLIND.EditorTools
             var voidMat = MakeVoidMaterial();
             var tDeck = BlindThermalTable.Mat("PitDeck");
             var tVoid = BlindThermalTable.Mat("PitVoid");
-            var tWall = BlindThermalTable.Mat("PitWall");
 
             foreach (var s in Pits)
             {
@@ -358,9 +361,7 @@ namespace BLIND.EditorTools
                     bool isThermal = pass == 1;
                     bool isEcho    = pass == 2;
                     Material deckMat = pass == 0 ? FloorMaterialOf(room.transform) : (pass == 1 ? tDeck : echoMat);
-                    // サーモの縦坑は内壁(PitWall)と底(PitVoid)で温度を分ける。
-                    // 同じ色だと開口をふさぐ1枚板に見えて、穴ではなく浮いたパネルになる。
-                    Material pitMat  = pass == 0 ? deckMat : (pass == 1 ? tWall : echoMat);
+                    Material pitMat  = pass == 0 ? deckMat : (pass == 1 ? tVoid : echoMat);
 
                     for (int z = 0; z < s.nz; z++)
                     {
@@ -561,6 +562,35 @@ namespace BLIND.EditorTools
         /// 各役は自分の色の穴しか「見えない」だけなので、3人で読み合わないと渡れない。
         /// 安全な一本道だけが全員にとって床なので、この道の作り方が難易度を決める。
         /// </summary>
+        /// <summary>
+        /// 穴を3役に配るときの重み。[0]=過去人 [1]=サーモ [2]=エコロケ。
+        /// **小さいほど多く配られる**（配った数にこの値を掛けて「まだ余裕がある役」を選ぶため）。
+        ///
+        /// エコロケだけ軽くしてある。エコロケ視点の穴は「マス目が1枚抜けている」
+        /// という引き算の表現で、サーモの光る面や過去人の黒い開口に比べて
+        /// 1個あたりの主張が弱い。3役同数だと画面が寂しく見える。
+        /// 0.45 だと、おおよそ他の役の 2 倍を持つ。
+        ///
+        /// ⚠️ 穴の総数は density で決まっていて、ここでは増えない。
+        /// エコロケを増やすぶん他の2役は減る。総数ごと増やしたいときは density を上げること。
+        /// </summary>
+        static readonly float[] RoleBias = { 1.00f, 1.00f, 0.45f };
+
+        /// <summary>
+        /// 「同じ役の穴を近くに置かない」ペナルティの重み。[0]=過去人 [1]=サーモ [2]=エコロケ。
+        ///
+        /// ⚠️ 個数の重み(RoleBias)だけ下げても、エコロケの数は増えなかった。
+        /// このペナルティが上限を作っていたため。
+        /// 「隣に同じ役がいると避ける」という規則がある以上、
+        /// 盤面の広さで持てる数が頭打ちになり、重みをいくら下げても越えられない。
+        ///
+        /// エコロケだけ緩めてある。エコロケの穴は隣り合うと**大きな1つの欠け**になり、
+        /// マス目が1枚抜けるより遥かに読みやすい。むしろ都合がいい。
+        /// ただしゼロにはしない。1行まるごと同じ役になると、
+        /// その行はその1人が読むだけで越えられて、3人で擦り合わせる意味が消える。
+        /// </summary>
+        static readonly float[] ClusterBias = { 1.00f, 1.00f, 0.35f };
+
         static int[,] Assign(PitSpec s)
         {
             var safe = new bool[s.nx, s.nz];
@@ -687,7 +717,7 @@ namespace BLIND.EditorTools
                             if (owner[nx, nz] != r) continue;
                             near += 1f / Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dz));
                         }
-                    float score = near * 4f + used[r];
+                    float score = near * 4f * ClusterBias[r] + used[r] * RoleBias[r];
                     if (score < bestScore) { bestScore = score; best = r; }
                 }
                 owner[h.x, h.y] = best;
@@ -722,7 +752,10 @@ namespace BLIND.EditorTools
                 if (pick < 0) continue;
 
                 int least = 0;
-                for (int r = 1; r < 3; r++) if (used[r] < used[least]) least = r;
+                // ここも RoleBias を掛けて選ぶ。素の個数で選ぶと、保証で足す穴が
+                // 全部エコロケ以外に回って、上で付けた偏りが打ち消される。
+                for (int r = 1; r < 3; r++)
+                    if (used[r] * RoleBias[r] < used[least] * RoleBias[least]) least = r;
                 owner[x, pick] = least;
                 used[least]++;
             }
@@ -751,9 +784,128 @@ namespace BLIND.EditorTools
                 if (pick < 0) continue;   // 行がまるごと安全な道＝通路なのでそのままでよい
 
                 int least = 0;
-                for (int r = 1; r < 3; r++) if (used[r] < used[least]) least = r;
+                // ここも RoleBias を掛けて選ぶ。素の個数で選ぶと、保証で足す穴が
+                // 全部エコロケ以外に回って、上で付けた偏りが打ち消される。
+                for (int r = 1; r < 3; r++)
+                    if (used[r] * RoleBias[r] < used[least] * RoleBias[least]) least = r;
                 owner[pick, z] = least;
                 used[least]++;
+            }
+
+            // ------------------------------------------------------------
+            // 5.5 一歩ごとに「誰かが声を出さないと進めない」ようにする
+            // ------------------------------------------------------------
+            // この部屋の主役は落とし穴そのものではなく、**3人の声の掛け合い**。
+            // 穴をいくら増やしても、道の隣が全部安全な行があると、
+            // その行はただ黙って歩くだけになる。逆に道の隣が必ず穴なら、
+            // 「左いける？」と訊かないと横に動けない。
+            //
+            // さらに、その隣の穴の持ち主を**行ごとに 過去人→サーモ→エコロケ と回す**。
+            // こうすると答える人が一歩ごとに入れ替わり、3人が交互に喋る形になる。
+            // 1人が読み上げ続けて他の2人が黙る、という状態にならない。
+            //
+            // 既に穴になっているマスがあれば、色（担当）だけ変えて数は増やさない。
+            var locked = new bool[s.nx, s.nz];
+            for (int z = s.nz - 1; z >= 0; z--)
+            {
+                int want = ((s.nz - 1 - z) + s.seed) % 3;   // 部屋ごとに始まりの役をずらす
+                bool satisfied = false;
+                var cands = new List<Vector2Int>();
+                for (int x = 0; x < s.nx && !satisfied; x++)
+                {
+                    if (!safe[x, z]) continue;
+                    for (int d = -1; d <= 1; d += 2)
+                    {
+                        int nx2 = x + d;
+                        if (nx2 < 0 || nx2 >= s.nx) continue;
+                        if (safe[nx2, z]) continue;              // 道の隣がまた道なら判断が要らない
+                        if (InBlockCell(s, nx2, z)) continue;    // 封鎖したい所は触らない
+                        if (owner[nx2, z] == want) { satisfied = true; locked[nx2, z] = true; break; }
+                        cands.Add(new Vector2Int(nx2, z));
+                    }
+                }
+                if (satisfied || cands.Count == 0) continue;
+
+                // 既に穴のマスを優先（色を替えるだけ）。無ければ床を1つ穴にする。
+                int pick2 = 0;
+                for (int i = 0; i < cands.Count; i++)
+                    if (owner[cands[i].x, cands[i].y] >= 0) { pick2 = i; break; }
+                var c2 = cands[pick2];
+                if (owner[c2.x, c2.y] >= 0) used[owner[c2.x, c2.y]]--;
+                owner[c2.x, c2.y] = want;
+                used[want]++;
+                locked[c2.x, c2.y] = true;
+            }
+
+            // ------------------------------------------------------------
+            // 6. 「その行(列)の穴が全部同じ役」を崩す
+            // ------------------------------------------------------------
+            // エコロケを多めに配る設定(RoleBias / ClusterBias)にすると、
+            // 穴が3つ以上あってその全部がエコロケ、という行が出てくる。
+            // そうなるとその行はエコロケ役が読み上げるだけで越えられて、
+            // 3人で擦り合わせる必要が消える＝この部屋の存在意義が薄れる。
+            //
+            // 配り方の重みで防ごうとすると結局エコロケの数が減るので、
+            // 配り終わってから最小限だけ直す。1行につき1マスだけ他の役に移す。
+            //
+            // ⚠️ 行と列を1回ずつ直すだけでは足りない。
+            // 列を直すと、その1マスが属する行が今度は全部同じ役になることがある。
+            // 落ち着くまで数回まわす（実測で2〜3回で止まる）。
+            for (int iter = 0; iter < 6; iter++)
+            {
+            bool fixedAny = false;
+            for (int pass2 = 0; pass2 < 2; pass2++)   // 0=行 1=列
+            {
+                int outer = pass2 == 0 ? s.nz : s.nx;
+                int inner = pass2 == 0 ? s.nx : s.nz;
+                for (int a = 0; a < outer; a++)
+                {
+                    int cnt = 0, role = -1; bool same = true;
+                    for (int b = 0; b < inner; b++)
+                    {
+                        int o = pass2 == 0 ? owner[b, a] : owner[a, b];
+                        if (o < 0) continue;
+                        cnt++;
+                        if (role < 0) role = o; else if (role != o) { same = false; break; }
+                    }
+                    if (!same || cnt < 3 || role < 0) continue;
+
+                    // 真ん中あたりの1マスを別の役に移す。端を移すと
+                    // 「端だけ他の役」になって、結局その行の中身は1人で読めてしまう。
+                    //
+                    // ⚠️ 手順5.5 で「一歩ごとの担当」に決めたマス(locked)は動かさない。
+                    // ここで動かすと、せっかく回した喋る順番が崩れる。
+                    int hit = 0, target = -1;
+                    for (int b = 0; b < inner && target < 0; b++)
+                    {
+                        int o = pass2 == 0 ? owner[b, a] : owner[a, b];
+                        if (o < 0) continue;
+                        if (pass2 == 0 ? locked[b, a] : locked[a, b]) continue;
+                        if (++hit == cnt / 2 + 1) target = b;
+                    }
+                    // 真ん中が locked だったときは、動かせるマスならどれでもよい
+                    if (target < 0)
+                        for (int b = 0; b < inner && target < 0; b++)
+                        {
+                            int o = pass2 == 0 ? owner[b, a] : owner[a, b];
+                            if (o < 0) continue;
+                            if (pass2 == 0 ? locked[b, a] : locked[a, b]) continue;
+                            target = b;
+                        }
+                    if (target < 0) continue;
+
+                    int to = -1;
+                    for (int r = 0; r < 3; r++)
+                    {
+                        if (r == role) continue;
+                        if (to < 0 || used[r] * RoleBias[r] < used[to] * RoleBias[to]) to = r;
+                    }
+                    if (pass2 == 0) owner[target, a] = to; else owner[a, target] = to;
+                    used[role]--; used[to]++;
+                    fixedAny = true;
+                }
+            }
+            if (!fixedAny) break;
             }
 
             return owner;
