@@ -72,13 +72,18 @@ namespace BLIND.EditorTools
         const float DeckEchoInset = 0.10f;
 
         /// <summary>
-        /// サーモ層で、穴の開口に張る「熱の蓋」の深さ(m)。
+        /// サーモ層で、穴の中に張る「底」の深さ(m)。
         ///
-        /// 熱源(45℃)は縦坑の中にあるが、縦坑は床より下なので目線からは中が見えず、
-        /// 実際サーモ視点で穴が一切分からなかった。開口のすぐ下に水平な面を張れば、
-        /// 距離や角度に関係なく「床に空いた明るい四角」として見える。
+        /// 縦坑は床より下なので、目線の高さからは中がほとんど見えない。
+        /// 何も張らないとサーモ視点で穴が分からなかったので、中に面を1枚張っている。
+        ///
+        /// ⚠️ ここを開口のすぐ下(0.05m)にすると、**開口をふさぐ板に見えて
+        /// 「パネルが浮いている」ようにしか読めない**（実際そう言われた）。
+        /// 1m ほど落とすと、遠くからは内壁(PitWall・明るい青)が四角く見え、
+        /// 近づくとその奥に底(PitVoid・濃い青紫)が現れる。
+        /// 本物の穴と同じ見え方の変化をするので、距離を問わず穴として読める。
         /// </summary>
-        const float PitCapDepth = 0.05f;
+        const float PitCapDepth = 1.10f;
         /// <summary>床板の厚み(m)。元の床(0.1)より少し厚くして縁が見えるようにする。</summary>
         const float DeckThickness = 0.15f;
 
@@ -309,6 +314,7 @@ namespace BLIND.EditorTools
             var voidMat = MakeVoidMaterial();
             var tDeck = BlindThermalTable.Mat("PitDeck");
             var tVoid = BlindThermalTable.Mat("PitVoid");
+            var tWall = BlindThermalTable.Mat("PitWall");
 
             foreach (var s in Pits)
             {
@@ -352,12 +358,15 @@ namespace BLIND.EditorTools
                     bool isThermal = pass == 1;
                     bool isEcho    = pass == 2;
                     Material deckMat = pass == 0 ? FloorMaterialOf(room.transform) : (pass == 1 ? tDeck : echoMat);
-                    Material pitMat  = pass == 0 ? deckMat : (pass == 1 ? tVoid : echoMat);
+                    // サーモの縦坑は内壁(PitWall)と底(PitVoid)で温度を分ける。
+                    // 同じ色だと開口をふさぐ1枚板に見えて、穴ではなく浮いたパネルになる。
+                    Material pitMat  = pass == 0 ? deckMat : (pass == 1 ? tWall : echoMat);
 
                     for (int z = 0; z < s.nz; z++)
                     {
                         var deck = new MeshBuild();
                         var pit  = new MeshBuild();
+                        var cap  = new MeshBuild();   // サーモの底だけ別材質にする
                         for (int x = 0; x < s.nx; x++)
                         {
                             float x0 = s.fx0 + cw * x, x1 = x0 + cw;
@@ -395,16 +404,17 @@ namespace BLIND.EditorTools
                             pit.BoxOpenTop(new Vector3(x0 + PitInset, -PitDepth, z0 + PitInset),
                                            new Vector3(x1 - PitInset, 0f, z1 - PitInset), PitRings);
 
-                            // サーモ層で、その役に見える穴には開口のすぐ下に「熱の蓋」を張る。
-                            // 熱源は縦坑の中にあるが床より下なので、目線からは中が見えず
-                            // 穴が一切分からなかった。水平な面を1枚張れば、
-                            // 距離や角度に関係なく「床に空いた明るい四角」として見える。
+                            // サーモ層で、その役に見える穴には少し下に「底」を張る。
+                            // 縦坑は床より下なので目線からは中がほとんど見えず、
+                            // 何も張らないと穴が分からなかった。
+                            // 開口のすぐ下ではなく PitCapDepth(1.1m) 落とすのが要点で、
+                            // 遠くからは内壁(明るい青)が四角く見え、近づくと奥に底(濃い青紫)が出る。
                             if (isThermal && o == pass)
                             {
                                 float qx0 = x0 + PitInset, qx1 = x1 - PitInset;
                                 float qz0 = z0 + PitInset, qz1 = z1 - PitInset;
                                 float qy = -PitCapDepth;
-                                pit.Quad(new Vector3(qx0, qy, qz0), new Vector3(qx0, qy, qz1),
+                                cap.Quad(new Vector3(qx0, qy, qz0), new Vector3(qx0, qy, qz1),
                                          new Vector3(qx1, qy, qz1), new Vector3(qx1, qy, qz0), Vector3.up);
                             }
                         }
@@ -413,6 +423,8 @@ namespace BLIND.EditorTools
                             meshes.Add(Emit(rootGo.transform, tag + "_Deck_" + z, layer, deck, deckMat, pass == 2));
                         if (pit.Count > 0)
                             meshes.Add(Emit(rootGo.transform, tag + "_Pit_" + z, layer, pit, pitMat, pass == 2));
+                        if (cap.Count > 0)
+                            meshes.Add(Emit(rootGo.transform, tag + "_PitBottom_" + z, layer, cap, tVoid, false));
                     }
 
                     // --- 穴フィールドの外側（扉まわりの安全地帯）---
@@ -443,15 +455,18 @@ namespace BLIND.EditorTools
                         var gap = new MeshBuild();
                         gap.BoxOpenTop(new Vector3(s.fx0 + PitInset, -PitDepth, s.gz0 + PitInset),
                                        new Vector3(s.fx1 - PitInset, 0f, s.gz1 - PitInset), PitRings);
+                        meshes.Add(Emit(rootGo.transform, tag + "_Gap", layer, gap, pitMat, pass == 2));
+
                         if (isThermal)
                         {
+                            var gcap = new MeshBuild();
                             float qy = -PitCapDepth;
-                            gap.Quad(new Vector3(s.fx0 + PitInset, qy, s.gz0 + PitInset),
-                                     new Vector3(s.fx0 + PitInset, qy, s.gz1 - PitInset),
-                                     new Vector3(s.fx1 - PitInset, qy, s.gz1 - PitInset),
-                                     new Vector3(s.fx1 - PitInset, qy, s.gz0 + PitInset), Vector3.up);
+                            gcap.Quad(new Vector3(s.fx0 + PitInset, qy, s.gz0 + PitInset),
+                                      new Vector3(s.fx0 + PitInset, qy, s.gz1 - PitInset),
+                                      new Vector3(s.fx1 - PitInset, qy, s.gz1 - PitInset),
+                                      new Vector3(s.fx1 - PitInset, qy, s.gz0 + PitInset), Vector3.up);
+                            meshes.Add(Emit(rootGo.transform, tag + "_GapBottom", layer, gcap, tVoid, false));
                         }
-                        meshes.Add(Emit(rootGo.transform, tag + "_Gap", layer, gap, pitMat, pass == 2));
                     }
                 }
 
