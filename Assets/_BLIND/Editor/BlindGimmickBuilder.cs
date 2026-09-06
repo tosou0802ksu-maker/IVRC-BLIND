@@ -72,22 +72,53 @@ namespace BLIND.EditorTools
         const float DeckEchoInset = 0.10f;
 
         /// <summary>
-        /// サーモ層で、穴の開口に張る面の深さ(m)。
+        /// サーモ層で、縦坑の内壁を温度で分ける境目の深さ(m)。
         ///
-        /// ここは「奥行きを出す」より「確実に見える」を優先する。
+        /// **開口に蓋（水平な板）は張らない。** 穴の中そのものに熱を持たせて深さを見せる。
         ///
-        /// ⚠️ 深く落とすと遠くの穴が消える。
-        /// 目線 h・距離 d から幅 w の開口を覗くと、深さ y の面は
-        /// **d &gt; w·h/y で手前の縁に完全に隠れる**。w=1.29m / h=1.6m なら
-        ///   y=0.05 → 41m（部屋の端まで見える）
-        ///   y=0.22 → 9.4m
-        ///   y=1.10 → 1.9m  ← 一度これにして遠くの穴が全部消えた
+        /// 蓋を張る作りは2通り試してどちらも駄目だった:
+        ///   ・開口のすぐ下(0.05m) → 開口をふさぐ板に見えて「パネルが浮いている」
+        ///   ・1.1m 落とす        → 遠くの穴が消える
+        /// 　（目線 h・距離 d から幅 w の開口を覗くと、深さ y の面は
+        /// 　 d &gt; w·h/y で手前の縁に完全に隠れる。w=1.29 / h=1.6 で y=1.1 なら 1.9m）
         ///
-        /// 縁に棚を作って内側だけ落とす「段付き」も試したが、
-        /// **平らな一枚のほうが読みやすいという判断になった**ので戻してある。
-        /// 触るときはこの経緯を踏まえること。
+        /// 内壁を上から PitRim(12℃) / PitWall(7℃) / PitVoid(3℃) の3段に分けると、
+        /// 覗き込んだときに水色→青→濃紫の輪が重なって見え、それ自体が深さになる。
         /// </summary>
-        const float PitCapDepth = 0.05f;
+        /// <summary>
+        /// 縦坑の内壁の段の境目(m)。0 〜 PitRimDepth が水色、そこから
+        /// PitWallDepth までが青、その下が濃紫。
+        ///
+        /// ⚠️ **穴の口に水平・準水平な面を置いてはいけない。** すり鉢状の縁を
+        /// 0.40m 幅で付けたことがあるが、1.47m のマスに対して両側 0.40m ＝
+        /// **開口面積の 73% が水平な輪**になり、遠目には水色の板が1枚
+        /// 張ってあるようにしか見えなかった（＝「蓋」）。
+        /// 深さは水平面ではなく**垂直な内壁の段**で見せること。
+        ///
+        /// 段の境目は「その距離から何m下まで見えるか」で決める。
+        /// 目線 h・距離 d から幅 w の開口を覗くと、見える深さは w·h/d。
+        /// w=1.47 / h=1.6 なら 10m先=0.24m、6m先=0.39m、3m先=0.78m、1.5m先=1.57m。
+        /// なので 0.40 / 1.60 で区切ると、遠→近で 水色 → 水色+青 → +濃紫 と
+        /// 段が増えていき、**輪が何重に見えるか＝深さ**になる。
+        /// </summary>
+        const float PitRimDepth  = 0.40f;
+        const float PitWallDepth = 1.60f;
+
+        /// <summary>
+        /// 穴の縁が床から出っ張る高さ(m)。サーモ層だけの見た目で、当たり判定には出ない。
+        /// 床より下の面は距離が延びると穴自身の縁に隠れるが、床より上なら何にも隠されない。
+        /// これが遠距離で穴の位置を示す唯一の手掛かり。上面は 3cm しか無いので
+        /// 「輪郭線」に見え、蓋にはならない。
+        /// </summary>
+        const float PitLipHeight = 0.07f;
+
+        /// <summary>
+        /// サーモ層だけ縦坑を広く掘る量(m)。
+        /// 浅い角度から覗いたとき、開口が広いほど内壁が多く見える
+        /// （見える深さは 開口幅 × 目線の高さ ÷ 距離）。
+        /// 当たり判定には関係しないので、見た目のためだけに広げてよい。
+        /// </summary>
+        const float PitThermalInset = 0.03f;
         /// <summary>床板の厚み(m)。元の床(0.1)より少し厚くして縁が見えるようにする。</summary>
         const float DeckThickness = 0.15f;
 
@@ -147,12 +178,29 @@ namespace BLIND.EditorTools
             //    生成物は同じ場所に出る＝別の部屋の下に二重にできてしまう。実際にそうなった。
             //    ここの名前は必ずシーンの実体と一致させること。
 
-            // room4 : 北(z=-4.1, x≈-7.05)から入って南(z=-13.3, x≈-2.05)へ抜ける
-            new PitSpec { room="room4",  fx0=-9.1f, fx1= 0.1f, fz0=-12.0f, fz1= -5.4f,
-                          nx=6, nz=4, rx0=-9.1f, rx1=0.1f, rz0=-13.3f, rz1=-4.1f,
-                          seed=5001, entryCol=1, exitCol=4, density=0.80f,
-                          note="西ルート(赤)の入口。最初に出会う落とし穴なので小さめ・易しめ。" +
-                               "3部屋で密度を変えて単調さを避ける（ここが一番薄い）" },
+            // room4 : 北(z=-4.1, x≈-7.0)から入って南(z=-13.3, x≈-2.0)へ抜ける
+            //
+            // ⚠️ **穴フィールドは部屋の床いっぱいに取ること。**
+            // 以前は z=-12.0〜-5.4 の 6.6m だけで、南北に 1.3m ずつ安全な帯が残っていた。
+            // その帯は壁から壁まで繋がっているので、**フィールドを1列だけ縦断して
+            // 帯に降りたら、あとは横に歩くだけで出口に着けてしまった**。
+            // 実測で入口→出口の最短経路は10マス中、判断が要るのは3回だけだった。
+            // 帯を無くすと「どこかで必ず横断させられる」状態になる。
+            //
+            // 部屋そのものを広げるのは無理。北は room2、東は room18、西と南は room5 が
+            // 接していて、壁を動かすと他人の部屋に食い込む。
+            // 代わりに床を余さず使い、4行 → 6行にしてある。
+            //
+            // ⚠️ seed は「乱数の種」ではなく**盤面そのもの**。触ったら必ず
+            //   ・穴の総数が減っていないか
+            //   ・列ごとの穴の数と、役ごとの重心が中央に寄っているか
+            //   ・入口→出口の最短経路の長さと「踏み外すと落ちる歩数」
+            // を測り直すこと。3室とも、この3つを満たす種を総当たりで選んである。
+            new PitSpec { room="room4",  fx0=-9.1f, fx1= 0.1f, fz0=-13.3f, fz1= -4.1f,
+                          nx=6, nz=6, rx0=-9.1f, rx1=0.1f, rz0=-13.3f, rz1=-4.1f,
+                          seed=6626, entryCol=1, exitCol=4, density=0.80f,
+                          note="西ルート(赤)の入口。最初に出会う落とし穴。" +
+                               "入口(col1)と出口(col4)が離れているので必ず横断させられる" },
 
             // room9 : 北(z=-20.5, x≈-4.45)から入る。南(z=-47.7, x≈-4.55)へは**直接抜けられない**。
             //
@@ -178,18 +226,26 @@ namespace BLIND.EditorTools
             //    room8 から出た瞬間に落ちる／一方通行が完全でない、という問題があった。
             //    帯で断ち切る方式ならその両方が起きない。封鎖矩形(bx/bz)と
             //    踏み場(sx/sz)はもう要らないので外した。
-            new PitSpec { room="room9",  fx0=-9.1f, fx1= 0.1f, fz0=-39.3f, fz1=-22.0f,
-                          nx=6, nz=11, rx0=-9.1f, rx1=0.1f, rz0=-47.7f, rz1=-20.5f,
-                          seed=10007, entryCol=3, exitCol=3, density=0.95f,
+            // 北側もフィールドを壁まで伸ばしてある（以前は 1.5m の安全な帯が残っていて、
+            // そこを横に歩けば好きな列から入れた。room4 と同じ抜け道）。
+            new PitSpec { room="room9",  fx0=-9.1f, fx1= 0.1f, fz0=-39.3f, fz1=-20.5f,
+                          nx=6, nz=12, rx0=-9.1f, rx1=0.1f, rz0=-47.7f, rz1=-20.5f,
+                          seed=12660, entryCol=3, exitCol=3, density=0.95f,
                           gz0=-43.3f, gz1=-39.3f,
                           gapNote="南ルートを断ち切る全員共通の穴。看板を見て room8 側へ迂回させる",
                           note="南ルート(青)。北半分が役職別の落とし穴、その南が渡れない帯" },
 
-            // room14 : 南北とも扉は x≈17.95
-            new PitSpec { room="room14", fx0=13.9f, fx1=22.1f, fz0=-35.6f, fz1=-24.6f,
-                          nx=6, nz=7,  rx0=13.9f, rx1=22.1f, rz0=-37.7f, rz1=-22.5f,
-                          seed=18013, entryCol=2, exitCol=3, density=0.90f,
-                          note="東ルート(緑)の入口。room4 と room9 の中間の密度" },
+            // room14 : 南北とも扉は x=17.4〜18.6（中心 18.0）
+            //
+            // ここも床いっぱいに取る（以前は南北 2.1m ずつ安全な帯が残っていた）。
+            // nx は 6 ではなく **5**。6 だと列の境目がちょうど扉の中心 18.0 に来て、
+            // 扉が2列にまたがり、どちらの列も 0.6m しか通れない
+            // （人の幅 0.64m に足りない）。5 なら扉が col2 のど真ん中に収まる。
+            new PitSpec { room="room14", fx0=13.9f, fx1=22.1f, fz0=-37.7f, fz1=-22.5f,
+                          nx=5, nz=10, rx0=13.9f, rx1=22.1f, rz0=-37.7f, rz1=-22.5f,
+                          seed=18580, entryCol=2, exitCol=2, density=0.90f,
+                          note="東ルート(緑)の入口。入口と出口が同じ列なので、" +
+                               "折り返し点で必ず左右に振らせる" },
         };
 
         // ------------------------------------------------------------
@@ -318,6 +374,8 @@ namespace BLIND.EditorTools
             var voidMat = MakeVoidMaterial();
             var tDeck = BlindThermalTable.Mat("PitDeck");
             var tVoid = BlindThermalTable.Mat("PitVoid");
+            var tWall = BlindThermalTable.Mat("PitWall");
+            var tRim  = BlindThermalTable.Mat("PitRim");
 
             foreach (var s in Pits)
             {
@@ -361,13 +419,16 @@ namespace BLIND.EditorTools
                     bool isThermal = pass == 1;
                     bool isEcho    = pass == 2;
                     Material deckMat = pass == 0 ? FloorMaterialOf(room.transform) : (pass == 1 ? tDeck : echoMat);
-                    Material pitMat  = pass == 0 ? deckMat : (pass == 1 ? tVoid : echoMat);
+                    // サーモの縦坑は内壁(PitWall・明るい水色)と底(PitVoid・濃い青紫)で温度を分ける。
+                    // 同じ色だと開口をふさぐ1枚板に見えて、穴ではなく浮いたパネルになる。
+                    Material pitMat  = pass == 0 ? deckMat : (pass == 1 ? tWall : echoMat);
 
                     for (int z = 0; z < s.nz; z++)
                     {
                         var deck = new MeshBuild();
                         var pit  = new MeshBuild();
-                        var cap  = new MeshBuild();   // サーモの底だけ別材質にする
+                        var rim  = new MeshBuild();   // サーモ: 入口まわりの内壁(12℃)
+                        var deep = new MeshBuild();   // サーモ: 深部の内壁と底(3℃)
                         for (int x = 0; x < s.nx; x++)
                         {
                             float x0 = s.fx0 + cw * x, x1 = x0 + cw;
@@ -402,30 +463,31 @@ namespace BLIND.EditorTools
                             // 床のマス目と紛らわしくなるため。
                             if (isEcho) continue;
 
-                            pit.BoxOpenTop(new Vector3(x0 + PitInset, -PitDepth, z0 + PitInset),
-                                           new Vector3(x1 - PitInset, 0f, z1 - PitInset), PitRings);
+                            // ⚠️ サーモの縦坑は**自分から見て穴のマスにだけ**置く。
+                            // 他の役だけの穴にも置いていたせいで、床が有るはずの所に
+                            // 縁の立ち上がり(PitLipHeight)が床から突き出て見えていた。
+                            // 立ち上がりは踏み板より上に出るので、踏み板では隠れない。
+                            if (isThermal && o != pass) continue;
 
-                            // サーモ層で、その役に見える穴には少し下に「底」を張る。
-                            // 縦坑は床より下なので目線からは中がほとんど見えず、
-                            // 何も張らないと穴が分からなかった。
-                            // 開口のすぐ下ではなく PitCapDepth(1.1m) 落とすのが要点で、
-                            // 遠くからは内壁(明るい青)が四角く見え、近づくと奥に底(濃い青紫)が出る。
-                            if (isThermal && o == pass)
-                            {
-                                float qx0 = x0 + PitInset, qx1 = x1 - PitInset;
-                                float qz0 = z0 + PitInset, qz1 = z1 - PitInset;
-                                float qy = -PitCapDepth;
-                                cap.Quad(new Vector3(qx0, qy, qz0), new Vector3(qx0, qy, qz1),
-                                         new Vector3(qx1, qy, qz1), new Vector3(qx1, qy, qz0), Vector3.up);
-                            }
+                            // サーモ層は蓋を張らず、**縦坑の内壁を深さで3段に分ける**。
+                            // 覗き込むと水色→青→濃紫の輪が重なって、それ自体が深さになる。
+                            if (isThermal)
+                                ThermalPitShaft(rim, pit, deep,
+                                                x0 + PitThermalInset, x1 - PitThermalInset,
+                                                z0 + PitThermalInset, z1 - PitThermalInset);
+                            else
+                                pit.BoxOpenTop(new Vector3(x0 + PitInset, -PitDepth, z0 + PitInset),
+                                               new Vector3(x1 - PitInset, 0f, z1 - PitInset), PitRings);
                         }
 
                         if (deck.Count > 0)
                             meshes.Add(Emit(rootGo.transform, tag + "_Deck_" + z, layer, deck, deckMat, pass == 2));
+                        if (rim.Count > 0)
+                            meshes.Add(Emit(rootGo.transform, tag + "_PitRim_" + z, layer, rim, tRim, false));
                         if (pit.Count > 0)
                             meshes.Add(Emit(rootGo.transform, tag + "_Pit_" + z, layer, pit, pitMat, pass == 2));
-                        if (cap.Count > 0)
-                            meshes.Add(Emit(rootGo.transform, tag + "_PitBottom_" + z, layer, cap, tVoid, false));
+                        if (deep.Count > 0)
+                            meshes.Add(Emit(rootGo.transform, tag + "_PitDeep_" + z, layer, deep, tVoid, false));
                     }
 
                     // --- 穴フィールドの外側（扉まわりの安全地帯）---
@@ -449,24 +511,28 @@ namespace BLIND.EditorTools
 
                     // --- 全員共通の穴の帯 ---
                     // 3役の誰から見ても穴なので、3層すべてに同じ物を描く。
-                    // 縦坑＋横縞で「深い」ことを伝え、サーモには熱の蓋、
-                    // エコロケにも横縞を出す（幅4mの帯なので、マス目の穴と紛れる心配がない）。
+                    // 過去人・エコロケは縦坑＋横縞で「深い」ことを伝え、
+                    // サーモは内壁を深さで3段に分ける（幅4mの帯なので中がよく見える）。
                     if (s.HasGap)
                     {
-                        var gap = new MeshBuild();
-                        gap.BoxOpenTop(new Vector3(s.fx0 + PitInset, -PitDepth, s.gz0 + PitInset),
-                                       new Vector3(s.fx1 - PitInset, 0f, s.gz1 - PitInset), PitRings);
-                        meshes.Add(Emit(rootGo.transform, tag + "_Gap", layer, gap, pitMat, pass == 2));
-
-                        if (isThermal)
+                        if (!isThermal)
                         {
-                            var gcap = new MeshBuild();
-                            float qy = -PitCapDepth;
-                            gcap.Quad(new Vector3(s.fx0 + PitInset, qy, s.gz0 + PitInset),
-                                      new Vector3(s.fx0 + PitInset, qy, s.gz1 - PitInset),
-                                      new Vector3(s.fx1 - PitInset, qy, s.gz1 - PitInset),
-                                      new Vector3(s.fx1 - PitInset, qy, s.gz0 + PitInset), Vector3.up);
-                            meshes.Add(Emit(rootGo.transform, tag + "_GapBottom", layer, gcap, tVoid, false));
+                            var gap = new MeshBuild();
+                            gap.BoxOpenTop(new Vector3(s.fx0 + PitInset, -PitDepth, s.gz0 + PitInset),
+                                           new Vector3(s.fx1 - PitInset, 0f, s.gz1 - PitInset), PitRings);
+                            meshes.Add(Emit(rootGo.transform, tag + "_Gap", layer, gap, pitMat, pass == 2));
+                        }
+                        else
+                        {
+                            var grim = new MeshBuild();
+                            var gwall = new MeshBuild();
+                            var gdeep = new MeshBuild();
+                            ThermalPitShaft(grim, gwall, gdeep,
+                                            s.fx0 + PitThermalInset, s.fx1 - PitThermalInset,
+                                            s.gz0 + PitThermalInset, s.gz1 - PitThermalInset);
+                            meshes.Add(Emit(rootGo.transform, tag + "_GapRim",  layer, grim,  tRim,  false));
+                            meshes.Add(Emit(rootGo.transform, tag + "_GapWall", layer, gwall, tWall, false));
+                            meshes.Add(Emit(rootGo.transform, tag + "_GapDeep", layer, gdeep, tVoid, false));
                         }
                     }
                 }
@@ -540,6 +606,68 @@ namespace BLIND.EditorTools
                                + "  元の床を" + hidden + "個停止  — " + s.note);
             }
             return log.ToString().TrimEnd();
+        }
+
+        /// <summary>
+        /// サーモ視点の縦坑を、深さで温度を分けた3段の内壁として作る。蓋は張らない。
+        ///
+        /// rim  (PitRim  12℃ 水色)  … 0 〜 PitRimDepth。浅い角度から一番よく見える帯
+        /// wall (PitWall  7℃ 青)   … PitRimDepth 〜 PitWallDepth
+        /// deep (PitVoid  3℃ 濃紫) … PitWallDepth 〜 底。底の面もここに入る
+        ///
+        /// 覗き込むほど下の帯が見えてくるので、
+        /// **輪が何重に見えるか＝どれだけ深いか** がそのまま伝わる。
+        /// 水平な蓋を張らないので「板が浮いている」ようには見えない。
+        /// </summary>
+        static void ThermalPitShaft(MeshBuild rim, MeshBuild wall, MeshBuild deep,
+                                    float x0, float x1, float z0, float z1)
+        {
+            var lo = new Vector3(x0, 0f, z0);
+            var hi = new Vector3(x1, 0f, z1);
+
+            // --- 床から少し出っ張った縁（マンホールの立ち上がりのような物）---
+            //
+            // ⚠️ これが**遠くからでも穴が分かる唯一の手段**。
+            // 床より下にある面は、距離が延びるほど穴の手前の縁に隠れていく
+            // （隠れ始める距離 = 開口幅 × 目線の高さ ÷ 深さ）。
+            // 床より上に出ている物だけは、どんな浅い角度でも何にも隠されない。
+            // 高さは 7cm。歩行の邪魔にならず、サーモには輪郭線として出る。
+            {
+                float ly = PitLipHeight;
+                float lx0 = lo.x - PitThermalInset, lx1 = hi.x + PitThermalInset;
+                float lz0 = lo.z - PitThermalInset, lz1 = hi.z + PitThermalInset;
+                // 立ち上がりの外側の面
+                rim.Quad2(new Vector3(lx0, 0f, lz0), new Vector3(lx1, 0f, lz0),
+                          new Vector3(lx1, ly, lz0), new Vector3(lx0, ly, lz0), Vector3.back);
+                rim.Quad2(new Vector3(lx1, 0f, lz1), new Vector3(lx0, 0f, lz1),
+                          new Vector3(lx0, ly, lz1), new Vector3(lx1, ly, lz1), Vector3.forward);
+                rim.Quad2(new Vector3(lx0, 0f, lz1), new Vector3(lx0, 0f, lz0),
+                          new Vector3(lx0, ly, lz0), new Vector3(lx0, ly, lz1), Vector3.left);
+                rim.Quad2(new Vector3(lx1, 0f, lz0), new Vector3(lx1, 0f, lz1),
+                          new Vector3(lx1, ly, lz1), new Vector3(lx1, ly, lz0), Vector3.right);
+                // 立ち上がりの上面（穴の内側へ向かって falling）
+                rim.Quad2(new Vector3(lx0, ly, lz0), new Vector3(lx1, ly, lz0),
+                          new Vector3(hi.x, 0f, lo.z), new Vector3(lo.x, 0f, lo.z), Vector3.up);
+                rim.Quad2(new Vector3(lx1, ly, lz1), new Vector3(lx0, ly, lz1),
+                          new Vector3(lo.x, 0f, hi.z), new Vector3(hi.x, 0f, hi.z), Vector3.up);
+                rim.Quad2(new Vector3(lx0, ly, lz1), new Vector3(lx0, ly, lz0),
+                          new Vector3(lo.x, 0f, lo.z), new Vector3(lo.x, 0f, hi.z), Vector3.up);
+                rim.Quad2(new Vector3(lx1, ly, lz0), new Vector3(lx1, ly, lz1),
+                          new Vector3(hi.x, 0f, hi.z), new Vector3(hi.x, 0f, lo.z), Vector3.up);
+            }
+
+            // --- 開口の下は、口いっぱいの垂直な内壁を深さで3段に分ける ---
+            //
+            // 水平な面はここには一切置かない。置くと蓋に見える。
+            // 開口を狭めもしない（狭めた分だけ中が見えなくなる）。
+            // 両面を張る。片面だと見る向きによって内壁が消え、
+            // 反対側から見ると穴の中が真っ黒になる。
+            rim.Walls (new Vector3(lo.x, -PitRimDepth,  lo.z),
+                       new Vector3(hi.x, 0f,            hi.z), 2, true);
+            wall.Walls(new Vector3(lo.x, -PitWallDepth, lo.z),
+                       new Vector3(hi.x, -PitRimDepth,  hi.z), 2, true);
+            deep.BoxOpenTop(new Vector3(lo.x, -PitDepth,     lo.z),
+                            new Vector3(hi.x, -PitWallDepth, hi.z), 3, true);
         }
 
         static int CountOwner(int[,] o, int who)
@@ -838,6 +966,166 @@ namespace BLIND.EditorTools
             }
 
             // ------------------------------------------------------------
+            // 5.7 穴を左右（列）に均す
+            // ------------------------------------------------------------
+            // 手順2は列を見ずに確率だけで穴を選ぶので、乱数の出目で片側に寄る。
+            // 実測で room4 は 西→東が 2/3/2/5/4/6 ＝ **東半分に22個中15個**。
+            // 入口(北)から南を向くと東は左手なので、「穴が左に偏っている」と見える。
+            // 手順4は「ゼロの列を作らない」だけなので、この偏りは素通りしていた。
+            //
+            // 多い列から1つ抜いて少ない列へ1つ足す、を差が1以下になるまで繰り返す。
+            // 総数と役の内訳は変わらない（抜いたマスの役をそのまま移すだけ）。
+            //
+            // 動かしてよいマスの条件:
+            //   ・安全な道(safe)は絶対に穴にしない  → 動線は壊れない
+            //   ・手順5.5で決めた locked は触らない  → 喋る順番は崩れない
+            //   ・封鎖矩形(InBlockCell)からは抜かない → 帯は塞がったまま
+            //   ・その行の最後の1つは抜かない        → 手順5の保証を壊さない
+            // 抜くのは「道からいちばん遠い穴」、足すのも「道からいちばん遠い床」。
+            // 道の隣の穴が声の掛け合いを作っているので、そこは残す。
+            //
+            // 差が2以上のときだけ動かすので、移動のたびに差は必ず2縮まる＝振動しない。
+            // ⚠️ いちばん多い列といちばん少ない列の1組だけを見て、動かせなければ諦める、
+            // という書き方にすると全く均されない。実際 room9 は 11/8/6/6/8/12 のまま
+            // 1マスも動かなかった（最多列の穴が全部 locked か封鎖矩形だった）。
+            // 差が2以上ある組を**総当たりで**探し、動かせる組が1つも無くなるまで回す。
+            for (int guard = 0; guard < s.nx * s.nz; guard++)
+            {
+                var cnt = new int[s.nx];
+                for (int x = 0; x < s.nx; x++)
+                    for (int z = 0; z < s.nz; z++) if (owner[x, z] >= 0) cnt[x]++;
+
+                bool moved = false;
+                for (int hiCol = 0; hiCol < s.nx && !moved; hiCol++)
+                    for (int loCol = 0; loCol < s.nx && !moved; loCol++)
+                    {
+                        if (cnt[hiCol] - cnt[loCol] <= 1) continue;
+
+                        int from = -1, fromD = -1;
+                        for (int z = 0; z < s.nz; z++)
+                        {
+                            if (owner[hiCol, z] < 0 || locked[hiCol, z]) continue;
+                            if (InBlockCell(s, hiCol, z)) continue;
+                            int rowCnt = 0;
+                            for (int x = 0; x < s.nx; x++) if (owner[x, z] >= 0) rowCnt++;
+                            if (rowCnt <= 1) continue;
+                            int d = DistToSafeInRow(s, safe, hiCol, z);
+                            if (d > fromD) { fromD = d; from = z; }
+                        }
+                        if (from < 0) continue;
+
+                        int to = -1, toD = -1;
+                        for (int z = 0; z < s.nz; z++)
+                        {
+                            if (owner[loCol, z] >= 0 || safe[loCol, z]) continue;
+                            if (InBlockCell(s, loCol, z)) continue;
+                            int d = DistToSafeInRow(s, safe, loCol, z);
+                            if (d > toD) { toD = d; to = z; }
+                        }
+                        if (to < 0) continue;
+
+                        owner[loCol, to] = owner[hiCol, from];
+                        owner[hiCol, from] = -1;
+                        moved = true;
+                    }
+                if (!moved) break;
+            }
+
+            // ------------------------------------------------------------
+            // 5.8 役ごとにも左右を均す
+            // ------------------------------------------------------------
+            // 穴の総数を均しても、**役ごとに見るとまだ片側に寄る**。
+            // 実測で room4 のサーモは 西→東が 0/2/2/1/1/2 で、西端に1つも無かった。
+            // サーモ役にとっては「自分に見える穴が全部左手にある」状態で、
+            // 一人称では総数の偏りより先にこれが目に付く。
+            //
+            // ここでやるのは **2つの穴の担当を入れ替えるだけ**。
+            // どのマスが穴かは1マスも変わらないので、床の形＝安全な道は不変。
+            // 役ごとの穴の総数も変わらない。locked は触らない。
+            for (int r = 0; r < 3; r++)
+                for (int guard = 0; guard < s.nx * s.nz; guard++)
+                {
+                    var cnt = new int[s.nx];
+                    for (int x = 0; x < s.nx; x++)
+                        for (int z = 0; z < s.nz; z++) if (owner[x, z] == r) cnt[x]++;
+
+                    bool moved = false;
+                    for (int hiCol = 0; hiCol < s.nx && !moved; hiCol++)
+                        for (int loCol = 0; loCol < s.nx && !moved; loCol++)
+                        {
+                            if (cnt[hiCol] - cnt[loCol] <= 1) continue;
+
+                            // 多い列から r の穴を1つ、少ない列から r 以外の穴を1つ選んで交換
+                            int z1 = -1;
+                            for (int z = 0; z < s.nz; z++)
+                                if (owner[hiCol, z] == r && !locked[hiCol, z]) { z1 = z; break; }
+                            if (z1 < 0) continue;
+
+                            int z2 = -1;
+                            for (int z = 0; z < s.nz; z++)
+                                if (owner[loCol, z] >= 0 && owner[loCol, z] != r && !locked[loCol, z]) { z2 = z; break; }
+                            if (z2 < 0) continue;
+
+                            int other = owner[loCol, z2];
+                            owner[loCol, z2] = r;
+                            owner[hiCol, z1] = other;
+                            moved = true;
+                        }
+                    if (!moved) break;
+                }
+
+            // ------------------------------------------------------------
+            // 5.9 役ごとの「重心」を部屋の中央に寄せる
+            // ------------------------------------------------------------
+            // 5.8 は「いちばん多い列といちばん少ない列の差」を見るので、
+            // 差が2に満たないまま片側に寄っている形（room4 のサーモ 0/1/2/1/2/2）は
+            // 直せない。人が「偏っている」と感じるのは最大差ではなく**重心**なので、
+            // 最後に重心そのものを見て寄せる。
+            //
+            // ここも担当の入れ替えだけ。穴の位置も総数も変わらない。
+            // 交換相手が locked しかない列には入れられないので、
+            // その場合は寄せきれずに止まる（声の掛け合いの順番のほうが優先）。
+            for (int r = 0; r < 3; r++)
+            {
+                float mid = (s.nx - 1) * 0.5f;
+                for (int guard = 0; guard < s.nx * s.nz; guard++)
+                {
+                    int n = 0; float sum = 0f;
+                    for (int x = 0; x < s.nx; x++)
+                        for (int z = 0; z < s.nz; z++) if (owner[x, z] == r) { n++; sum += x; }
+                    if (n == 0) break;
+                    float c = sum / n;
+                    if (Mathf.Abs(c - mid) <= 0.30f) break;
+
+                    // 重心が東(西)に寄っているなら、東(西)の r を西(東)へ移す。
+                    // いちばん遠くへ動かせる組を選ぶと一度で大きく寄る。
+                    int bx = -1, bz = -1, tx = -1, tz = -1, bestGain = 0;
+                    for (int hx = 0; hx < s.nx; hx++)
+                        for (int lx = 0; lx < s.nx; lx++)
+                        {
+                            int gain = (c > mid) ? (hx - lx) : (lx - hx);
+                            if (gain <= bestGain) continue;
+                            int z1 = -1, z2 = -1;
+                            for (int z = 0; z < s.nz; z++)
+                                if (owner[hx, z] == r && !locked[hx, z]) { z1 = z; break; }
+                            for (int z = 0; z < s.nz; z++)
+                                if (owner[lx, z] >= 0 && owner[lx, z] != r && !locked[lx, z]) { z2 = z; break; }
+                            if (z1 < 0 || z2 < 0) continue;
+                            bestGain = gain; bx = hx; bz = z1; tx = lx; tz = z2;
+                        }
+                    if (bestGain <= 0) break;
+
+                    // 行き過ぎるなら動かさない（左右に振動しないように）
+                    float after = (sum - bx + tx) / n;
+                    if (Mathf.Abs(after - mid) >= Mathf.Abs(c - mid)) break;
+
+                    int other = owner[tx, tz];
+                    owner[tx, tz] = r;
+                    owner[bx, bz] = other;
+                }
+            }
+
+            // ------------------------------------------------------------
             // 6. 「その行(列)の穴が全部同じ役」を崩す
             // ------------------------------------------------------------
             // エコロケを多めに配る設定(RoleBias / ClusterBias)にすると、
@@ -909,6 +1197,20 @@ namespace BLIND.EditorTools
             }
 
             return owner;
+        }
+
+        /// <summary>
+        /// その行の中で、安全な道までの横方向の距離（マス数）。
+        /// 穴を足し引きするとき「道のすぐ隣」を避けるために使う。
+        /// 道の隣を塞ぐと「1マス外したら即死」になり、逆に道の隣の穴を抜くと
+        /// 声を掛け合う必要が消える。行に道が無ければ 0。
+        /// </summary>
+        static int DistToSafeInRow(PitSpec s, bool[,] safe, int x, int z)
+        {
+            int d = int.MaxValue;
+            for (int x2 = 0; x2 < s.nx; x2++)
+                if (safe[x2, z]) d = Mathf.Min(d, Mathf.Abs(x2 - x));
+            return d == int.MaxValue ? 0 : d;
         }
 
         /// <summary>そのマスが「通したくない矩形」の中か。</summary>
@@ -1026,6 +1328,13 @@ namespace BLIND.EditorTools
             public List<int> t = new List<int>();
             public int Count { get { return t.Count; } }
 
+            /// <summary>表裏の両面を張る四角形。向きを気にしなくてよくなる。</summary>
+            public void Quad2(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 nrm)
+            {
+                Quad(a, b, c, d, nrm);
+                Quad(d, c, b, a, -nrm);
+            }
+
             public void Quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 nrm)
             {
                 int i = v.Count;
@@ -1067,11 +1376,33 @@ namespace BLIND.EditorTools
             /// 穴の中に何も描かれず、床のマス目と見分けが付かない。
             /// 帯に割ると1段ごとに輪が出て、下へ向かって縮む線の列＝深さになる。
             /// </summary>
-            public void BoxOpenTop(Vector3 lo, Vector3 hi, int rings)
+            public void BoxOpenTop(Vector3 lo, Vector3 hi, int rings) { BoxOpenTop(lo, hi, rings, false); }
+
+            public void BoxOpenTop(Vector3 lo, Vector3 hi, int rings, bool bothSides)
             {
                 // 底（上を向く）。穴の底がどこかを示す手掛かりになる。
                 Quad(new Vector3(lo.x, lo.y, lo.z), new Vector3(lo.x, lo.y, hi.z), new Vector3(hi.x, lo.y, hi.z), new Vector3(hi.x, lo.y, lo.z), Vector3.up);
+                Walls(lo, hi, rings, bothSides);
+            }
 
+            /// <summary>
+            /// 内向きの側面だけを rings 段の帯にして作る（底も上面も作らない）。
+            ///
+            /// 縦坑を深さで温度分けするために要る。BoxOpenTop は底を必ず作るので、
+            /// 上の段に使うと途中に偽の床が張られてしまう。
+            /// </summary>
+            public void Walls(Vector3 lo, Vector3 hi, int rings) { Walls(lo, hi, rings, false); }
+
+            /// <summary>
+            /// bothSides=true で表裏の両面を張る。
+            ///
+            /// ⚠️ サーモの縦坑には必ず両面を張ること。
+            /// 片面だと**見る向きによって内壁が消える**。実際、部屋の南側から見ると
+            /// 穴の中がほとんど真っ黒になっていた（北側からは見えていたので気付きにくい）。
+            /// 三角形は倍になるが、縦坑は1部屋で数百枚しかないので誤差。
+            /// </summary>
+            public void Walls(Vector3 lo, Vector3 hi, int rings, bool bothSides)
+            {
                 if (rings < 1) rings = 1;
                 for (int k = 0; k < rings; k++)
                 {
@@ -1083,6 +1414,13 @@ namespace BLIND.EditorTools
                     Quad(new Vector3(lo.x, y0, hi.z), new Vector3(lo.x, y1, hi.z), new Vector3(hi.x, y1, hi.z), new Vector3(hi.x, y0, hi.z), Vector3.back);
                     Quad(new Vector3(lo.x, y0, lo.z), new Vector3(lo.x, y1, lo.z), new Vector3(lo.x, y1, hi.z), new Vector3(lo.x, y0, hi.z), Vector3.right);
                     Quad(new Vector3(hi.x, y0, hi.z), new Vector3(hi.x, y1, hi.z), new Vector3(hi.x, y1, lo.z), new Vector3(hi.x, y0, lo.z), Vector3.left);
+
+                    if (!bothSides) continue;
+                    // 裏面も張る。頂点の順を逆にすると裏返しの面になる。
+                    Quad(new Vector3(lo.x, y0, lo.z), new Vector3(lo.x, y1, lo.z), new Vector3(hi.x, y1, lo.z), new Vector3(hi.x, y0, lo.z), Vector3.back);
+                    Quad(new Vector3(hi.x, y0, hi.z), new Vector3(hi.x, y1, hi.z), new Vector3(lo.x, y1, hi.z), new Vector3(lo.x, y0, hi.z), Vector3.forward);
+                    Quad(new Vector3(lo.x, y0, hi.z), new Vector3(lo.x, y1, hi.z), new Vector3(lo.x, y1, lo.z), new Vector3(lo.x, y0, lo.z), Vector3.left);
+                    Quad(new Vector3(hi.x, y0, lo.z), new Vector3(hi.x, y1, lo.z), new Vector3(hi.x, y1, hi.z), new Vector3(hi.x, y0, hi.z), Vector3.right);
                 }
             }
         }
@@ -1406,6 +1744,10 @@ namespace BLIND.EditorTools
             int n = 0;
             foreach (var t in UnityEngine.Object.FindObjectsOfType<Transform>(true))
             {
+                // ⚠️ この一覧は最初に一度だけ取る。ループの中で古い Hazard_Generated を
+                // 消すので、その子だった Transform が一覧に残ったまま破棄される。
+                // null チェックを外すと MissingReferenceException で BuildAll が途中で止まる。
+                if (t == null) continue;
                 if (t.name != "LaserBeam") continue;
                 var r = t.GetComponent<Renderer>();
                 if (r == null) continue;

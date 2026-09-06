@@ -33,7 +33,7 @@ Material:
     - _BodyProfile: 0
     - _BodySpread: 0.85
     - _BodyVein: 2.2
-    - _Dim: 0.022
+    - _Dim: 0.11
     - _EdgeCool: 0.1
     - _FadeFar: 200
     - _FadeNear: 5

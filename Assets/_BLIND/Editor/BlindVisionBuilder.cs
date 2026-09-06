@@ -1044,6 +1044,7 @@ namespace BLIND.EditorTools
 
             var log = new System.Text.StringBuilder();
             long totalTris = 0; int totalRend = 0; int baked = 0;
+            EchoMatSeq.Clear();   // 箱投影マテリアルの連番を作り直す
 
             foreach (var rn in roomNames)
             {
@@ -1282,6 +1283,23 @@ namespace BLIND.EditorTools
                     int nx = Mathf.Max(1, Mathf.RoundToInt(floorBounds.size.x / EchoChunk));
                     int nz = Mathf.Max(1, Mathf.RoundToInt(floorBounds.size.z / EchoChunk));
                     float sx = floorBounds.size.x / nx, sz = floorBounds.size.z / nz;
+
+                    // 床は必ずタイルに割る。
+                    //
+                    // ⚠️ ブロック1個を一枚板で張ると、**エコロケ視点では床が
+                    // 「外周の線」だけになって、立っている面がどこまで続いているのか
+                    // 全く読めない**（room5 で実際に「エコロケが見えていない」と言われた）。
+                    // 落とし穴部屋で穴が読めるのはマス目に割ってあるからで、
+                    // 普通の床も同じ理由で割る必要がある。
+                    //
+                    // 以前は穴のある部屋(cut != null)だけ割っていた。
+                    // 部屋が広いとタイル数が跳ね上がるので、1部屋あたりの上限を決めて
+                    // 超えるぶんはタイルを大きくする（線が粗くなるだけで、消えはしない）。
+                    const int MaxFloorTiles = 1200;
+                    float tile = FloorTile;
+                    float area = floorBounds.size.x * floorBounds.size.z;
+                    if (area / (tile * tile) > MaxFloorTiles)
+                        tile = Mathf.Sqrt(area / MaxFloorTiles);
                     for (int ix = 0; ix < nx; ix++)
                         for (int iz = 0; iz < nz; iz++)
                         {
@@ -1303,22 +1321,17 @@ namespace BLIND.EditorTools
                                         new Vector3(ax1 - ax0, 0.04f, az1 - az0)),
                                 });
 
-                            if (cut == null)
+                            // 板を小さいタイルに割る。穴のある部屋では
+                            // 「床が実際にある所」だけ置くので、曲がった縁も階段状に追える。
                             {
-                                addBox(bx0, bx1, bz0, bz1);
-                            }
-                            else
-                            {
-                                // 穴のある部屋だけ、板を小さいタイルに割って
-                                // 「床が実際にある所」だけ置く。曲がった縁も階段状に追える。
-                                int tx = Mathf.Max(1, Mathf.RoundToInt(sx / FloorTile));
-                                int tz = Mathf.Max(1, Mathf.RoundToInt(sz / FloorTile));
+                                int tx = Mathf.Max(1, Mathf.RoundToInt(sx / tile));
+                                int tz = Mathf.Max(1, Mathf.RoundToInt(sz / tile));
                                 float dx = sx / tx, dz = sz / tz;
                                 for (int i = 0; i < tx; i++)
                                     for (int j = 0; j < tz; j++)
                                     {
                                         float cx = bx0 + dx * (i + 0.5f), cz = bz0 + dz * (j + 0.5f);
-                                        if (!cut.OnDeck(cx, cz)) continue;
+                                        if (cut != null && !cut.OnDeck(cx, cz)) continue;
                                         // 少し内側に寄せて1枚ずつ独立した四角にする。
                                         // くっついていると格子1枚に見えて縁が読めない（落とし穴部屋と同じ理由）。
                                         addBox(bx0 + dx * i + 0.05f, bx0 + dx * (i + 1) - 0.05f,
@@ -1397,6 +1410,22 @@ namespace BLIND.EditorTools
                 }
                 foreach (var kv in bigOnesEcho)
                 {
+                    // ⚠️ 床に寝ている大きな平板（道路・地面のデカール）はエコロケ層に出さない。
+                    //
+                    // 厚みが数cmしかないので出しても外周の線が1本出るだけなのに、
+                    // 不透明なので **その下にある床タイルの格子を丸ごと隠す**。
+                    // room5 の道路(14×6m)が実際にそうで、床を格子に割っても
+                    // 道路に覆われて1本も見えず、地面が「線1本」のままだった。
+                    // 床の形は床スラブの格子が伝えるので、これを出す意味は無い。
+                    if (hasFloor)
+                    {
+                        var fb = kv.Key.bounds;
+                        if (fb.size.y <= 0.15f
+                         && Mathf.Max(fb.size.x, fb.size.z) >= 3f
+                         && fb.max.y <= floorBounds.max.y + 0.35f)
+                            continue;
+                    }
+
                     var em = EchoMatFor(kv.Key, rn, echoMat);
                     var go = CloneReal(kv.Key, eRoot.transform, LayerEcho, em, "E_");
                     if (go == null) continue;
@@ -1714,6 +1743,13 @@ namespace BLIND.EditorTools
         /// 貼り直せないため、シェーダー側のオブジェクト空間箱投影に切り替える。
         /// 投影に使うバウンズはメッシュごとに決まるので、マテリアルもメッシュ単位で作る。
         /// </summary>
+        /// <summary>
+        /// 箱投影マテリアルを「同じ部屋・同じメッシュで何個目か」で数える。
+        /// 2個目以降は別アセットにしてバッチングを断ち切る（理由は EchoMatFor 内）。
+        /// Build() の頭で必ず空にすること。
+        /// </summary>
+        static readonly Dictionary<string, int> EchoMatSeq = new Dictionary<string, int>();
+
         static Material EchoMatFor(Renderer src, string room, Material baseMat)
         {
             var mf = src.GetComponent<MeshFilter>();
@@ -1725,7 +1761,32 @@ namespace BLIND.EditorTools
             var safe = mesh.name;
             foreach (var c in new[] { '/', '\\', ' ', '(', ')', ':', '*', '?', '"', '<', '>', '|' })
                 safe = safe.Replace(c, '_');
-            var path = EchoBigDir + "/Echo_" + room + "_" + safe + ".mat";
+
+            // ⚠️ **箱投影のマテリアルを2つ以上のオブジェクトで共有してはいけない。**
+            //
+            // Unity の動的バッチングは「同じマテリアル」で「300頂点未満」のメッシュを
+            // 1つのドローコールに統合する。そのとき **頂点をワールド座標に焼き込み、
+            // unity_ObjectToWorld を単位行列にする**。
+            // 箱投影(_UseObjectUv)は v.vertex がオブジェクト座標である前提なので、
+            // 統合された瞬間に UV が 0〜1 から外れ、面が丸ごと輪郭と判定されて
+            // 最大輝度で塗り潰される。
+            //
+            // 実測(room5 の道路 Plane、エコロケ視点):
+            //   道路1枚だけ                    → 画面の 0.3%
+            //   同じマテリアルの板をもう1枚出す → **46.8%**
+            //   同じマテリアルの板を全部出す    → **69.4%**
+            // 「room5 の床が光で飛んでいる」の正体はこれ。
+            // シェーダー側では直しようがない（バッチング後はオブジェクト座標が消える）。
+            //
+            // マテリアルの参照が違えばバッチングされないので、同じ部屋に同じメッシュが
+            // 複数あるときだけ連番の別アセットにする。中身は同一なので見た目は変わらない。
+            var seqKey = room + "/" + safe;
+            int seq;
+            EchoMatSeq.TryGetValue(seqKey, out seq);
+            EchoMatSeq[seqKey] = seq + 1;
+
+            var path = EchoBigDir + "/Echo_" + room + "_" + safe
+                     + (seq == 0 ? "" : "_b" + seq) + ".mat";
 
             var m = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (m == null) { m = new Material(baseMat); AssetDatabase.CreateAsset(m, path); }
@@ -1737,12 +1798,22 @@ namespace BLIND.EditorTools
             m.SetVector("_ObjSize", b.size);
             // 箱投影だけだと有機的な形（アヒル・腕）にはほとんど線が出ないので
             // シルエットを足す。反響定位で返るのは外形なので理屈にも合う。
-            m.SetFloat("_RimWeight", 1f);
+            //
+            // ⚠️ **平たい物にシルエット発光を掛けてはいけない。**
+            // 床・道路・地面・壁のポスターは必ず視線と浅い角度で見るので
+            // dot(n,v)≈0 → rim≈1 になり、**面が丸ごと最大輝度で塗り潰される**。
+            // room5 の道路(Plane 14×6m)が実際にこれで、画面の 56% が真っ白に飛び、
+            // 地面がどこまで続いているのか全く読めなかった。
+            // RimPower を上げても pow(≈1, n) ≈ 1 なので効かない。重みを0にするしかない。
+            // 平たい物は箱投影のUVの端＝外周の線だけで形が出るので、これで足りる。
+            float span = Mathf.Max(b.size.x, Mathf.Max(b.size.y, b.size.z));
+            float thin = Mathf.Min(b.size.x, Mathf.Min(b.size.y, b.size.z));
+            bool flat = thin <= span * 0.08f;
+            m.SetFloat("_RimWeight", flat ? 0f : 1f);
             // 数メートルを超える物にシルエット発光を素の強さで掛けると、
             // 視線に対して寝ている面が全部光ってベタ塗りの塊になる。
             // プールの内壁や巨大アヒルがそうなって、**プールのふちがどこか分からなかった**。
             // 大きい物ほど鋭くして、本当に縁になっている所だけ光らせる。
-            float span = Mathf.Max(b.size.x, Mathf.Max(b.size.y, b.size.z));
             m.SetFloat("_RimPower", span > 5f ? 9f : 3.5f);
             m.SetFloat("_GlowIntensity", 0f);
             EditorUtility.SetDirty(m);
