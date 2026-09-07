@@ -2031,8 +2031,14 @@ namespace BLIND.EditorTools
             var keyGo = new GameObject("Key");
             Undo.RegisterCreatedObjectUndo(keyGo, "key");
             keyGo.transform.SetParent(rootGo.transform, false);
-            // 棚の開口側（部屋の中央側）へ少し出す。奥に押し込むと見えない。
-            float inward = shelf.position.x > aim.x ? -0.13f : 0.13f;
+            // ⚠️ 棚の当たり判定は**棚1台まるごと1個の箱**（高さ2.1m）で、
+            //    棚板のあいだに手が入らない。棚の内側に置くと
+            //    **見えているのに絶対に取れない鍵**になる。
+            //    箱の外、棚板の手前のふちに置くこと。
+            float half = 0.0f;
+            var sc = shelf.GetComponentInChildren<Collider>();
+            if (sc != null) half = sc.bounds.extents.x;
+            float inward = shelf.position.x > aim.x ? -(half + 0.09f) : (half + 0.09f);
             keyGo.transform.position = new Vector3(shelf.position.x + inward,
                                                    ShelfY + KeyThick * 0.5f + 0.002f,
                                                    shelf.position.z);
@@ -2092,15 +2098,46 @@ namespace BLIND.EditorTools
                 }
             }
 
-            // 掴む用の当たり判定。運搬を入れるときにこのまま使える大きさにしておく。
+            // --- 掴めるようにする（VRChat 標準の VRCPickup）---
+            //
+            // ⚠️ VRCPickup だけでは位置が同期しない。VRCObjectSync が要る。
+            //    無いと「自分だけ鍵を持っていて、他の2人には棚に置いたまま見える」
+            //    という、この作品でいちばん厄介な種類の食い違いになる。
             var col = keyGo.AddComponent<BoxCollider>();
             col.center = new Vector3(0.02f, 0.06f, 0f);
             col.size = new Vector3(0.13f, 0.17f, 0.05f);
-            col.isTrigger = true;
+            col.isTrigger = false;                        // 掴むには実体が要る
+
+            var rb = keyGo.AddComponent<Rigidbody>();
+            rb.mass = 0.15f;
+            rb.useGravity = true;
+            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
+
+            AddVrc(keyGo, "VRC.SDK3.Components.VRCPickup");
+            var sync = AddVrc(keyGo, "VRC.SDK3.Components.VRCObjectSync");
+
+            // 置き場所の受け皿。棚の当たり判定の外に置くので、
+            // このごく薄い板が無いと初期位置から床へ落ちてしまう。
+            var ledge = new GameObject("Ledge");
+            Undo.RegisterCreatedObjectUndo(ledge, "key ledge");
+            ledge.transform.SetParent(rootGo.transform, false);
+            ledge.transform.position = keyGo.transform.position + Vector3.down * 0.012f;
+            ledge.layer = LayerDefault;
+            var lc = ledge.AddComponent<BoxCollider>();
+            lc.size = new Vector3(0.26f, 0.02f, 0.26f);
+
+            var carry = AddUdon(keyGo, "CarryableItem");
+            if (carry != null)
+            {
+                if (sync != null) SetObj(carry, "objectSync", sync);
+                SetSyncMode(carry, "None");
+                PushUdon(carry);
+            }
 
             return "鍵: " + shelf.name + " の棚(高さ" + ShelfY.ToString("F2") + "m)に設置 "
                  + keyGo.transform.position.ToString("F2")
-                 + " / まわりのだるまを" + swept + "体どけて置き場所を空けた（運搬は未実装）";
+                 + " / だるまを" + swept + "体どけて空けた / VRCPickup+ObjectSync 付き";
         }
 
         /// <summary>
@@ -2506,6 +2543,24 @@ namespace BLIND.EditorTools
             if (usb == null) return;
             if (UdonSharpEditor.UdonSharpEditorUtility.GetBackingUdonBehaviour(usb) == null) return;
             UdonSharpEditor.UdonSharpEditorUtility.CopyProxyToUdon(usb);
+        }
+
+        /// <summary>
+        /// VRChat SDK のコンポーネント（VRCPickup / VRCObjectSync など）を付ける。
+        /// U# ではないので UdonSharpUndo は通さない。素の AddComponent でよい。
+        /// </summary>
+        static Component AddVrc(GameObject go, string fullName)
+        {
+            System.Type t = null;
+            foreach (var a in System.AppDomain.CurrentDomain.GetAssemblies())
+            {
+                t = a.GetType(fullName);
+                if (t != null) break;
+            }
+            if (t == null) { Debug.LogError("BLIND: VRC の型が見つからない " + fullName); return null; }
+            var c = go.GetComponent(t);
+            if (c == null) c = Undo.AddComponent(go, t);
+            return c;
         }
 
         /// <summary>その GameObject に付いている EchoReceiver（U# プロキシ）を返す。</summary>
