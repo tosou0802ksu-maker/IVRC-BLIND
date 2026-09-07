@@ -128,6 +128,7 @@ namespace BLIND.EditorTools
         const string DarumaRootName = "DarumaWatcher_Generated";
         /// <summary>だるま本体の子に作るサーモ・エコロケ複製の入れ物。本体と一緒に回るのが要点。</summary>
         const string DarumaVisName  = "DarumaVision_Generated";
+        const string KeyRootName    = "KeyProp_Generated";
 
         // ------------------------------------------------------------
         // 落とし穴フロアの設計値
@@ -1970,12 +1971,136 @@ namespace BLIND.EditorTools
             SetSyncMode(beh, "Manual");
             PushUdon(beh);
 
+            // ⚠️ 鍵を先に置くこと。鍵は自分の周りのだるまを撤去して置き場所を空けるので、
+            //    群れの配線より後にすると、消したはずのだるまが配列に残って null になる。
+            string key   = BuildKeyProp(room, eMat);
             string crowd = BuildDarumaCrowd(room, rootGo, eMat);
 
             return "だるまさんがころんだ: " + room.name + " に監視者を1体設置"
                  + "（位置 " + boss.transform.position.ToString("F1")
                  + " / 見張る向き -Z / 判定ゾーン " + zone.size.ToString("F1") + "）\n"
-                 + "  " + crowd;
+                 + "  " + crowd + "\n  " + key;
+        }
+
+        /// <summary>
+        /// 奥の間の棚に、持ち帰る鍵を置く。
+        ///
+        /// 置き場所は**だるまの真横の棚**。奥まで来た証になるうえ、
+        /// 取るあいだ必ずだるまの正面に体をさらすことになる。
+        /// 棚板の高さ 1.09m は胸の高さで、しゃがまずに見つけられて手も届く。
+        ///
+        /// ⚠️ 運搬（掴んで持ち帰る）はまだ入っていない。今は置いてあるだけ。
+        /// </summary>
+        static string BuildKeyProp(Transform room, Material eMat)
+        {
+            var old = room.Find(KeyRootName);
+            if (old != null) Undo.DestroyObjectImmediate(old.gameObject);
+
+            var mesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/_BLIND/Art/Models/Key/BrassKey.asset");
+            if (mesh == null) return "鍵: BrassKey.asset が無い。先に BLIND/鍵/1. 真鍮の鍵を焼く";
+
+            var far = room.Find("Prop_FarRoom");
+            if (far == null) return "鍵: Prop_FarRoom が無い";
+
+            // だるまの真横の棚を選ぶ。名前ではなく位置で選ぶので、
+            // 棚の並びが変わっても一番近い棚に付いてくる。
+            Transform boss = null;
+            var dw = room.Find(DarumaRootName);
+            if (dw != null) boss = dw.Find("Boss");
+            Vector3 aim = boss != null ? boss.position : far.GetChild(0).position;
+
+            Transform shelf = null; float best = float.MaxValue;
+            foreach (Transform c in far)
+            {
+                // 東側だけ（出口へ戻る動線の側）
+                if (c.position.x < aim.x) continue;
+                float d = Mathf.Abs(c.position.z - aim.z);
+                if (d < best) { best = d; shelf = c; }
+            }
+            if (shelf == null) return "鍵: 置ける棚が見つからない";
+
+            const float ShelfY = 1.09f;       // Room12Kit.RackShelfY[2]
+            const float KeyThick = 0.010f;
+
+            var rootGo = new GameObject(KeyRootName);
+            Undo.RegisterCreatedObjectUndo(rootGo, "key prop");
+            rootGo.transform.SetParent(room, false);
+            rootGo.transform.position = Vector3.zero;
+            rootGo.layer = LayerDefault;
+
+            var keyGo = new GameObject("Key");
+            Undo.RegisterCreatedObjectUndo(keyGo, "key");
+            keyGo.transform.SetParent(rootGo.transform, false);
+            // 棚の開口側（部屋の中央側）へ少し出す。奥に押し込むと見えない。
+            float inward = shelf.position.x > aim.x ? -0.13f : 0.13f;
+            keyGo.transform.position = new Vector3(shelf.position.x + inward,
+                                                   ShelfY + KeyThick * 0.5f + 0.002f,
+                                                   shelf.position.z);
+            // 立った姿勢のメッシュを寝かせる（厚み 0.010 が上下になる）
+            keyGo.transform.rotation = Quaternion.Euler(90f, 28f, 0f);
+            keyGo.layer = LayerDefault;
+
+            // ⚠️ 鍵のまわりのだるまを撤去する。
+            //    棚はだるまで埋まっていて、11cm の鍵は**その中に完全に埋もれる**
+            //    （サーモで撮って、白飛びさせても見分けが付かなかった）。
+            //    1棚ぶん空けて「そこだけ何も無い」状態にすると、
+            //    空きそのものが目印になって3役とも見つけられる。
+            int swept = 0;
+            var propDaruma = room.Find("Prop_Daruma");
+            if (propDaruma != null)
+            {
+                var doomed = new List<GameObject>();
+                foreach (Transform d in propDaruma)
+                {
+                    var p = d.position - keyGo.transform.position;
+                    p.y *= 0.55f;                    // 上下は少し甘く見る（同じ棚だけ払う）
+                    if (p.sqrMagnitude < 0.95f * 0.95f) doomed.Add(d.gameObject);
+                }
+                foreach (var d in doomed) { Undo.DestroyObjectImmediate(d); swept++; }
+            }
+
+            var brass = AssetDatabase.LoadAssetAtPath<Material>("Assets/_BLIND/Art/Materials/Key_Brass.mat");
+            var tagM  = AssetDatabase.LoadAssetAtPath<Material>("Assets/_BLIND/Art/Materials/Key_Tag.mat");
+            var tKey  = BlindThermalTable.Mat("Key");
+
+            for (int pass = 0; pass < 3; pass++)
+            {
+                int layer = pass == 0 ? LayerDefault : (pass == 1 ? LayerThermal : LayerEcho);
+                string tag = pass == 0 ? "D" : (pass == 1 ? "T" : "E");
+                var g = new GameObject(tag + "_Key");
+                Undo.RegisterCreatedObjectUndo(g, "key layer");
+                g.transform.SetParent(keyGo.transform, false);
+                g.layer = layer;
+                g.AddComponent<MeshFilter>().sharedMesh = mesh;
+                var mr = g.AddComponent<MeshRenderer>();
+                // 過去人だけ真鍮と札を塗り分ける。他の層は1色でよい
+                mr.sharedMaterials = pass == 0 ? new[] { brass, tagM }
+                                    : (pass == 1 ? new[] { tKey, tKey } : new[] { eMat, eMat });
+                mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                mr.receiveShadows = false;
+                if (pass == 2)
+                {
+                    var rec = AddUdon(g, "EchoReceiver");
+                    if (rec != null)
+                    {
+                        var so = new SerializedObject(rec);
+                        var arr = so.FindProperty("targetRenderers");
+                        if (arr != null) { arr.arraySize = 1; arr.GetArrayElementAtIndex(0).objectReferenceValue = mr; }
+                        so.ApplyModifiedProperties();
+                        PushUdon(rec);
+                    }
+                }
+            }
+
+            // 掴む用の当たり判定。運搬を入れるときにこのまま使える大きさにしておく。
+            var col = keyGo.AddComponent<BoxCollider>();
+            col.center = new Vector3(0.02f, 0.06f, 0f);
+            col.size = new Vector3(0.13f, 0.17f, 0.05f);
+            col.isTrigger = true;
+
+            return "鍵: " + shelf.name + " の棚(高さ" + ShelfY.ToString("F2") + "m)に設置 "
+                 + keyGo.transform.position.ToString("F2")
+                 + " / まわりのだるまを" + swept + "体どけて置き場所を空けた（運搬は未実装）";
         }
 
         /// <summary>

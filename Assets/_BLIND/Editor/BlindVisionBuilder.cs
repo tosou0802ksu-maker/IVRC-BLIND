@@ -73,6 +73,7 @@ namespace BLIND.EditorTools
                 //   BlindGimmickBuilder が本体の子として複製を作る。
                 if (p.name == "PitField_Generated"
                  || p.name == "DarumaWatcher_Generated"
+                 || p.name == "KeyProp_Generated"
                  || p.name == "Prop_Daruma") return true;
             }
             return false;
