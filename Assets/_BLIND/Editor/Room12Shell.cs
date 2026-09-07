@@ -11,18 +11,43 @@ namespace BLIND.EditorTools
     public static class Room12Shell
     {
         const float SizeX = 8f;
-        const float SizeZ = 20f;
+        /// <summary>
+        /// 部屋の長さ(m)。だるまさんがころんだの助走距離そのものなので、
+        /// ここを変えたら必ず動線を測り直すこと（BLIND/room12/3. Verify Circulation）。
+        ///
+        /// 20 → 33 に伸ばしてある。北へ伸ばす余地は z=-24.8 まで（その先は room18）。
+        /// **扉はローカル座標で定義してあるので、伸ばしても位置は動かない**
+        /// （西の入口 z=2 → world -55.8 / 東の出口 z=18 → world -39.8）。
+        /// 結果、出口は部屋の途中になり、奥へ行って折り返す動線になる。
+        /// </summary>
+        const float SizeZ = 33f;
         const float CeilY = 2.95f;    // 吊り天井の高さ
         const float DadoY = 1.15f;    // 腰壁の高さ
         // 壁は境界線をまたいで立っている（厚さ0.2）ので、部屋の内側の面はここ
-        const float InX0 = 0.10f, InX1 = 7.90f, InZ0 = 0.10f, InZ1 = 19.90f;
+        const float InX0 = 0.10f, InX1 = 7.90f, InZ0 = 0.10f, InZ1 = SizeZ - 0.10f;
         // 扉：南壁(x=0)は z=2 で room11 へ、北壁(x=8)は z=18 で room13 へ。高さは隣室に合わせて 2.3
         const float DoorS = 2f, DoorN = 18f, DoorW = 1.2f, DoorH = 2.3f;
         const string MatDir = "Assets/_BLIND/Art/Materials/";
         const string TexDir = "Assets/_BLIND/Art/Textures/";
 
+        /// <summary>
+        /// だるまの部屋を探す。
+        ///
+        /// ⚠️ 以前は「ルート直下の room12」を名前で探していたが、
+        ///    (1) 部屋が `=== ROOMS ===` の下へ移されてルート直下から消え、
+        ///    (2) 部屋番号が振り直されて room12 → room11 になった
+        ///    ため、**この関数は常に null を返し、Build Shell が何もしなくなっていた**。
+        ///    名前と階層に依存しないよう、中身（Prop_Daruma を持つ部屋）で照合する。
+        /// </summary>
         static GameObject Room()
         {
+            foreach (var t in Object.FindObjectsOfType<Transform>(true))
+            {
+                if (t.Find("Prop_Daruma") == null) continue;
+                if (t.GetComponentsInChildren<Renderer>(true).Length == 0) continue;
+                return t.gameObject;
+            }
+            // 保険：昔の置き方でも見つかるようにしておく
             foreach (var g in UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects())
                 if (g.name == "room12" && g.GetComponentsInChildren<Renderer>(true).Length > 0) return g;
             return null;
@@ -109,6 +134,11 @@ namespace BLIND.EditorTools
             }
             if (rb == null) return "8×20 の RoomBuilder3 が見つからない";
 
+            // ⚠️ 長さは必ずここで入れ直すこと。SizeZ を変えただけでは
+            //    RoomBuilder3 側は古い値のままで、床と壁が伸びない。
+            var fz = rt.GetField("roomWidthZ");
+            if (fz != null) fz.SetValue(rb, SizeZ);
+
             rt.GetField("floorMaterial").SetValue(rb, mFloor);
             rt.GetField("wallMaterial").SetValue(rb, mWall);
             rt.GetField("doorFrameMaterial").SetValue(rb, mTrim);
@@ -124,6 +154,7 @@ namespace BLIND.EditorTools
             log.AppendLine("躯体を再生成（床=テラゾー / 壁=塗装 / 枠=グレー）");
 
             // ── 腰壁と天井まわり
+            Rebuild(room, "Room12_WallPatch", p => BuildWallPatch(p, mWall, mDado), log);
             Rebuild(room, "Room12_Dado", p => BuildDado(p, mDado, mTrim), log);
             Rebuild(room, "Room12_Ceiling", p => BuildCeiling(p, mCeil, mTrim), log);
             Rebuild(room, "Room12_Duct", p => BuildDuct(p, mDuct, mTrim), log);
@@ -178,6 +209,43 @@ namespace BLIND.EditorTools
         }
 
         /// <summary>腰壁：壁の下half を濃い色の板で覆い、上端に見切り縁を回す。扉の位置は避ける。</summary>
+        /// <summary>
+        /// 東壁の内側に貼る化粧板。
+        ///
+        /// ⚠️ 部屋を北へ伸ばした結果、**隣の room14 の西壁がこの部屋の内側に入り込んだ**。
+        /// room14 の壁は x 13.9〜14.1、この部屋の壁は x 14.1〜14.3 なので、
+        /// 伸ばした範囲だけ**手前に他人の部屋の壁面が見えてしまう**
+        /// （実機で「隣の部屋の壁が出てきておかしい」と指摘された黄色い面がこれ）。
+        ///
+        /// room14 は他メンバーの部屋なので**あちらの壁は消さない**。
+        /// こちら側から1枚かぶせて、見える面をこの部屋の材質に揃える。
+        /// 貼るのは元の北端(ローカルZ=20.1)から新しい北端まで。
+        /// </summary>
+        static void BuildWallPatch(Transform p, Material mWall, Material mDado)
+        {
+            const float OldZ1 = 20.10f;              // 伸ばす前の北端
+            if (SizeZ <= OldZ1 + 0.2f) return;       // 伸ばしていないなら不要
+
+            float z0 = OldZ1, z1 = SizeZ - 0.10f;
+            float zc = (z0 + z1) * 0.5f, zl = z1 - z0;
+            float xf = 7.68f;                        // room14 の壁面(7.70)より 2cm 手前
+
+            Patch(p, "PatchWall", mWall, new Vector3(xf, 2.00f, zc), new Vector3(0.03f, 4.00f, zl));
+            Patch(p, "PatchDado", mDado, new Vector3(xf - 0.02f, DadoY * 0.5f, zc), new Vector3(0.03f, DadoY, zl));
+        }
+
+        static void Patch(Transform p, string name, Material m, Vector3 pos, Vector3 size)
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.name = name;
+            var c = go.GetComponent<Collider>();
+            if (c != null) Object.DestroyImmediate(c);
+            go.transform.SetParent(p, false);
+            go.transform.localPosition = pos;
+            go.transform.localScale = size;
+            go.GetComponent<MeshRenderer>().sharedMaterial = m;
+        }
+
         static void BuildDado(Transform p, Material mDado, Material mTrim)
         {
             float half = DoorW * 0.5f + 0.06f;

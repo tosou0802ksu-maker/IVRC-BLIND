@@ -152,6 +152,21 @@ namespace BLIND.EditorTools
             new Temp("Button",      33.0f, 0.900f, "赤/青/緑ゲートボタンの筐体。通電した操作盤としてはっきり読ませる"),
             new Temp("ButtonLit",   58.0f, 1.000f, "押した後のゲートボタン。点灯して発熱し、押済みかどうかが一目で分かる"),
 
+            // --- だるまさんがころんだの監視者（room11）---
+            // ⚠️ ここだけ Prop(19℃ dim 0.095) を使ってはいけない。
+            // dim が小さい物は数mで背景に溶ける（range = lerp(5,200,dim²)）。
+            // 部屋は20mあるので、Prop のままだとサーモ役には奥のだるまが見えず、
+            // 「今こっちを向いた」を3人で共有できない＝ギミックが成立しない。
+            // 向きが読めることが全てなので、例外的に明るくする。
+            // ⚠️ だるまは**シルエットが前後対称**なので、一様な温度で塗ると
+            // サーモ役には「どっちを向いているか」が分からない。向きが全てのギミックなので致命的。
+            // → この2つだけ `_AlbedoTex` を入れて**元の絵から温度差を作る**
+            //   （BuildMaterials の darumaKey / ThermalSurface の _TempByRed / _TempByDark）。
+            //   赤い胴＝高温(橙〜赤)、白い顔＝中温(緑)、黒い目と眉＝低温(青) になり、
+            //   サーモ画面でもちゃんと「だるまの顔」として読める。
+            new Temp("Watcher",     33.0f, 0.900f, "だるまさんがころんだの監視者。部屋の端からでも向きが読めないと成立しない"),
+            new Temp("Daruma",      26.0f, 0.550f, "棚や机の上のだるまの群れ。監視者より一段暗くして、どれが本体か分かるようにする"),
+
             // --- 熱源（サーモ役の領分。ここだけ全開） ---
             // 配管は「生きている設備」としてはっきり読ませる。
             // 長い管なので天井の一本線で間取りがある程度読めてしまう副作用はあるが、
@@ -303,6 +318,19 @@ namespace BLIND.EditorTools
                 m.SetFloat("_FlowStrength", flow);
                 m.SetFloat("_FlowLength", flowLen);
                 m.SetFloat("_FlowSpeed", flowSpd);
+
+                // --- だるまだけ、元の絵から温度差を作る ---
+                //
+                // 一様な温度で塗ると前後対称の塊になり、**顔の向きが読めない**。
+                // 向きが読めることがギミックの全てなので、ここだけ例外的に絵を使う。
+                // 赤い胴 +34℃ / 黒い目・眉 -16℃ で、橙〜赤の胴・緑の顔・青い目になる。
+                // 実際の `_AlbedoTex` はだるまの種類ごとに違うので、
+                // ここでは既定(白)のままにして BlindGimmickBuilder が差し替える。
+                bool darumaKey = t.key == "Watcher" || t.key == "Daruma";
+                // 28 だと朱色が橙止まりで「赤」に見えない。33 でランプの 0.91＝赤に乗る
+                // （白飛びは 0.93 からなので、いちばん鮮やかな所だけが白く抜ける）。
+                m.SetFloat("_TempByRed", darumaKey ? 33f : 0f);
+                m.SetFloat("_TempByDark", darumaKey ? 16f : 0f);
 
                 bool isBody = t.key == "Body" || t.key == "Skin" || t.key == "Burning";
                 m.SetFloat("_BodyProfile", isBody ? 1f : 0f);

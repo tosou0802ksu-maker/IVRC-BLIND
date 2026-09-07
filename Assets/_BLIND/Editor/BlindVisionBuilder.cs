@@ -66,7 +66,15 @@ namespace BLIND.EditorTools
         static bool IsGimmickOwned(Transform t)
         {
             for (var p = t; p != null; p = p.parent)
-                if (p.name == "PitField_Generated") return true;
+            {
+                // Prop_Daruma : だるまは実行中に首を回すので、複製を部屋直下のバケツに
+                //   まとめてしまうと本体だけが回って複製が取り残される
+                //   （過去人だけが「こっち向いた」と言う嘘になる）。
+                //   BlindGimmickBuilder が本体の子として複製を作る。
+                if (p.name == "PitField_Generated"
+                 || p.name == "DarumaWatcher_Generated"
+                 || p.name == "Prop_Daruma") return true;
+            }
             return false;
         }
 
@@ -1321,8 +1329,17 @@ namespace BLIND.EditorTools
                                         new Vector3(ax1 - ax0, 0.04f, az1 - az0)),
                                 });
 
-                            // 板を小さいタイルに割る。穴のある部屋では
-                            // 「床が実際にある所」だけ置くので、曲がった縁も階段状に追える。
+                            // ⚠️ **タイルに割るのは床に穴が開いている部屋だけ。**
+                            // 一度は全部の部屋を割ってみたが、**どの部屋も同じ格子模様に
+                            // なって部屋どうしの区別が付かなくなった**（room2 の床が
+                            // 落とし穴部屋とそっくりになった）。エコロケ役が
+                            // 「今どの部屋にいるか」を言えなくなるので割ってはいけない。
+                            // 穴のある部屋だけは、曲がった縁を階段状に追うために必要。
+                            if (cut == null)
+                            {
+                                addBox(bx0, bx1, bz0, bz1);
+                            }
+                            else
                             {
                                 int tx = Mathf.Max(1, Mathf.RoundToInt(sx / tile));
                                 int tz = Mathf.Max(1, Mathf.RoundToInt(sz / tile));
@@ -1331,7 +1348,7 @@ namespace BLIND.EditorTools
                                     for (int j = 0; j < tz; j++)
                                     {
                                         float cx = bx0 + dx * (i + 0.5f), cz = bz0 + dz * (j + 0.5f);
-                                        if (cut != null && !cut.OnDeck(cx, cz)) continue;
+                                        if (!cut.OnDeck(cx, cz)) continue;
                                         // 少し内側に寄せて1枚ずつ独立した四角にする。
                                         // くっついていると格子1枚に見えて縁が読めない（落とし穴部屋と同じ理由）。
                                         addBox(bx0 + dx * i + 0.05f, bx0 + dx * (i + 1) - 0.05f,
@@ -1410,22 +1427,6 @@ namespace BLIND.EditorTools
                 }
                 foreach (var kv in bigOnesEcho)
                 {
-                    // ⚠️ 床に寝ている大きな平板（道路・地面のデカール）はエコロケ層に出さない。
-                    //
-                    // 厚みが数cmしかないので出しても外周の線が1本出るだけなのに、
-                    // 不透明なので **その下にある床タイルの格子を丸ごと隠す**。
-                    // room5 の道路(14×6m)が実際にそうで、床を格子に割っても
-                    // 道路に覆われて1本も見えず、地面が「線1本」のままだった。
-                    // 床の形は床スラブの格子が伝えるので、これを出す意味は無い。
-                    if (hasFloor)
-                    {
-                        var fb = kv.Key.bounds;
-                        if (fb.size.y <= 0.15f
-                         && Mathf.Max(fb.size.x, fb.size.z) >= 3f
-                         && fb.max.y <= floorBounds.max.y + 0.35f)
-                            continue;
-                    }
-
                     var em = EchoMatFor(kv.Key, rn, echoMat);
                     var go = CloneReal(kv.Key, eRoot.transform, LayerEcho, em, "E_");
                     if (go == null) continue;

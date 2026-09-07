@@ -13,7 +13,8 @@ namespace BLIND.EditorTools
     /// </summary>
     public static class Room12Layout
     {
-        const float SizeX = 8f, SizeZ = 20f;
+        // ⚠️ Room12Shell.SizeZ と必ず揃えること。動線チェック(3.)がこの値で走る。
+        const float SizeX = 8f, SizeZ = 33f;
 
         // --- X 方向の割り付け ---
         const float WestGap0 = 0.10f, WestGap1 = 1.00f;   // 行き止まりの細い通路
@@ -32,8 +33,18 @@ namespace BLIND.EditorTools
         /// <summary>本線（中央通路）に面している列。だるまはここに集める。</summary>
         static readonly bool[] FacesMainAisle = { false, true, true, false };
 
-        const float RunSouthZ0 = 3.10f;   // 南の列の始まり
-        const float RunNorthZ0 = 10.90f;  // 北の列の始まり
+        /// <summary>
+        /// 書架の列の始まり(ローカルZ)。1列 0.95m × UnitsPerRun。
+        ///
+        /// 部屋を 20m → 33m に伸ばしたので、2列から4列に増やしてある。
+        /// 列と列の間が横に抜けられる通路になる（z 8.8〜10.9 / 16.6〜18.7 / 24.4〜26.5）。
+        /// **東の出口は z=18** ＝ 2本目の通路にちょうど開いているので、
+        /// 奥(z 26.5〜32.2)まで行って折り返す動線が自然に作れる。
+        /// </summary>
+        /// ⚠️ 最後の列は 18.70 まで。**北の 8.4m(ローカル 24.4〜32.9)は空けておくこと。**
+        /// ここがだるまと対峙する「奥の間」になる。書架で埋めると
+        /// だるま(幅1.7m)が通路(幅2.6m)を塞いで**部屋が通り抜け不能になる**（実際なった）。
+        static readonly float[] RunZ0 = { 3.10f, 10.90f, 18.70f };
         const int UnitsPerRun = 6;        // 0.95m × 6 = 5.70m
 
         const float OfficeZ0 = 16.60f;    // 北の事務スペース
@@ -55,13 +66,22 @@ namespace BLIND.EditorTools
         static readonly Vector2 DeadEndTo = new Vector2(0.55f, 4.15f);   // 実測でここまで入れる
         const float DeadEndBlockZ = 4.70f;
 
+        /// <summary>
+        /// だるまの部屋を探す。
+        ///
+        /// ⚠️ **名前で探してはいけない。** 部屋番号が振り直されて
+        ///    「だるまの部屋」は room12 → **room11** になり、
+        ///    room12 という名前は別の部屋（クイズ扉の 14×10 の部屋）が使っている。
+        ///    名前で探すと **家具一式を隣の部屋にぶちまける**。
+        ///    中身（Prop_Daruma / Prop_Racks を持つ部屋）で照合すること。
+        /// </summary>
         static Transform Room()
         {
-            foreach (var g in Object.FindObjectsOfType<GameObject>())
+            foreach (var t in Object.FindObjectsOfType<Transform>(true))
             {
-                if (g.name != "room12") continue;
-                if (g.GetComponentsInChildren<Renderer>().Length == 0) continue;   // 空の重複よけ
-                return g.transform;
+                if (t.Find("Prop_Daruma") == null && t.Find("Prop_Racks") == null) continue;
+                if (t.GetComponentsInChildren<Renderer>(true).Length == 0) continue;
+                return t;
             }
             return null;
         }
@@ -112,6 +132,7 @@ namespace BLIND.EditorTools
 
             var log = new System.Text.StringBuilder();
             log.AppendLine(PlaceRacks(room));
+            log.AppendLine(PlaceFarRoom(room));
             log.AppendLine(PlaceOffice(room));
             log.AppendLine(PlaceClutter(room));
             log.AppendLine(PlaceDaruma(room));
@@ -139,9 +160,9 @@ namespace BLIND.EditorTools
             int n = 0;
             for (int col = 0; col < RackX.Length; col++)
             {
-                for (int run = 0; run < 2; run++)
+                for (int run = 0; run < RunZ0.Length; run++)
                 {
-                    float z0 = run == 0 ? RunSouthZ0 : RunNorthZ0;
+                    float z0 = RunZ0[run];
                     for (int u = 0; u < UnitsPerRun; u++)
                     {
                         float z = z0 + (u + 0.5f) * Room12Kit.RackW;
@@ -157,6 +178,57 @@ namespace BLIND.EditorTools
             }
             return "書架 " + n + " 台 (" + (n * mesh.triangles.Length / 3) + " tri)";
         }
+
+        // ---------------------------------------------------------------
+        //  奥の間（だるまと対峙する部屋）
+        // ---------------------------------------------------------------
+        /// <summary>
+        /// 書架の最後の列から北の壁までの 8.4m を飾る。
+        ///
+        /// ⚠️ **中央は絶対に空けておくこと。** ここはだるま（幅2.4m）が立って
+        /// プレイヤーが左右から抜ける場所で、物を置くと通り抜け不能になる。
+        /// 東西の壁ぎわにだけ寄せて、真ん中 4.4m(ローカルX 1.8〜6.2)は手を付けない。
+        ///
+        /// 書架を壁と平行に伏せて並べ、上に箱を積む。
+        /// 「本線の書庫が尽きて、置き場に困った物を放り込んだ奥の間」に見せる。
+        /// </summary>
+        static string PlaceFarRoom(Transform room)
+        {
+            var parent = Group(room, "Prop_FarRoom");
+            var rack = Kit("Room12_SteelRack");
+            var steel = Mat("Room12_Steel");
+            var rust = Mat("Room12_SteelRust");
+            if (rack == null || steel == null) return "奥の間: 書架のメッシュ／マテリアルがない";
+
+            float z0 = RunZ0[RunZ0.Length - 1] + UnitsPerRun * Room12Kit.RackW + 0.6f;  // 最後の列の先
+            float z1 = SizeZ - 0.60f;
+            if (z1 - z0 < 2f) return "奥の間: 空きが足りないので何も置かない";
+
+            var rnd = new System.Random(4242);
+            int n = 0;
+            // 東西の壁ぎわに、壁と平行に並べる
+            foreach (var side in new[] { 0, 1 })
+            {
+                float x = side == 0 ? InsetX0 + Room12Kit.RackD * 0.5f
+                                    : InsetX1 - Room12Kit.RackD * 0.5f;
+                float yaw = side == 0 ? 90f : -90f;         // 開口を部屋の中央へ向ける
+                for (float z = z0; z + Room12Kit.RackW <= z1; z += Room12Kit.RackW)
+                {
+                    // ところどころ抜いて、詰まりすぎないようにする
+                    if (rnd.NextDouble() < 0.22) continue;
+                    bool rusty = rnd.NextDouble() < 0.28;
+                    Piece(parent.transform, "FarRack_" + side + "_" + n, rack,
+                          rusty && rust != null ? rust : steel,
+                          new Vector3(x, 0f, z + Room12Kit.RackW * 0.5f), yaw, true, 0.9f);
+                    n++;
+                }
+            }
+            return "奥の間: 壁ぎわに書架 " + n + " 台（中央 "
+                 + (InsetX1 - InsetX0 - Room12Kit.RackD * 2f).ToString("F1") + "m は空けたまま）";
+        }
+
+        /// <summary>奥の間で壁に寄せる基準（壁の内面）。</summary>
+        const float InsetX0 = 0.20f, InsetX1 = 7.80f;
 
         // ---------------------------------------------------------------
         //  事務スペース：机・椅子・CRT

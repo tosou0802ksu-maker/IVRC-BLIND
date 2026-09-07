@@ -27,6 +27,18 @@ Shader "BLIND/ThermalSurface"
         _FadeNear     ("Fade Range at Dim=0 (m)", Float) = 5.0
         _FadeFar      ("Fade Range at Dim=1 (m)", Float) = 200.0
 
+        // --- 元の絵から温度差を作る（だるま用。0 なら完全に無効で従来どおり） ---
+        //
+        // 一様な温度で塗ると、模様のある物が「のっぺりした塊」になる。
+        // だるまは**顔の向きが読めること自体がギミック**なので、
+        // 赤い胴・白い顔・黒い目を温度差として出さないと成立しない。
+        //
+        // 実機のサーモでも、同じ室温の物が塗料の放射率の違いで別の温度に写る。
+        // 赤い塗り＝放射率が高く実際より高温に、黒目＝艶で低く写る、という解釈。
+        _AlbedoTex    ("Albedo (温度差を作る元絵。白＝無効)", 2D) = "white" {}
+        _TempByRed    ("Hotter where red (℃)", Float) = 0.0
+        _TempByDark   ("Colder where dark (℃)", Float) = 0.0
+
         // --- 熱の流れ（配管・配線用。0 なら完全に無効で従来どおり） ---
         _FlowStrength ("Heat Flow Amplitude (C)", Float) = 0.0
         _FlowSpeed    ("Flow Speed (m/s)", Float) = 1.2
@@ -56,14 +68,19 @@ Shader "BLIND/ThermalSurface"
             #pragma fragment frag
             #include "UnityCG.cginc"
 
-            struct appdata { float4 vertex : POSITION; float3 normal : NORMAL; float4 color : COLOR; };
+            struct appdata { float4 vertex : POSITION; float3 normal : NORMAL; float4 color : COLOR; float2 uv : TEXCOORD0; };
             struct v2f
             {
                 float4 vertex : SV_POSITION;
                 float3 worldNormal : TEXCOORD0;
                 float3 worldPos : TEXCOORD1;
                 float4 vcol : TEXCOORD2;
+                float2 uv : TEXCOORD3;
             };
+
+            sampler2D _AlbedoTex;
+            float4 _AlbedoTex_ST;
+            float _TempByRed, _TempByDark;
 
             float _TempC, _TempMin, _TempMax, _TempGamma;
             float _HeatIntensity, _EdgeCool, _Noise, _Grain, _Dim;
@@ -81,6 +98,7 @@ Shader "BLIND/ThermalSurface"
                 // 頂点カラーを持たないメッシュには GPU が (1,1,1,1) を入れる。
                 // 焼き込み済みのメッシュは a=0.5 にしてあるので、a で見分けられる。
                 o.vcol = v.color;
+                o.uv = TRANSFORM_TEX(v.uv, _AlbedoTex);
                 return o;
             }
 
@@ -179,6 +197,45 @@ Shader "BLIND/ThermalSurface"
 
                 // 実機でも、かすめる角度の面は放射率が落ちて数℃低く写る
                 float tempC = _TempC * _HeatIntensity;
+
+                // --- 元の絵から温度差を作る ---
+                //
+                // だるまのように「模様に意味がある」物は、一様な温度で塗ると
+                // ただの塊になり、**顔がどちらを向いているか分からなくなる**。
+                // 赤い所を高く、暗い所を低くすることで、
+                // 赤い胴／白い顔／黒い目がそのまま温度差として出る。
+                // 既定は 0 なので、指定しないマテリアルの見え方は一切変わらない。
+                if (abs(_TempByRed) + abs(_TempByDark) > 0.0001)
+                {
+                    float3 alb = tex2D(_AlbedoTex, i.uv).rgb;
+
+                    // ⚠️ Linear 色空間では tex2D がリニア値を返す。そのまま使うと
+                    // 「絵の上では鮮やかな赤」が r=0.32 程度にしか見えず、赤さが出ない。
+                    // 絵を見たときの数字で調整できるよう、いったん sRGB に戻す。
+                    #ifndef UNITY_COLORSPACE_GAMMA
+                        alb = LinearToGammaSpace(alb);
+                    #endif
+
+                    float mx = max(alb.r, max(alb.g, alb.b));
+                    float mn = min(alb.r, min(alb.g, alb.b));
+                    float sat = (mx - mn) / max(mx, 0.0001);
+                    float lum = dot(alb, float3(0.299, 0.587, 0.114));
+
+                    // 「赤さ」＝赤が他の2色をどれだけ上回っているか。
+                    // ×1.8 は「どのくらい鮮やかなら“真っ赤”とみなすか」の当たり。
+                    // 素の差だけだと、だるまの朱色(差 0.5)が橙止まりで赤に届かない。
+                    // 0.55 以上で頭打ちになるので、鮮やかな赤が白飛びすることもない。
+                    float redness = saturate((alb.r - max(alb.g, alb.b)) * 1.8);
+
+                    // ⚠️ 暗さの減算は **彩度の低い所にだけ** 効かせること。
+                    // 素の (1 - 輝度) で引くと、**赤い胴が「暗い」と判定されて
+                    // 赤さの加算を打ち消し、胴が緑になる**（実際そうなった）。
+                    // 濃い赤は輝度が 0.25 しかないので、赤ほど強く冷やされてしまう。
+                    // 黒目・黒眉だけを冷やしたいので、無彩色なぶんだけ引く。
+                    tempC += _TempByRed * redness;
+                    tempC -= _TempByDark * (1.0 - lum) * (1.0 - sat);
+                }
+
                 tempC -= (1.0 - NdotV) * _EdgeCool * max(tempC - _TempMin, 0.0);
 
                 // 同じ材質でも表面には温度ムラがある（16cm マス）

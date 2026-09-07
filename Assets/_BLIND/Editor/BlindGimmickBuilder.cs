@@ -125,6 +125,9 @@ namespace BLIND.EditorTools
         const string PitRootName    = "PitField_Generated";
         const string ButtonRootName = "Gimmicks_Generated";
         const string HazardName     = "Hazard_Generated";
+        const string DarumaRootName = "DarumaWatcher_Generated";
+        /// <summary>だるま本体の子に作るサーモ・エコロケ複製の入れ物。本体と一緒に回るのが要点。</summary>
+        const string DarumaVisName  = "DarumaVision_Generated";
 
         // ------------------------------------------------------------
         // 落とし穴フロアの設計値
@@ -259,14 +262,37 @@ namespace BLIND.EditorTools
             public int checkpoint;      // CheckpointManager の復帰地点番号
             public Color color;
             public string note;
+
+            /// <summary>
+            /// 置き場所を決め打ちする。Vector3.zero なら部屋の空きから自動で選ぶ。
+            ///
+            /// ⚠️ 自動配置は「一番広く空いている床」を選ぶだけで、
+            /// **部屋の中でそこが妥当な位置かは見ていない**。
+            /// room11 では部屋のど真ん中(9.7, -47.0)に置かれ、
+            /// だるまの部屋を前半と後半に分断していた。
+            /// </summary>
+            public Vector3 at;
         }
 
         static readonly ButtonSpec[] Buttons =
         {
             new ButtonSpec { name="Btn_Red",   room="room7",  buttonId=0, checkpoint=1,
                              color=new Color(1.00f, 0.13f, 0.10f), note="西ルートの終点" },
-            new ButtonSpec { name="Btn_Blue",  room="room11", buttonId=1, checkpoint=2,
-                             color=new Color(0.15f, 0.40f, 1.00f), note="南ルートの終点" },
+            // ⚠️ 青は room11(だるま部屋)から room12 へ出してある。
+            //
+            // 元は room11 に自動配置されていて、部屋のど真ん中(9.7, -47.0)＝
+            // だるまの正面に立っていた。**だるま部屋にボタンは要らない**
+            // （作者の設計にそんな物は無い。ビルダーが空き床を見て勝手に置いただけ）。
+            // 置かれていると、だるまの部屋が「ボタン前」と「ボタン後」に分断され、
+            // 一続きの緊張が切れる。
+            //
+            // 移動先は南ルートで room11 の次に来る room12 の入口すぐ。
+            // 「南ルートの終点」という役目は変わらず、だるまの区間は
+            // 丸ごと「ボタンを押す前」に揃う。
+            // 位置は実測で選んだ（周囲3.24m空き。room11 の最良地点でも1.14mしかない）。
+            new ButtonSpec { name="Btn_Blue",  room="room12", buttonId=1, checkpoint=2,
+                             at=new Vector3(15.0f, 0f, -43.6f),
+                             color=new Color(0.15f, 0.40f, 1.00f), note="南ルートの終点。だるま部屋を抜けた先" },
             new ButtonSpec { name="Btn_Green", room="room19", buttonId=2, checkpoint=3,
                              color=new Color(0.15f, 1.00f, 0.30f), note="東ルートの終点" },
         };
@@ -293,7 +319,9 @@ namespace BLIND.EditorTools
             if (cm == null) return "CheckpointManager が見つからない。処理を中止した。";
 
             log.AppendLine(EnsureManagers());
+            log.AppendLine(BuildCoyoteTime());
             log.AppendLine(BuildPitFields(cm));
+            log.AppendLine(BuildDarumaWatcher(cm));
             log.AppendLine(BuildGateButtons(cm));
             log.AppendLine(BuildLaserHazards(cm));
             log.AppendLine(BuildBurningHazard(cm));
@@ -301,6 +329,17 @@ namespace BLIND.EditorTools
             log.AppendLine(WireCheckpoints(cm));
 
             Physics.SyncTransforms();
+
+            // ⚠️ **最後に必ず受信機を集め直すこと。**
+            //
+            // EchoEmitter はパルスを届ける相手を receivers 配列で持っている。
+            // 落とし穴フロアの踏み板にも EchoReceiver を付けているが、
+            // 配列に入れ直さないと**エディタでは見えているのに実行すると
+            // 一度も光らない**。vision/2 の最後で集め直しているので、
+            // 「vision/2 → ギミック/1」の順に流すと、ここで作った受信機だけが
+            // 登録から漏れる（room4 のエコロケが真っ暗だった原因がこれ）。
+            log.AppendLine(EchoReceiverCollector.Collect());
+
             AssetDatabase.SaveAssets();
             EditorSceneManagerMarkDirty();
             return log.ToString();
@@ -1560,7 +1599,12 @@ namespace BLIND.EditorTools
                 if (room == null) { log.AppendLine("  " + b.room + " : 見つからない"); continue; }
 
                 Vector3 p;
-                if (!FindOpenSpot(room.transform, out p))
+                if (b.at != Vector3.zero)
+                {
+                    // 決め打ち。床の高さだけは実測に合わせる。
+                    p = b.at;
+                }
+                else if (!FindOpenSpot(room.transform, out p))
                 {
                     log.AppendLine("  " + b.room + " : 置ける空きが見つからない");
                     continue;
@@ -1733,6 +1777,389 @@ namespace BLIND.EditorTools
                     if (score > best) { best = score; result = new Vector3(x, gy, z); }
                 }
             return best > 0f;
+        }
+
+        // ============================================================
+        // 3.5 コヨーテタイム（ワールド全体で1個）
+        // ============================================================
+
+        /// <summary>
+        /// 足場を踏み外した直後のジャンプ入力を救う。
+        /// 落とし穴部屋は「他人の声を聞いてから跳ぶ」設計なので、入力が一瞬遅れるのが
+        /// 正しい遊び方になっている。素のままだとその遅れがそのまま全員リスポーンになる。
+        /// ローカル判定しかしないので、ワールドに1個置けば全部屋で効く。
+        /// </summary>
+        static string BuildCoyoteTime()
+        {
+            var sys = GameObject.Find("=== SYSTEM ===");
+            if (sys == null) return "コヨーテタイム: === SYSTEM === が無い";
+
+            var holder = Child(Child(sys.transform, "GameManagement"), "Gimmicks");
+            var t = holder.Find("CoyoteTime");
+            if (t == null)
+            {
+                var g = new GameObject("CoyoteTime");
+                Undo.RegisterCreatedObjectUndo(g, "coyote time");
+                g.transform.SetParent(holder, false);
+                t = g.transform;
+            }
+
+            var type = System.Type.GetType("CoyoteTimeAssist, Assembly-CSharp");
+            if (type == null) return "コヨーテタイム: CoyoteTimeAssist が見つからない";
+
+            var c = t.GetComponent(type);
+            if (c == null)
+            {
+                c = AddUdon(t.gameObject, "CoyoteTimeAssist");
+                if (c == null) return "コヨーテタイム: 付与に失敗";
+            }
+
+            var so = new SerializedObject(c);
+            var p = so.FindProperty("coyoteTime");
+            float grace = p != null ? p.floatValue : 0f;
+            so.ApplyModifiedProperties();
+            // 同期する変数が1つも無いので通信は不要。既定の Continuous のままだと
+            // 中身が空のまま毎フレーム送り続けることになる。
+            SetSyncMode(c, "None");
+            PushUdon(c);
+
+            return "コヨーテタイム: 猶予 " + grace.ToString("0.00") + " 秒（踏み外してからこの間はジャンプが効く）";
+        }
+
+        // ============================================================
+        // 3.6 だるまさんがころんだ
+        // ============================================================
+
+        /// <summary>
+        /// だるまの部屋に「振り向く監視者」を1体立てる。
+        ///
+        /// ⚠️ 部屋番号は振り直されるので名前では探さない。
+        ///    `Prop_Daruma` を持っている部屋＝だるま部屋、で照合する。
+        ///
+        /// ⚠️ サーモ・エコロケの複製はここで作る（vision/2 には任せない）。
+        ///    vision/2 に作らせると「vision/2 → ギミック/1」の順で流したときに
+        ///    ここで本体を作り直すぶん複製が消える。落とし穴フロアと同じ理由で
+        ///    `IsGimmickOwned` に登録して vision 側から除外してある。
+        /// </summary>
+        static string BuildDarumaWatcher(Component cm)
+        {
+            var rooms = GameObject.Find("=== ROOMS ===");
+            if (rooms == null) return "だるま: === ROOMS === が無い";
+
+            Transform room = null;
+            foreach (Transform r in rooms.transform)
+                if (r.Find("Prop_Daruma") != null) { room = r; break; }
+            if (room == null) return "だるま: Prop_Daruma を持つ部屋が見つからない";
+
+            var mesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/_BLIND/Art/Models/Room12Daruma/DarumaA.asset");
+            if (mesh == null) return "だるま: DarumaA.asset が無い。先に BLIND/room12/Bake Daruma";
+
+            var bodyMat  = AssetDatabase.LoadAssetAtPath<Material>("Assets/_BLIND/Art/Materials/Room12_DarumaA_Dark.mat");
+            var tMat     = ThermalDarumaMat(bodyMat, "Watcher");
+            var eMat     = AssetDatabase.LoadAssetAtPath<Material>("Assets/_BLIND/Art/Materials/Echo/EchoMaterial_Prop.mat");
+            if (eMat == null) eMat = AssetDatabase.LoadAssetAtPath<Material>(EchoMatPath);
+
+            var old = room.Find(DarumaRootName);
+            if (old != null) Undo.DestroyObjectImmediate(old.gameObject);
+
+            // --- 床の範囲を実測する（部屋ごとに形が違うので決め打ちにしない）---
+            Bounds floor = new Bounds();
+            bool has = false;
+            foreach (var mr in room.GetComponentsInChildren<MeshRenderer>(true))
+            {
+                if (mr.name != "FloorTile") continue;
+                if (!has) { floor = mr.bounds; has = true; } else floor.Encapsulate(mr.bounds);
+            }
+            if (!has) return "だるま: 床(FloorTile)が見つからない";
+
+            // 奥（+Z 側）に立たせて、手前（-Z 側）から来るプレイヤーを見張らせる。
+            //
+            // ⚠️ **書架のあいだの通路(幅2.6m)に立たせてはいけない。**
+            //    footprint が通路より広いので、部屋が通り抜け不能になる
+            //    （実際なった。BFS で到達不能を確認）。
+            //    立たせてよいのは書架を張らずに空けてある「奥の間」(幅7.6m)だけ。
+            //    ここなら中央に置いても両脇に 2.5m ずつ残るので、
+            //    正面から向き合ったまま横を抜けられる。
+            var spot = new Vector3(10.2f, floor.max.y, -28.5f);
+            if (!FindClearSpotInBand(room, floor, spot.z - 0.4f, spot.z + 0.4f, 0.80f, out var probe)
+                || Mathf.Abs(probe.x - spot.x) > 3.0f)
+            {
+                // 部屋の形が変わって決め打ちが使えないときだけ自動探索に戻す
+                float zBack = floor.max.z - 2.6f;
+                if (!FindClearSpotInBand(room, floor, zBack - 1.2f, zBack + 1.2f, 0.85f, out spot))
+                    spot = new Vector3(floor.center.x, floor.max.y, zBack);
+            }
+
+            var rootGo = new GameObject(DarumaRootName);
+            Undo.RegisterCreatedObjectUndo(rootGo, "daruma watcher");
+            rootGo.transform.SetParent(room, false);
+            rootGo.transform.position = Vector3.zero;
+            rootGo.layer = LayerDefault;
+
+            // --- だるま本体（3レイヤー分を重ねる）---
+            // 高さ 0.98m × 2.4 ≒ 2.35m。人より頭ひとつ大きく、奥の間で見上げる大きさ。
+            // ⚠️ 上げすぎると footprint(0.98×倍率)が広がって通路を塞ぐ。
+            //    奥の間の幅は 7.6m なので、2.4 でも両脇に 2.5m ずつ残る。
+            const float BossScale = 2.4f;
+            var boss = new GameObject("Boss");
+            Undo.RegisterCreatedObjectUndo(boss, "daruma boss");
+            boss.transform.SetParent(rootGo.transform, false);
+            boss.transform.position = new Vector3(spot.x, floor.max.y, spot.z);
+            boss.transform.localScale = Vector3.one * BossScale;
+            boss.layer = LayerDefault;
+
+            GameObject tBody = null, eBody = null;
+            for (int pass = 0; pass < 3; pass++)
+            {
+                int layer = pass == 0 ? LayerDefault : (pass == 1 ? LayerThermal : LayerEcho);
+                string tag = pass == 0 ? "D" : (pass == 1 ? "T" : "E");
+                Material mat = pass == 0 ? bodyMat : (pass == 1 ? tMat : eMat);
+                var g = MakeMeshChild(boss.transform, tag + "_Body", layer, mesh, mat, pass == 2);
+                if (pass == 1) tBody = g;
+                if (pass == 2) eBody = g;
+            }
+
+            // --- 顔の板（エコロケ用だけ）---
+            //
+            // ⚠️ だるまは**シルエットが前後でほぼ同じ**なので、輪郭しか見えない
+            //    エコロケ役には**どちらを向いているか判別できない**。
+            //    向きが全てのギミックなので致命的。顔の位置に板を貼って、
+            //    向いている間だけ四角い輪郭が出るようにする。
+            //
+            //    サーモ側には板を貼らない。`Thermal_Watcher` が元の絵から温度差を
+            //    作る（赤い胴=橙 / 白い顔=緑 / 黒い目=青）ので、板を貼ると
+            //    せっかくの顔を塗り潰してしまう。
+            //    過去人にも板は不要（元の絵がそのまま見える）。
+            var facePos = new Vector3(0f, 0.56f, 0.44f);      // メッシュのローカル。顔の真ん中
+            var faceSize = new Vector3(0.52f, 0.40f, 0.10f);
+            var eFace = MakeBox(boss.transform, "E_Face", LayerEcho, facePos, faceSize, eMat, true);
+
+            // ぶつかれる本体。押しのけて通れないように非トリガーで置く。
+            var cap = boss.AddComponent<CapsuleCollider>();
+            cap.center = new Vector3(0f, 0.49f, 0f);
+            cap.radius = 0.48f;
+            cap.height = 0.98f;
+
+            // --- 判定ゾーン（この部屋にいる人だけを見る）---
+            // ⚠️ OnPlayerTriggerEnter は「トリガーが付いている GameObject の
+            //    UdonBehaviour」にしか飛ばない。コライダーと DarumaWatcher は
+            //    必ず同じ GameObject に付けること。
+            var zone = rootGo.AddComponent<BoxCollider>();
+            zone.isTrigger = true;
+            zone.center = new Vector3(floor.center.x, floor.max.y + 1.6f, floor.center.z);
+            zone.size   = new Vector3(floor.size.x - 0.4f, 3.2f, floor.size.z - 0.4f);
+
+            // --- 見張る向きの目印（手前側の端）---
+            var mark = new GameObject("WatchFrom");
+            Undo.RegisterCreatedObjectUndo(mark, "daruma watch mark");
+            mark.transform.SetParent(rootGo.transform, false);
+            mark.transform.position = new Vector3(floor.center.x, floor.max.y + 1.5f, floor.min.z + 1.0f);
+
+            var beh = AddUdon(rootGo, "DarumaWatcher");
+            if (beh == null) return "だるま: DarumaWatcher の付与に失敗";
+            SetObj(beh, "daruma", boss.transform);
+            SetObj(beh, "watchTarget", mark.transform);
+            SetObj(beh, "checkpointManager", cm);
+
+            // 「今 振り向いた」を各役に伝える口。
+            //   サーモ : 振り向いている間だけ熱を上げる（この Renderer に MPB を掛ける）
+            //   エコロケ: 振り向いた瞬間に受信機を強制点灯（パルス待ちだと見逃す）
+            if (tBody != null) SetObj(beh, "thermalBody", tBody.GetComponent<MeshRenderer>());
+            SetObjArray(beh, "echoParts", new Object[] { EchoRec(eBody), EchoRec(eFace) });
+
+            SetSyncMode(beh, "Manual");
+            PushUdon(beh);
+
+            string crowd = BuildDarumaCrowd(room, rootGo, eMat);
+
+            return "だるまさんがころんだ: " + room.name + " に監視者を1体設置"
+                 + "（位置 " + boss.transform.position.ToString("F1")
+                 + " / 見張る向き -Z / 判定ゾーン " + zone.size.ToString("F1") + "）\n"
+                 + "  " + crowd;
+        }
+
+        /// <summary>
+        /// 棚や机の上のだるま全部に「熱」と「こちらを向く」を足す。
+        ///
+        /// ⚠️ サーモ・エコロケの複製は **本体の子として** 作ること。
+        ///    vision/2 に任せると部屋直下のバケツに1枚のメッシュとして結合されるので、
+        ///    本体が首を回しても複製は取り残され、**過去人だけが「こっち向いた」と言う**
+        ///    嘘になる。そのため Prop_Daruma は IsGimmickOwned で vision から除外してある。
+        ///
+        /// 動かさない物と違って結合できないぶん描画数は増えるが、
+        /// だるまは元から軽い(平均400三角形)ので2層合わせても8万三角形程度で収まる。
+        /// </summary>
+        static string BuildDarumaCrowd(Transform room, GameObject rootGo, Material eMat)
+        {
+            var prop = room.Find("Prop_Daruma");
+            if (prop == null) return "だるまの群れ: Prop_Daruma が無い";
+
+            var list = new List<Transform>();
+            var echoList = new List<Object>();
+            long tris = 0;
+            int skipped = 0;
+
+            foreach (Transform d in prop)
+            {
+                // 前回の複製を消す（本体は他人の配置物なので絶対に消さない）
+                var oldVis = d.Find(DarumaVisName);
+                if (oldVis != null) Undo.DestroyObjectImmediate(oldVis.gameObject);
+
+                var mf = d.GetComponent<MeshFilter>();
+                var mr = d.GetComponent<MeshRenderer>();
+                if (mf == null || mf.sharedMesh == null || mr == null) { skipped++; continue; }
+
+                var vis = new GameObject(DarumaVisName);
+                Undo.RegisterCreatedObjectUndo(vis, "daruma vision");
+                vis.transform.SetParent(d, false);
+                vis.transform.localPosition = Vector3.zero;
+                vis.transform.localRotation = Quaternion.identity;
+                vis.transform.localScale = Vector3.one;
+
+                var tm = ThermalDarumaMat(mr.sharedMaterial, "Daruma");
+                MakeMeshChild(vis.transform, "T_Body", LayerThermal, mf.sharedMesh, tm, false);
+                var eGo = MakeMeshChild(vis.transform, "E_Body", LayerEcho, mf.sharedMesh, eMat, true);
+
+                tris += (mf.sharedMesh.triangles.Length / 3) * 2;
+                list.Add(d);
+                echoList.Add(EchoRec(eGo));
+            }
+
+            var beh = AddUdon(rootGo, "DarumaCrowd");
+            if (beh == null) return "だるまの群れ: DarumaCrowd の付与に失敗";
+
+            SetObjArray(beh, "darumas", list.ConvertAll(x => (Object)x).ToArray());
+            // 動いた瞬間にエコロケを光らせる口。並びは darumas と1対1。
+            SetObjArray(beh, "echoes", echoList.ToArray());
+            SetSyncMode(beh, "None");
+            PushUdon(beh);
+
+            return "だるまの群れ: " + list.Count + "体に熱と追従を付与"
+                 + "（サーモ+エコロケで " + tris + " 三角形"
+                 + (skipped > 0 ? " / メッシュ無しで除外 " + skipped + "体" : "") + "）";
+        }
+
+        /// <summary>
+        /// だるま用のサーモ材質。元の絵をそのまま `_AlbedoTex` に渡し、
+        /// 赤い胴＝高温 / 黒い目＝低温 という温度差を作らせる（ThermalSurface 側で計算）。
+        /// だるまは種類ごとにテクスチャが違うので、絵ごとに材質を分ける。
+        /// </summary>
+        static Material ThermalDarumaMat(Material src, string key)
+        {
+            var baseMat = BlindThermalTable.Mat(key);
+            if (baseMat == null) return null;
+
+            Texture tex = (src != null && src.HasProperty("_MainTex")) ? src.GetTexture("_MainTex") : null;
+            if (tex == null) return baseMat;      // 絵が無いなら一様な温度のまま
+
+            if (!AssetDatabase.IsValidFolder(GenMatDir))
+                AssetDatabase.CreateFolder("Assets/_BLIND/Art/Materials", "Gimmick");
+
+            var safe = tex.name;
+            foreach (var c in new[] { '/', '\\', ' ', '(', ')', ':', '*', '?', '"', '<', '>', '|', '.' })
+                safe = safe.Replace(c, '_');
+            var path = GenMatDir + "/Thermal_" + key + "_" + safe + ".mat";
+
+            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m == null) { m = new Material(baseMat); AssetDatabase.CreateAsset(m, path); }
+            m.shader = baseMat.shader;
+            m.CopyPropertiesFromMaterial(baseMat);
+            m.SetTexture("_AlbedoTex", tex);
+            EditorUtility.SetDirty(m);
+            return m;
+        }
+
+        /// <summary>
+        /// 指定した Z の帯の中で、だるまを立てるのに一番よい床の点を返す。
+        /// 部屋の中身は担当者が随時足すので、座標を決め打ちにすると机や椅子に埋まる。
+        ///
+        /// ⚠️ **扉の前を除外すること。** 空きだけで選ぶと、一番物が無い＝扉の前が
+        ///    選ばれる。実際 room11 では出口の扉(14.2, -39.8)の真ん前に立って
+        ///    通路を塞いでいた。扉から DoorClear(m) 以内は候補から外す。
+        /// 中央寄りを少し優遇する。端に立たれると廊下の奥から向きが読みにくい。
+        /// </summary>
+        static bool FindClearSpotInBand(Transform room, Bounds floor,
+                                        float z0, float z1, float need, out Vector3 result)
+        {
+            const float DoorClear = 2.4f;
+            result = Vector3.zero;
+
+            var obstacles = new List<Bounds>();
+            var doors = new List<Vector3>();
+            foreach (var mr in room.GetComponentsInChildren<MeshRenderer>(true))
+            {
+                var n = mr.name;
+                if (n.StartsWith("T_") || n.StartsWith("E_")) continue;
+                if (n == "FramePiece")
+                {
+                    var c = mr.bounds.center; c.y = 0f;
+                    doors.Add(c);
+                    continue;
+                }
+                if (n == "FloorTile" || n.StartsWith("Wall")) continue;
+                var b = mr.bounds;
+                if (b.min.y > 1.8f) continue;              // 天井の配管などは無視
+                if (b.max.y < floor.max.y - 0.05f) continue;
+                obstacles.Add(b);
+            }
+
+            float cx = floor.center.x;
+            float best = -1f;
+            for (float x = floor.min.x + 1.0f; x <= floor.max.x - 1.0f; x += 0.25f)
+                for (float z = z0; z <= z1; z += 0.25f)
+                {
+                    var p = new Vector3(x, floor.max.y + 0.5f, z);
+
+                    bool nearDoor = false;
+                    foreach (var d in doors)
+                    {
+                        float dx = x - d.x, dz = z - d.z;
+                        if (dx * dx + dz * dz < DoorClear * DoorClear) { nearDoor = true; break; }
+                    }
+                    if (nearDoor) continue;
+
+                    float clear = 999f;
+                    foreach (var b in obstacles)
+                    {
+                        var q = b.ClosestPoint(p);
+                        q.y = p.y;
+                        clear = Mathf.Min(clear, Vector3.Distance(p, q));
+                    }
+                    if (clear > 4f) clear = 4f;            // これ以上広くても価値は変わらない
+
+                    float score = clear - 0.25f * Mathf.Abs(x - cx);
+                    if (score > best && clear >= need) { best = score; result = new Vector3(x, floor.max.y, z); }
+                }
+
+            return best > 0f;
+        }
+
+        /// <summary>だるま本体のように「既にあるメッシュ」を各レイヤーへ複製する。</summary>
+        static GameObject MakeMeshChild(Transform parent, string name, int layer,
+                                        Mesh mesh, Material mat, bool echo)
+        {
+            var go = new GameObject(name);
+            Undo.RegisterCreatedObjectUndo(go, "mesh child");
+            go.transform.SetParent(parent, false);
+            go.layer = layer;
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var mr = go.AddComponent<MeshRenderer>();
+            mr.sharedMaterial = mat;
+            mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            mr.receiveShadows = false;
+            if (echo)
+            {
+                var rec = AddUdon(go, "EchoReceiver");
+                if (rec != null)
+                {
+                    var so = new SerializedObject(rec);
+                    var arr = so.FindProperty("targetRenderers");
+                    if (arr != null) { arr.arraySize = 1; arr.GetArrayElementAtIndex(0).objectReferenceValue = mr; }
+                    so.ApplyModifiedProperties();
+                    PushUdon(rec);
+                }
+            }
+            return go;
         }
 
         // ============================================================
@@ -1921,6 +2348,32 @@ namespace BLIND.EditorTools
             return c;
         }
 
+        /// <summary>
+        /// 実体の UdonBehaviour の同期方式を指定する。
+        ///
+        /// ⚠️ スクリプト側に [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)] を書いても、
+        /// **スクリプトから AddComponent した UdonBehaviour には反映されない**。
+        /// U# のプログラム資産は Manual になっているのに、実体は Continuous のままだった。
+        /// Continuous だと OnDeserialization が毎フレーム飛んでくるので、
+        /// 「同期が来た瞬間だけ処理する」書き方が全部壊れる
+        /// （だるまはオーナー以外の画面で振り向き途中のまま固まる）。
+        /// </summary>
+        static void SetSyncMode(Component c, string mode)
+        {
+            var usb = c as UdonSharp.UdonSharpBehaviour;
+            if (usb == null) return;
+            var ub = UdonSharpEditor.UdonSharpEditorUtility.GetBackingUdonBehaviour(usb);
+            if (ub == null) return;
+
+            var so = new SerializedObject(ub);
+            var p = so.FindProperty("_syncMethod");
+            if (p == null) return;
+            int idx = System.Array.IndexOf(p.enumNames, mode);
+            if (idx < 0) { Debug.LogError("BLIND: 同期方式が無い " + mode); return; }
+            p.enumValueIndex = idx;
+            so.ApplyModifiedProperties();
+        }
+
         /// <summary>プロキシに書いた値を実体の UdonBehaviour へ流し込む。忘れると実機で全部 null。</summary>
         static void PushUdon(Component c)
         {
@@ -1928,6 +2381,27 @@ namespace BLIND.EditorTools
             if (usb == null) return;
             if (UdonSharpEditor.UdonSharpEditorUtility.GetBackingUdonBehaviour(usb) == null) return;
             UdonSharpEditor.UdonSharpEditorUtility.CopyProxyToUdon(usb);
+        }
+
+        /// <summary>その GameObject に付いている EchoReceiver（U# プロキシ）を返す。</summary>
+        static Object EchoRec(GameObject go)
+        {
+            if (go == null) return null;
+            var t = System.Type.GetType("EchoReceiver, Assembly-CSharp");
+            if (t == null) return null;
+            return go.GetComponent(t);
+        }
+
+        /// <summary>配列フィールドに一括で入れる。null は詰めずにそのまま残す（並びが1対1のため）。</summary>
+        static void SetObjArray(Component c, string field, Object[] values)
+        {
+            var so = new SerializedObject(c);
+            var p = so.FindProperty(field);
+            if (p == null) { Debug.LogError("BLIND: フィールドが無い " + field + " on " + c.GetType().Name); return; }
+            p.arraySize = values.Length;
+            for (int i = 0; i < values.Length; i++)
+                p.GetArrayElementAtIndex(i).objectReferenceValue = values[i];
+            so.ApplyModifiedProperties();
         }
 
         static void SetObj(Component c, string field, UnityEngine.Object value)
