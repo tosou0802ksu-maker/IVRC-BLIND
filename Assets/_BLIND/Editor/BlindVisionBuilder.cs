@@ -74,6 +74,7 @@ namespace BLIND.EditorTools
                 if (p.name == "PitField_Generated"
                  || p.name == "DarumaWatcher_Generated"
                  || p.name == "KeyProp_Generated"
+                 || p.name == "KeyGate_Generated"
                  || p.name == "Prop_Daruma") return true;
             }
             return false;

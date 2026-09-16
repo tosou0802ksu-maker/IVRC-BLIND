@@ -22,6 +22,9 @@ public class CarryableItem : UdonSharpBehaviour
     [Header("位置同期。VRCObjectSync を入れる（必須）")]
     [SerializeField] private VRCObjectSync objectSync;
 
+    [Header("掴む本体。VRCPickup を入れる（はめ込みで使う）")]
+    [SerializeField] private VRCPickup pickup;
+
     [Header("戻す条件")]
     [Tooltip("この高さより下に落ちたら置き場所へ戻す。床下に抜けたとき用。")]
     [SerializeField] private float respawnBelowY = -1.5f;
@@ -33,6 +36,7 @@ public class CarryableItem : UdonSharpBehaviour
 
     private Vector3 home;
     private bool held;
+    private bool seated;
 
     void Start()
     {
@@ -49,14 +53,70 @@ public class CarryableItem : UdonSharpBehaviour
         held = false;
     }
 
-    /// <summary>誰かが持っているか。受け取り口(ItemReceptacle)から見る。</summary>
+    /// <summary>
+    /// **このクライアントのプレイヤーが**持っているか。
+    ///
+    /// OnPickup / OnDrop は掴んだ本人のクライアントでしか呼ばれないので、
+    /// これは「他の誰かが持っている」では true にならない。
+    /// KeyReceptacle 側はこれを使って**運んでいる本人だけに判定させている**。
+    /// 全員が判定すると同じフレームに3人が所有権を要求して取り合いになる。
+    /// </summary>
     public bool IsHeld()
     {
         return held;
     }
 
+    /// <summary>すでに受け口へはめ込まれたか。</summary>
+    public bool IsSeated()
+    {
+        return seated;
+    }
+
+    /// <summary>
+    /// 受け口へはめ込んで、二度と動かないようにする。
+    /// KeyReceptacle が**全クライアントで**呼ぶ（同期値 unlocked から各自が実行する）。
+    ///
+    /// ⚠️ ここで再親子付けはしない。VRCObjectSync が付いた物の親を変えると同期が壊れる。
+    ///    座標を直接置いて Rigidbody を kinematic にするだけにする。
+    /// </summary>
+    public void Seat(Transform anchor)
+    {
+        if (seated)
+        {
+            return;
+        }
+        seated = true;
+        held = false;
+
+        if (pickup != null)
+        {
+            pickup.Drop();
+            pickup.pickupable = false;      // もう拾えない
+        }
+
+        Rigidbody rb = (Rigidbody)GetComponent(typeof(Rigidbody));
+        if (rb != null)
+        {
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.isKinematic = true;
+        }
+
+        if (anchor != null)
+        {
+            transform.position = anchor.position;
+            transform.rotation = anchor.rotation;
+        }
+    }
+
     void Update()
     {
+        // はめ込み済みなら戻す判定ごと止める。
+        if (seated)
+        {
+            return;
+        }
+
         // 持たれている間は何もしない。持ち主が部屋の外へ運ぶのは正しい遊び方。
         if (held)
         {

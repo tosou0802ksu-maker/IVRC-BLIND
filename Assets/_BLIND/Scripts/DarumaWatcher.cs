@@ -150,6 +150,21 @@ public class DarumaWatcher : UdonSharpBehaviour
     private bool eligible;      // この回の見張りで判定の対象になるか
     private bool deathSent;
 
+    // ------------------------------------------------------------
+    // クリア後
+    // ------------------------------------------------------------
+    // 鍵をはめて扉が開いたら「だるまさんがころんだ」は終わり。
+    // 以降だるまは**ただプレイヤーの方を向いて追い続けるだけ**になる。
+    //
+    // ⚠️ ここを止めないと、鍵を持って戻る途中でまた止まらされる。
+    //    出口は目の前にあるので、そこで足止めしても緊張ではなく待ち時間にしかならない。
+    //
+    // ⚠️ 向く相手は**そのクライアントのプレイヤー自身**。回転はもともと同期しておらず
+    //    （各自が phase から計算している）、3人は互いの姿が見えないので、
+    //    「自分の方を向いている」が3人とも成立するのが一番強い。
+    private bool cleared;
+    private float clearedFlash;
+
     void Start()
     {
         if (daruma == null)
@@ -177,6 +192,29 @@ public class DarumaWatcher : UdonSharpBehaviour
         if (Networking.IsOwner(gameObject))
         {
             EnterPhase(PhaseAway);
+        }
+    }
+
+    /// <summary>
+    /// クリアした（鍵で扉が開いた）。KeyReceptacle が**全クライアントで**呼ぶ。
+    /// 同期値 unlocked から各自が呼ぶので、途中参加のプレイヤーにも届く。
+    /// </summary>
+    public void SetCleared()
+    {
+        if (cleared)
+        {
+            return;
+        }
+        cleared = true;
+        frozenValid = false;
+        eligible = false;
+
+        // 名指し中に開けられた場合に備えて、位相を無害な所へ戻しておく。
+        if (Networking.IsOwner(gameObject))
+        {
+            phase = PhaseWatch;
+            accusedId = -1;
+            RequestSerialization();
         }
     }
 
@@ -211,6 +249,12 @@ public class DarumaWatcher : UdonSharpBehaviour
 
     public override void OnDeserialization()
     {
+        // クリア後は位相を使わない。演出を始め直すと声が鳴ってしまう。
+        if (cleared)
+        {
+            return;
+        }
+
         // オーナーが位相を変えた。こちらはタイマーを0に戻して同じ演出を始める。
         phaseTimer = 0.0f;
         OnPhaseStarted();
@@ -321,7 +365,12 @@ public class DarumaWatcher : UdonSharpBehaviour
         }
 
         float want = 1.0f;
-        if (phase == PhaseTurn)
+        if (cleared)
+        {
+            // 睨んでいるだけ。振り向きの合図は要らないので一定。
+            want = watchHeat;
+        }
+        else if (phase == PhaseTurn)
         {
             want = turnHeat;
         }
@@ -354,6 +403,22 @@ public class DarumaWatcher : UdonSharpBehaviour
 
         UpdateRotation(dt);
         UpdateHeat();
+
+        // クリア後は位相を進めず、捕まえもしない。首を回すだけ。
+        if (cleared)
+        {
+            // エコロケ役はパルスが当たっている間しか物が見えないので、
+            // 首を回していても「そこに居る」ことが伝わらない。
+            // 動いているあいだは定期的に光らせて存在を出す。
+            clearedFlash -= dt;
+            if (clearedFlash <= 0.0f)
+            {
+                clearedFlash = 2.0f;
+                FlashEcho();
+            }
+            return;
+        }
+
         UpdateCatch();
 
         // 進行はオーナーだけ。全員が進めると位相が割れる。
@@ -411,6 +476,25 @@ public class DarumaWatcher : UdonSharpBehaviour
     {
         if (daruma == null)
         {
+            return;
+        }
+
+        if (cleared)
+        {
+            // ずっとこちらを向き続ける。追い付ける速さで回す。
+            float want = watchYaw;
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (Utilities.IsValid(lp))
+            {
+                Vector3 dp = lp.GetPosition() - daruma.position;
+                dp.y = 0.0f;
+                if (dp.sqrMagnitude > 0.0001f)
+                {
+                    want = Quaternion.LookRotation(dp.normalized).eulerAngles.y + faceYawOffset;
+                }
+            }
+            currentYaw = Mathf.MoveTowardsAngle(currentYaw, want, trackSpeed * dt);
+            ApplyYaw(currentYaw);
             return;
         }
 

@@ -129,6 +129,7 @@ namespace BLIND.EditorTools
         /// <summary>だるま本体の子に作るサーモ・エコロケ複製の入れ物。本体と一緒に回るのが要点。</summary>
         const string DarumaVisName  = "DarumaVision_Generated";
         const string KeyRootName    = "KeyProp_Generated";
+        const string KeyGateName    = "KeyGate_Generated";
 
         // ------------------------------------------------------------
         // 落とし穴フロアの設計値
@@ -1974,12 +1975,13 @@ namespace BLIND.EditorTools
             // ⚠️ 鍵を先に置くこと。鍵は自分の周りのだるまを撤去して置き場所を空けるので、
             //    群れの配線より後にすると、消したはずのだるまが配列に残って null になる。
             string key   = BuildKeyProp(room, eMat);
+            string gate  = BuildKeyGate(room, floor, eMat);
             string crowd = BuildDarumaCrowd(room, rootGo, eMat);
 
             return "だるまさんがころんだ: " + room.name + " に監視者を1体設置"
                  + "（位置 " + boss.transform.position.ToString("F1")
                  + " / 見張る向き -Z / 判定ゾーン " + zone.size.ToString("F1") + "）\n"
-                 + "  " + crowd + "\n  " + key;
+                 + "  " + crowd + "\n  " + key + "\n  " + gate;
         }
 
         /// <summary>
@@ -2114,7 +2116,7 @@ namespace BLIND.EditorTools
             rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
             rb.interpolation = RigidbodyInterpolation.Interpolate;
 
-            AddVrc(keyGo, "VRC.SDK3.Components.VRCPickup");
+            var pick = AddVrc(keyGo, "VRC.SDK3.Components.VRCPickup");
             var sync = AddVrc(keyGo, "VRC.SDK3.Components.VRCObjectSync");
 
             // 置き場所の受け皿。棚の当たり判定の外に置くので、
@@ -2131,6 +2133,7 @@ namespace BLIND.EditorTools
             if (carry != null)
             {
                 if (sync != null) SetObj(carry, "objectSync", sync);
+                if (pick != null) SetObj(carry, "pickup", pick);
                 SetSyncMode(carry, "None");
                 PushUdon(carry);
             }
@@ -2138,6 +2141,162 @@ namespace BLIND.EditorTools
             return "鍵: " + shelf.name + " の棚(高さ" + ShelfY.ToString("F2") + "m)に設置 "
                  + keyGo.transform.position.ToString("F2")
                  + " / だるまを" + swept + "体どけて空けた / VRCPickup+ObjectSync 付き";
+        }
+
+        /// <summary>
+        /// 出口(room12 側)の扉を施錠して、横に「鍵をはめる操作盤」を立てる。
+        ///
+        /// 扉は最初から閉まっていて、奥の棚から持ってきた鍵を盤にはめると開く。
+        /// **一度開いたら二度と閉まらない**（KeyReceptacle.unlocked は戻さない）。
+        /// 行って帰ってくる道順なので、戻りでまた鍵を探させるとテンポが死ぬ。
+        ///
+        /// ⚠️ 扉の位置は決め打ちにしない。部屋の枠(FramePiece)を実測して合わせる。
+        ///    room11 は一度 20m→33m に延ばしているので、座標を書くとまたずれる。
+        ///
+        /// ⚠️ 扉は**壁の中へ横に滑らせて**開ける。上へ抜くと天井(4.0m)を突き抜け、
+        ///    下へ抜くと床下に空洞が要る。横なら扉の南側が 17m ぶん壁なので、
+        ///    滑り込ませた先が完全に隠れる。
+        /// </summary>
+        static string BuildKeyGate(Transform room, Bounds floor, Material eMat)
+        {
+            var old = room.Find(KeyGateName);
+            if (old != null) Undo.DestroyObjectImmediate(old.gameObject);
+
+            var keyRoot = room.Find(KeyRootName);
+            var keyGo = keyRoot != null ? keyRoot.Find("Key") : null;
+            if (keyGo == null) return "施錠扉: 鍵が無い（BuildKeyProp が失敗している）";
+
+            // --- 東側の扉枠を実測する ---
+            Bounds frame = new Bounds();
+            bool has = false;
+            foreach (var mr in room.GetComponentsInChildren<MeshRenderer>(true))
+            {
+                if (mr.name != "FramePiece") continue;
+                if (mr.bounds.center.x < floor.center.x) continue;   // 西の入口は除く
+                if (!has) { frame = mr.bounds; has = true; } else frame.Encapsulate(mr.bounds);
+            }
+            if (!has) return "施錠扉: 東側の扉枠(FramePiece)が見つからない";
+
+            // 枠の内側 = 通れる穴。枠材の厚みぶん内側へ入る。
+            const float Jamb = 0.05f;      // 枠材の厚み(Room12Shell と同じ)
+            float leafH = (frame.size.y - Jamb * 2f) - 0.02f;
+            float leafW = (frame.size.z - Jamb * 2f) - 0.02f;
+            float leafT = frame.size.x - 0.04f;
+            var leafCenter = new Vector3(frame.center.x, frame.min.y + Jamb + leafH * 0.5f, frame.center.z);
+
+            var rootGo = new GameObject(KeyGateName);
+            Undo.RegisterCreatedObjectUndo(rootGo, "key gate");
+            rootGo.transform.SetParent(room, false);
+            rootGo.transform.position = Vector3.zero;
+            rootGo.transform.rotation = Quaternion.identity;
+            rootGo.layer = LayerDefault;
+
+            // --- 扉本体 ---
+            var leaf = new GameObject("Leaf");
+            Undo.RegisterCreatedObjectUndo(leaf, "gate leaf");
+            leaf.transform.SetParent(rootGo.transform, false);
+            leaf.transform.position = new Vector3(leafCenter.x, frame.min.y, leafCenter.z);
+            leaf.layer = LayerDefault;
+            var closedLocal = leaf.transform.localPosition;
+
+            var steel = MakeButtonMaterial("KeyGate_Leaf", new Color(0.30f, 0.31f, 0.33f), Color.black);
+            var tGate = BlindThermalTable.Mat("Gate");
+            var leafSize = new Vector3(leafT, leafH, leafW);
+            var leafLocal = new Vector3(0f, leafCenter.y - frame.min.y, 0f);
+            MakeBox(leaf.transform, "D_Leaf", LayerDefault, leafLocal, leafSize, steel, false);
+            MakeBox(leaf.transform, "T_Leaf", LayerThermal, leafLocal, leafSize, tGate, false);
+            var eLeaf = MakeBox(leaf.transform, "E_Leaf", LayerEcho, leafLocal, leafSize, eMat, true);
+
+            var lc = leaf.AddComponent<BoxCollider>();
+            lc.center = leafLocal;
+            lc.size = leafSize;
+
+            // 滑り込ませる先。扉枠の南隣は壁が 17m 続いているので、
+            // 枠の幅ぶん南へ動かせば扉は完全に壁の中へ消える。
+            var openLocal = closedLocal + new Vector3(0f, 0f, -(frame.size.z + 0.08f));
+
+            // --- 横の操作盤 ---
+            //
+            // 扉の**北隣**（部屋の奥側ではなく、扉のすぐ横）の壁面に立てる。
+            // 扉が南へ滑るので、南に置くと開いた扉と重なる。
+            const float PanelGap = 0.45f;                 // 扉枠の端から盤の中心まで
+            float panelZ = frame.max.z + PanelGap;
+            float wallFace = frame.min.x;                 // 部屋側の壁面
+            var panel = new GameObject("Panel");
+            Undo.RegisterCreatedObjectUndo(panel, "key panel");
+            panel.transform.SetParent(rootGo.transform, false);
+            panel.transform.position = new Vector3(wallFace, 1.15f, panelZ);
+            panel.layer = LayerDefault;
+
+            var plateM = MakeButtonMaterial("KeyPanel_Plate", new Color(0.40f, 0.41f, 0.43f), Color.black);
+            var slotM  = MakeButtonMaterial("KeyPanel_Slot",  new Color(0.04f, 0.04f, 0.05f), Color.black);
+            var lampRedM = MakeButtonMaterial("KeyPanel_Lamp_Locked",
+                                              new Color(0.55f, 0.06f, 0.06f), new Color(1.2f, 0.10f, 0.08f));
+            var lampGrnM = MakeButtonMaterial("KeyPanel_Lamp_Open",
+                                              new Color(0.08f, 0.55f, 0.18f), new Color(0.12f, 1.4f, 0.35f));
+            var tPanel   = BlindThermalTable.Mat("Button");
+            var tPanelLit = BlindThermalTable.Mat("ButtonLit");
+
+            var plateSize = new Vector3(0.07f, 0.48f, 0.36f);
+            var platePos  = new Vector3(-0.035f, 0f, 0f);
+            MakeBox(panel.transform, "D_Plate", LayerDefault, platePos, plateSize, plateM, false);
+            MakeBox(panel.transform, "T_Plate", LayerThermal, platePos, plateSize, tPanel, false);
+            var ePlate = MakeBox(panel.transform, "E_Plate", LayerEcho, platePos, plateSize, eMat, true);
+
+            var slotSize = new Vector3(0.03f, 0.18f, 0.05f);
+            var slotPos  = new Vector3(-0.075f, 0.05f, 0f);
+            MakeBox(panel.transform, "D_Slot", LayerDefault, slotPos, slotSize, slotM, false);
+            MakeBox(panel.transform, "T_Slot", LayerThermal, slotPos, slotSize, tPanel, false);
+
+            var lampSize = new Vector3(0.03f, 0.06f, 0.06f);
+            var lampPos  = new Vector3(-0.080f, -0.16f, 0f);
+            var dLamp = MakeBox(panel.transform, "D_Lamp", LayerDefault, lampPos, lampSize, lampRedM, false);
+            var tLamp = MakeBox(panel.transform, "T_Lamp", LayerThermal, lampPos, lampSize, tPanel, false);
+
+            // --- 鍵がはまる位置 ---
+            //
+            // 軸(メッシュの -Y)を壁の中(+X)へ、札を吊る輪(メッシュの +X)を下へ向ける。
+            // Z 回転 90° で -Y→+X にしてから、その軸まわりに 180° 回して札を下げる。
+            var slot = new GameObject("Slot");
+            Undo.RegisterCreatedObjectUndo(slot, "key slot");
+            slot.transform.SetParent(panel.transform, false);
+            slot.transform.position = new Vector3(wallFace - 0.12f, 1.15f + 0.05f, panelZ);
+            slot.transform.rotation = Quaternion.AngleAxis(180f, Vector3.right) * Quaternion.Euler(0f, 0f, 90f);
+
+            // --- 配線 ---
+            var beh = AddUdon(panel, "KeyReceptacle");
+            if (beh == null) return "施錠扉: KeyReceptacle の付与に失敗";
+
+            var carry = keyGo.GetComponent(System.Type.GetType("CarryableItem, Assembly-CSharp"));
+            SetObj(beh, "key", carry);
+            SetObj(beh, "slotAnchor", slot.transform);
+
+            // 扉が開いたら「ころんだ」を終わらせる。
+            var dwRoot = room.Find(DarumaRootName);
+            if (dwRoot != null)
+            {
+                var dw = dwRoot.GetComponent(System.Type.GetType("DarumaWatcher, Assembly-CSharp"));
+                if (dw != null) SetObj(beh, "watcher", dw);
+            }
+            SetObj(beh, "doorLeaf", leaf.transform);
+            var so = new SerializedObject(beh);
+            so.FindProperty("closedLocalPos").vector3Value = closedLocal;
+            so.FindProperty("openLocalPos").vector3Value = openLocal;
+            so.ApplyModifiedProperties();
+            SetObjArray(beh, "lampRenderers", new Object[]
+            {
+                dLamp.GetComponent<MeshRenderer>(),
+                tLamp.GetComponent<MeshRenderer>(),
+            });
+            SetObjArray(beh, "lampOpenMaterials", new Object[] { lampGrnM, tPanelLit });
+            SetObjArray(beh, "echoes", new Object[] { EchoRec(ePlate), EchoRec(eLeaf) });
+            SetSyncMode(beh, "Manual");
+            PushUdon(beh);
+
+            return "施錠扉: 出口を施錠（扉 " + leafSize.ToString("F2")
+                 + " / 開くと南へ " + (-openLocal.z + closedLocal.z).ToString("F2") + "m 壁の中へ）"
+                 + " / 操作盤 " + panel.transform.position.ToString("F2")
+                 + " / 鍵の差し込み口 " + slot.transform.position.ToString("F2");
         }
 
         /// <summary>
