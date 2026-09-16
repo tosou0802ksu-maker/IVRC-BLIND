@@ -75,6 +75,11 @@ namespace BLIND.EditorTools
                  || p.name == "DarumaWatcher_Generated"
                  || p.name == "KeyProp_Generated"
                  || p.name == "KeyGate_Generated"
+                 || p.name == "PoolLedge_Generated"
+                 // DuckGimmick_Generated : 運ぶアヒルは持ち上げて動かすので、
+                 //   だるまと同じ理由でバケツにまとめてはいけない。
+                 //   台と看板もここに入っている（看板は過去人専用なので複製自体を作らない）。
+                 || p.name == "DuckGimmick_Generated"
                  || p.name == "Prop_Daruma") return true;
             }
             return false;
@@ -794,9 +799,15 @@ namespace BLIND.EditorTools
         /// 箱に潰すと駒が全部同じ直方体になり、この部屋で会話が成立しなくなる。
         /// 駒は1個2〜7万tri と重いが、粗くしてでも輪郭を残す価値がある。
         /// </summary>
+        /// room6 のアヒルも同じ。1体 260 三角形で上限(MaxPropTris=180)をわずかに超えるため、
+        /// **61体すべてが同じ直方体に化けていた**（サーモ視点で「四角が浮いている」だけになる）。
+        /// この部屋のギミックは「61体の中から熱い3体を探す」なので、
+        /// アヒルがアヒルの形で見えないと、そもそも何を探しているのか伝わらない。
+        /// 素のメッシュでも 61体×2層で 3.2万三角形しか増えない。
         static readonly string[] SilhouetteProps =
         {
             "knight", "bishop", "rook", "pawn", "queen", "king",
+            "smallduck", "giantduck", "rubberduck",
         };
 
         /// <summary>
