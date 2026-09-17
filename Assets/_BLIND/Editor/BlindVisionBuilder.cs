@@ -63,6 +63,21 @@ namespace BLIND.EditorTools
         /// ギミック→vision の順で作れば起きないが、順番に依存する仕様は必ず壊れる。
         /// 順番によらず安全になるよう、ここで material として除外する。
         /// </summary>
+        /// <summary>
+        /// 本体の下にぶら下げる「サーモ・エコロケのセット」の入れ物の名前。
+        ///
+        /// 手で物を動かしたときに複製が一緒に動くように、部屋直下のバケツへ結合せず
+        /// **元オブジェクトの子**として持つ（作者指定）。
+        /// ラッパーを1枚挟むのは、Hierarchy で1行に畳めること、
+        /// 作り直しのときに「何が生成物か」を名前1つで判別できることの2つのため。
+        ///
+        ///   Desk_1
+        ///    └ Vision_Generated
+        ///        ├ T_Desk_1  (layer 22)
+        ///        └ E_Desk_1  (layer 23)
+        /// </summary>
+        const string PairGroup = "Vision_Generated";
+
         static bool IsGimmickOwned(Transform t)
         {
             for (var p = t; p != null; p = p.parent)
@@ -80,6 +95,10 @@ namespace BLIND.EditorTools
                  //   だるまと同じ理由でバケツにまとめてはいけない。
                  //   台と看板もここに入っている（看板は過去人専用なので複製自体を作らない）。
                  || p.name == "DuckGimmick_Generated"
+                 // Props_SmallDucks : 61体すべてが掴めるようになったので、
+                 //   まとめて1枚に結合すると持ち上げた瞬間に複製が置き去りになる。
+                 //   だるまと同じく、複製は本体の子として個別に持つ。
+                 || p.name == "Props_SmallDucks"
                  || p.name == "Prop_Daruma") return true;
             }
             return false;
@@ -1066,6 +1085,7 @@ namespace BLIND.EditorTools
             var log = new System.Text.StringBuilder();
             long totalTris = 0; int totalRend = 0; int baked = 0;
             EchoMatSeq.Clear();   // 箱投影マテリアルの連番を作り直す
+            EchoUvCache.Clear();
 
             foreach (var rn in roomNames)
             {
@@ -1095,10 +1115,12 @@ namespace BLIND.EditorTools
                                      + string.Join(", ", rescued.ConvertAll(x => x.name).ToArray()));
                     Object.DestroyImmediate(old.gameObject);
                 }
-                // 動く熱源の複製は元の親の下にぶら下がっているので、名前で探して消す
+                // 動く熱源の複製と、本体の下のセット(Vision_Generated)は
+                // バケツの外にぶら下がっているので、名前で探して消す
                 var doomedFx = new List<GameObject>();
                 foreach (var t in room.GetComponentsInChildren<Transform>(true))
-                    if (t != null && t.name.StartsWith(FxPrefix)) doomedFx.Add(t.gameObject);
+                    if (t != null && (t.name.StartsWith(FxPrefix) || t.name == PairGroup))
+                        doomedFx.Add(t.gameObject);
                 foreach (var d in doomedFx) if (d != null) Object.DestroyImmediate(d);
 
                 // --- 元になるレンダラーを集めて分類 ---
@@ -1117,6 +1139,7 @@ namespace BLIND.EditorTools
                 var floorBounds = new Bounds(); bool hasFloor = false;
 
                 int proxied = 0;
+                long tTrisPair = 0, eTrisPair = 0; int tRendPair = 0, eRendPair = 0;
                 var bigOnes = new List<KeyValuePair<Renderer, string>>();
                 // 大きい物は結合せず単体で複製するが、その経路も echo フラグを見ること。
                 // 見落とすと「エコロケに出すな」と分類した物（レーザーなど）が
@@ -1167,30 +1190,46 @@ namespace BLIND.EditorTools
                     }
 
 
+                    // ⚠️ ここから下は**結合しない**。1つの物につき1セットを本体の子に作る。
+                    //    手で位置を直したときに複製が一緒に動くようにするため（作者指定）。
+                    //    代償はドローコール。結合していた頃は全部屋で 1,634 枚だったものが
+                    //    1万枚規模になる。重いと感じたらまずここを疑うこと。
                     CombineInstance ci; bool standalone;
-                    if (!MakeInstance(mr, room, key, out standalone, out ci))
+                    bool okT = MakeInstance(mr, room, key, out standalone, out ci);
+                    if (!okT && !standalone) { skipped++; continue; }
+                    if (okT && (ci.mesh == _boxProxy || ci.mesh == _blobProxy)) proxied++;
+
+                    var pair = EnsurePair(mr.transform);
+
+                    // --- サーモ ---
+                    var tMat = BlindThermalTable.Mat(key);
+                    if (tMat != null)
                     {
-                        if (standalone)
+                        Mesh tm2; Matrix4x4 tmx;
+                        if (okT) { tm2 = ci.mesh; tmx = ci.transform; }
+                        else
                         {
-                            bigOnes.Add(new KeyValuePair<Renderer, string>(mr, key));
-                            if (echo) bigOnesEcho.Add(new KeyValuePair<Renderer, string>(mr, key));
-                            used++;
+                            // 簡易形状にすると部屋を塞ぐ大物は素のメッシュをそのまま使う
+                            var mf2 = mr.GetComponent<MeshFilter>();
+                            tm2 = mf2 != null ? mf2.sharedMesh : null;
+                            tmx = room.worldToLocalMatrix * mr.transform.localToWorldMatrix;
                         }
-                        else skipped++;
-                        continue;
+                        if (tm2 != null)
+                        {
+                            var go = MakeChild(pair, "T_" + mr.name, LayerThermal, tm2, tMat, mr, room, tmx);
+                            if (go != null)
+                            {
+                                if (IsBodyKey(key) && BlindBodyThermalBake.Apply(go)) baked++;
+                                tTrisPair += TriOf(tm2); tRendPair++;
+                            }
+                        }
                     }
-                    if (ci.mesh == _boxProxy || ci.mesh == _blobProxy) proxied++;
 
-                    if (!byTemp.ContainsKey(key)) byTemp[key] = new List<CombineInstance>();
-                    byTemp[key].Add(ci);
-
+                    // --- エコロケ ---
                     if (echo)
                     {
-                        // 床は 2m角のタイルが何十枚も並んでいる。EchoHighlight は
-                        // 小さい面ほど輪郭が太く出る(fwidth基準)ので、タイルのままだと
-                        // 一枚ごとに全面が輪郭判定になって床がベタ塗りになる。
-                        // 配置手順.md のとおり、床は部屋につき大きな板1枚にまとめる。
-                        // 水面もエコロケ上は「そこが床の高さ」を意味するので床板にまとめる
+                        // 床と水面だけは 1対1 にならない（部屋ぶんを大きな板に割り直し、
+                        // プールの穴をくり抜く）。ここは今まで通り部屋直下のバケツに残す。
                         if (key == "FloorStone" || key == "Water")
                         {
                             if (!hasFloor) { floorBounds = mr.bounds; hasFloor = true; }
@@ -1198,40 +1237,29 @@ namespace BLIND.EditorTools
                         }
                         else
                         {
-                            var lp = room.InverseTransformPoint(mr.bounds.center);
-                            var cell = new Vector3Int(Mathf.FloorToInt(lp.x / EchoChunk), 0, Mathf.FloorToInt(lp.z / EchoChunk));
-                            var bucket = IsArchitecture(key) ? byChunk : byChunkProp;
-                            if (!bucket.ContainsKey(cell)) bucket[cell] = new List<CombineInstance>();
-
-                            // エコロケ層は「UVの端＝輪郭」で線を引くので、UVが0〜1でない
-                            // メッシュ（床タイル・手続き生成の棚・FBXの実寸UV）をそのまま渡すと
-                            // 面全体が輪郭と判定されてベタ塗りになる。
-                            //
-                            // ただし全部を箱で代用すると、部屋の内装（回り縁・格天井・
-                            // 壁パネル・棚板・照明器具）まで箱に潰れて「倉庫に箱が並んでいる」
-                            // だけの部屋になってしまう。エコロケ役が形を伝える係である以上、
-                            // ここが潰れるとその部屋の性格が誰にも伝わらない。
-                            //
-                            // そこで、CPU側でUVを貼り直せる軽いメッシュ（読み取り可・260三角形以下）は
-                            // 素の形のまま使う。内装の造作はほぼ全部これに当たるので、
-                            // ポリゴンをほとんど増やさずに部屋の中身が出る。
                             var srcE = EchoSource(mr, key);
-                            CombineInstance eci;
+                            Mesh em2; Matrix4x4 emx;
                             if (srcE != null)
                             {
-                                eci = new CombineInstance
-                                {
-                                    mesh = EchoUv(srcE),
-                                    subMeshIndex = 0,
-                                    transform = room.worldToLocalMatrix * mr.transform.localToWorldMatrix,
-                                };
+                                em2 = EchoUvAsset(srcE, rn);
+                                emx = room.worldToLocalMatrix * mr.transform.localToWorldMatrix;
                             }
                             else
                             {
-                                eci = ProxyInstance(mr, room, true, key);
+                                var eci = ProxyInstance(mr, room, true, key);
+                                em2 = eci.mesh; emx = eci.transform;
+                                temps.Add(null);   // 破棄はしない（子として残すため）
                             }
-                            temps.Add(eci.mesh);
-                            bucket[cell].Add(eci);
+                            if (em2 != null)
+                            {
+                                var emat = EchoMatFor(mr, rn, echoMat);
+                                var go = MakeChild(pair, "E_" + mr.name, LayerEcho, em2, emat, mr, room, emx);
+                                if (go != null)
+                                {
+                                    AddReceiver(go, go.GetComponent<MeshRenderer>());
+                                    eTrisPair += TriOf(em2); eRendPair++;
+                                }
+                            }
                         }
                     }
                     used++;
@@ -1461,6 +1489,9 @@ namespace BLIND.EditorTools
                 // --- アニメーションで動く熱源（燃える男・炎） ---
                 var fxLog = new System.Text.StringBuilder();
                 int fx = BuildMovingHeat(room, rn, fxLog);
+
+                tTris += tTrisPair; tRend += tRendPair;
+                eTris += eTrisPair; eRend += eRendPair;
 
                 log.AppendLine(rn.PadRight(8)
                     + " 元 " + used.ToString().PadLeft(4) + " 個(簡易化 " + proxied + " / 除外 " + skipped + ")"
@@ -1716,6 +1747,85 @@ namespace BLIND.EditorTools
         /// 元の親の下に一度作ってローカルTRSをそのまま写してから付け替えるので、
         /// 親側に回転やスケールが掛かっていても位置がずれない。
         /// </summary>
+        /// <summary>本体の下の入れ物を用意する（無ければ作る）。</summary>
+        static Transform EnsurePair(Transform src)
+        {
+            var t = src.Find(PairGroup);
+            if (t != null) return t;
+            var go = new GameObject(PairGroup);
+            go.transform.SetParent(src, false);
+            go.transform.localPosition = Vector3.zero;
+            go.transform.localRotation = Quaternion.identity;
+            go.transform.localScale = Vector3.one;
+            go.layer = src.gameObject.layer;
+            return go.transform;
+        }
+
+        /// <summary>
+        /// セットの中に1枚作る。
+        ///
+        /// ⚠️ 位置は「部屋を基準にした行列」で来るので、本体を基準に直してから入れる。
+        ///    素のメッシュをそのまま使う場合は単位行列になるが、簡易形状（箱・団子）は
+        ///    ワールド軸に合わせた箱なので、本体が回っていると単位行列にならない。
+        ///    ここを忘れると簡易形状だけ**部屋の原点にまとめて出現する**。
+        /// </summary>
+        static GameObject MakeChild(Transform pair, string name, int layer, Mesh mesh, Material mat,
+                                    Renderer src, Transform room, Matrix4x4 roomLocal)
+        {
+            if (mesh == null || mat == null) return null;
+            var go = new GameObject(name);
+            go.transform.SetParent(pair, false);
+            go.layer = layer;
+
+            var m = src.transform.worldToLocalMatrix * room.localToWorldMatrix * roomLocal;
+            go.transform.localPosition = m.GetColumn(3);
+            go.transform.localRotation = m.rotation;
+            go.transform.localScale = m.lossyScale;
+
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var r = go.AddComponent<MeshRenderer>();
+            var mats = new Material[Mathf.Max(mesh.subMeshCount, 1)];
+            for (int i = 0; i < mats.Length; i++) mats[i] = mat;
+            r.sharedMaterials = mats;
+            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            r.receiveShadows = false;
+            r.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
+            r.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+            return go;
+        }
+
+        static long TriOf(Mesh m)
+        {
+            if (m == null) return 0;
+            return m.isReadable ? m.triangles.Length / 3 : m.vertexCount;
+        }
+
+        /// <summary>
+        /// エコロケ用にUVを貼り直したメッシュを**資産として**返す。
+        ///
+        /// ⚠️ 結合していた頃は使い捨ての一時メッシュでよかったが、
+        ///    子として残す以上シーンから参照され続けるので保存が要る。
+        ///    元メッシュ1種につき1つ作って使い回す（同じ机が20脚あっても資産は1つ）。
+        /// </summary>
+        static readonly Dictionary<Mesh, Mesh> EchoUvCache = new Dictionary<Mesh, Mesh>();
+        static Mesh EchoUvAsset(Mesh src, string rn)
+        {
+            if (src == null) return null;
+            if (EchoUvCache.TryGetValue(src, out var got) && got != null) return got;
+
+            var made = EchoUv(src);
+            if (made == null) return null;
+            var safe = src.name;
+            foreach (var c in new[] { '/', '\\', ' ', '(', ')', ':', '*', '?', '"', '<', '>', '|', '.' })
+                safe = safe.Replace(c, '_');
+            var path = MeshDir + "/EchoUV_" + safe + "_" + Mathf.Abs(src.GetInstanceID() % 100000) + ".asset";
+            var ex = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+            if (ex != null) { EditorUtility.CopySerialized(made, ex); Object.DestroyImmediate(made); EchoUvCache[src] = ex; return ex; }
+            AssetDatabase.CreateAsset(made, path);
+            EchoUvCache[src] = made;
+            return made;
+        }
+
         static GameObject CloneReal(Renderer src, Transform parent, int layer, Material mat, string prefix)
         {
             var mf = src.GetComponent<MeshFilter>();

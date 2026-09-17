@@ -72,25 +72,31 @@ namespace BLIND.EditorTools
 
             var log = new System.Text.StringBuilder();
 
-            // 前回の生成物を消す。**アヒル本体は戻してから消す**（下の Restore）。
+            // ⚠️ 作り直す前に、**全部のアヒルを素の状態へ戻す**。
+            //    掴む仕掛けは 61体すべてに付けているので、Carry フォルダだけ見ていると
+            //    前回ぶんが残って二重に付く。
+            var pool0 = room.Find("Props_SmallDucks");
+            if (pool0 != null)
+            {
+                var back = new List<Transform>();
+                foreach (Transform d in pool0) back.Add(d);
+                var oldRoot = room.Find(RootName);
+                if (oldRoot != null)
+                {
+                    var carry = oldRoot.Find("Carry");
+                    if (carry != null) foreach (Transform d in carry) back.Add(d);
+                }
+                foreach (var d in back)
+                {
+                    var vis = d.Find("DuckVision_Generated");
+                    if (vis != null) Undo.DestroyObjectImmediate(vis.gameObject);
+                    StripGenerated(d.gameObject);
+                    if (d.parent != pool0) Undo.SetTransformParent(d, pool0, "restore duck");
+                }
+            }
             var old = room.Find(RootName);
             if (old != null)
             {
-                var carry = old.Find("Carry");
-                var pool = room.Find("Props_SmallDucks");
-                if (carry != null && pool != null)
-                {
-                    var back = new List<Transform>();
-                    foreach (Transform d in carry) back.Add(d);
-                    foreach (var d in back)
-                    {
-                        // 生成した見た目の子だけ消して、本体は元のグループへ返す
-                        var vis = d.Find("DuckVision_Generated");
-                        if (vis != null) Undo.DestroyObjectImmediate(vis.gameObject);
-                        StripGenerated(d.gameObject);
-                        Undo.SetTransformParent(d, pool, "restore duck");
-                    }
-                }
                 Undo.DestroyObjectImmediate(old.gameObject);
                 Physics.SyncTransforms();
             }
@@ -543,7 +549,11 @@ namespace BLIND.EditorTools
                     Bounds sb = new Bounds(); bool has = false;
                     foreach (var c in st.GetComponentsInChildren<BoxCollider>())
                     { if (!has) { sb = c.bounds; has = true; } else sb.Encapsulate(c.bounds); }
-                    if (has) block.Add(Grow(sb, 1.20f));
+                    // ⚠️ 余白を取りすぎない。1.2m にしたら6箇所ぶんで
+                    //    **水面の 7割が立入禁止になり、61体中39体が置けなくなった**
+                    //    （実測：置ける水面 1247升 → 377升）。
+                    //    降り口さえ空いていればよいので 0.5m で足りる。
+                    if (has) block.Add(Grow(sb, 0.50f));
                 }
             return block;
         }
@@ -613,45 +623,16 @@ namespace BLIND.EditorTools
             var size = new Dictionary<Transform, Bounds>();
             foreach (var d in ducks) { if (TryBounds(d, out var b)) size[d] = b; }
 
-            // --- 先に「運ぶ3体」を決めて、歩ける床の上に置く ---
-            //
-            // ⚠️ 散らかしてから「たまたま陸の近くに落ちた個体」を選んではいけない。
-            //    プールは深さ1〜2mで壁が垂直、落ちたら自力で上がれない。
-            //    水の中の個体を選ぶと**取りに行った人が詰む**。
-            //    置く場所を先に決めてしまえば、その事故は起こりようがない。
-            var small = new List<Transform>();
-            foreach (var d in ducks)
-            {
-                if (!size.ContainsKey(d)) continue;
-                var s = size[d].size;
-                // 受け皿(内寸 0.90m)に収まる個体だけ。はみ出すと囲いに乗り上げて
-                // 転がり止めとして働かない。
-                if (s.x <= 0.84f && s.z <= 0.84f) small.Add(d);
-            }
-            var spots = PickLandSpots(map, CarryCount);
-            for (int i = 0; i < CarryCount && i < small.Count && i < spots.Count; i++)
-            {
-                var d = small[i];
-                var b = size[d];
-                Undo.RecordObject(d, "place carry duck");
-                d.position = new Vector3(spots[i].x, spots[i].y + (b.center.y - b.min.y) + 0.01f, spots[i].z);
-                EditorUtility.SetDirty(d);
-                carriers.Add(d);
-            }
+            // ⚠️ **積み上がった高さを覚えておく。** 以前は床の高さだけ見て置いていたので、
+            //    同じ所に3体まで重ねてよい規則と合わさって**アヒル同士がめり込んだ**
+            //    （作者から「おかしいことになってる」と指摘）。
+            //    下に何か居ればその上に乗せる。これなら浮きもせず、めり込みもせず、
+            //    「山」になる。
+            var stack = new float[map.nx, map.nz];
+            for (int i = 0; i < map.nx; i++)
+                for (int j = 0; j < map.nz; j++) stack[i, j] = map.y[i, j];
 
-            // --- 残りを小さい山に散らす ---
-            //
-            // ⚠️ **歩ける床（デッキ）の上には置かない。**
-            //    最初の版は水の上でも陸の上でも構わず散らした結果、
-            //    西側の細い通路がアヒルで塞がり、部屋の南半分が丸ごと
-            //    到達不能になった（入口から歩ける升 1991 → 1458、
-            //    運ぶアヒルの1体が陸から 2.42m ＝ 取りに行けない）。
-            //    ここはプール部屋なので、水の上に浮いているのが元々自然でもある。
-            //
-            // ⚠️ ただし熱い3体は陸の上に置いてある。まわりに何も無いと
-            //    **過去人が熱を見なくても「1体だけ離れて置いてある」で分かってしまう**。
-            //    それではサーモ役の出番が消えるので、各1体の足元の水際に
-            //    連れを数体ずつ浮かべて、群れの中の1体に見せる。
+            // 山の中心。ほとんどはプールの中に置く。
             var piles = new[]
             {
                 new Vector2(-18.6f, -18.2f), new Vector2(-22.4f, -19.2f),
@@ -659,121 +640,162 @@ namespace BLIND.EditorTools
                 new Vector2(-17.2f, -12.2f), new Vector2(-24.6f, -11.0f),
                 new Vector2(-19.4f, -10.2f), new Vector2(-16.0f, -16.0f),
             };
-            const int Companions = 4;      // 熱い1体につき、まわりに浮かべる連れの数
+
+            // --- 運ぶ3体をどこに隠すか ---
+            //
+            // ⚠️ 3体とも陸の上に置くと、熱を見なくても「陸に転がっている3体」で当たる。
+            //    サーモ役の出番が消えるので、**2体は山の中に埋める**。
+            //    プールには階段を付けたので、水の中へ取りに行っても戻ってこられる。
+            //    1体だけプールサイドに置いて、最初の1体は見つけやすくしてある。
+            var small = new List<Transform>();
+            foreach (var d in ducks)
+            {
+                if (!size.ContainsKey(d)) continue;
+                var sz = size[d].size;
+                if (sz.x <= 0.84f && sz.z <= 0.84f) small.Add(d);
+            }
+            if (small.Count < CarryCount) return "アヒル: 受け皿に入る大きさの個体が足りない";
+            for (int i = 0; i < CarryCount; i++) carriers.Add(small[i]);
+
+            // ⚠️ 隠す山は**必ず水の中**から選ぶ。決め打ちにしたら片方がデッキの上で、
+            //    熱い3体のうち2体が陸に転がる形になった。
+            //    狙いの点に一番近い「水の升」を取る。
+            var hidePiles = new List<Vector2>();
+            foreach (var want in new[] { new Vector2(-20.8f, -13.4f), new Vector2(-18.4f, -17.6f) })
+            {
+                float best = float.MaxValue; Vector2 got = want; bool found = false;
+                for (int i = 0; i < map.nx; i++)
+                    for (int j = 0; j < map.nz; j++)
+                    {
+                        if (!map.free[i, j] || map.land[i, j]) continue;
+                        var w = map.World(i, j);
+                        float dd = (w - want).sqrMagnitude;
+                        if (dd < best) { best = dd; got = w; found = true; }
+                    }
+                if (found) hidePiles.Add(got);
+            }
+            if (hidePiles.Count == 0) hidePiles.Add(piles[0]);
 
             var rng = new System.Random(6061);
-            var placed = new List<Bounds>();
-            foreach (var c in carriers) if (size.ContainsKey(c)) placed.Add(new Bounds(c.position, size[c].size));
+            int moved = 0, idx = 0, stranded = 0;
 
+            // 1体目：プールサイド（歩ける床）
+            var landSpots = PickLandSpots(map, 1);
+            if (landSpots.Count > 0 && size.ContainsKey(carriers[0]))
+            {
+                var b0 = size[carriers[0]];
+                PlaceOn(carriers[0], b0, map, stack,
+                        new Vector3(landSpots[0].x, 0f, landSpots[0].z), true, true);
+                moved++;
+            }
+
+            // --- 残りを山へ ---
             var rest = new List<Transform>();
             foreach (var d in ducks) if (!carriers.Contains(d) && size.ContainsKey(d)) rest.Add(d);
 
-            int moved = 0, idx = 0, stranded = 0;
-            for (int n = 0; n < rest.Count; n++)
+            // ⚠️ 隠す2体を**先に**置くと山の一番下に埋まる。実測で底(-1.3m)に沈み、
+            //    上に 2m ぶんアヒルが積まれて、掘り出すのが苦行になっていた。
+            //    山を6割ほど作ってから差し込むと**山の中腹**に収まる。
+            //    そこなら角度によってサーモ役の目に入り、掘る手間も数体で済む。
+            int insertAt = Mathf.RoundToInt(rest.Count * 0.6f);
+            int hidden = 0;
+
+            for (int n2 = 0; n2 < rest.Count; n2++)
             {
-                var d = rest[n];
+                if (n2 == insertAt)
+                {
+                    for (int k = 1; k < carriers.Count; k++)
+                    {
+                        var hd = carriers[k];
+                        var aim2 = hidePiles[(k - 1) % hidePiles.Count];
+                        if (TryPlaceNear(hd, size[hd], map, stack, aim2, 0f, 0.6f, rng)) { moved++; hidden++; }
+                        else stranded++;
+                    }
+                }
+
+                var d = rest[n2];
                 var b = size[d];
-
-                // 最初の 3×Companions 体は、熱い個体の足元の水際へ
-                bool companion = n < carriers.Count * Companions;
-                Vector2 aim;
-                float rMin, rMax;
-                if (companion)
-                {
-                    var host = carriers[n % carriers.Count].position;
-                    aim = new Vector2(host.x, host.z);
-                    rMin = 0.9f; rMax = 2.2f;
-                }
-                else
-                {
-                    aim = piles[idx % piles.Length]; idx++;
-                    rMin = 0.25f; rMax = 1.70f;
-                }
-
-                bool found = false;
-                for (int tryN = 0; tryN < 200 && !found; tryN++)
-                {
-                    float ang = (float)rng.NextDouble() * Mathf.PI * 2f;
-                    float rad = rMin + (float)rng.NextDouble() * (rMax - rMin);
-                    float px = aim.x + Mathf.Cos(ang) * rad;
-                    float pz = aim.y + Mathf.Sin(ang) * rad;
-                    if (!map.Cell(px, pz, out int ci, out int cj)) continue;
-                    if (!map.free[ci, cj]) continue;
-                    if (map.land[ci, cj]) continue;                 // 陸には置かない＝通路を塞がない
-
-                    // ⚠️ 浮かせない。以前は3体に1体を 0.35m 持ち上げて「山」を作っていたが、
-                    //    アヒルが宙に浮いているようにしか見えなかった（作者指摘）。
-                    //    床（水底）にきちんと着けること。
-                    float py = map.y[ci, cj] + (b.center.y - b.min.y);
-                    var nb = new Bounds(new Vector3(px, py, pz), b.size);
-
-                    // ⚠️ 升の中心だけ見ても足りない。アヒルは 1m 以上あるので、
-                    //    水の上の升に置いても**体が隣の通路にはみ出して塞ぐ**。
-                    //    実測では西の連絡路がこれで切れ、部屋の南半分が孤立した
-                    //    （入口から歩ける升 1991 → 1458）。体ごと陸から外す。
-                    if (OverlapsWalk(map, nb, 0.12f)) continue;
-
-                    int touching = 0;
-                    foreach (var q in placed) if (Flat(nb, q)) touching++;
-                    if (touching > 2) continue;       // 山なので多少は重なってよい
-
-                    Undo.RecordObject(d, "scatter duck");
-                    d.position = new Vector3(px, py, pz);
-                    EditorUtility.SetDirty(d);
-                    placed.Add(nb);
-                    found = true; moved++;
-                }
-
-                // ⚠️ 見つからなかったときに**その場へ置き去りにしてはいけない。**
-                //    置き去りにされた1体(SmallDuck_9)が西の連絡路のど真ん中に残り、
-                //    部屋の南半分が丸ごと孤立した。山のそばに入らないなら
-                //    水面のどこでもよいので必ずどこかへ動かす。
-                if (!found)
-                {
-                    for (int i = 0; i < map.nx && !found; i++)
-                        for (int j = 0; j < map.nz && !found; j++)
-                        {
-                            if (!map.free[i, j] || map.land[i, j]) continue;
-                            var w = map.World(i, j);
-                            float py = map.y[i, j] + (b.center.y - b.min.y);
-                            var nb = new Bounds(new Vector3(w.x, py, w.y), b.size);
-                            if (OverlapsWalk(map, nb, 0.12f)) continue;
-                            // 逃げ場なので重なりには甘くする。山に見えるだけで害は無い。
-                            int touching = 0;
-                            foreach (var qq in placed) if (Flat(nb, qq)) touching++;
-                            if (touching > 2) continue;
-                            Undo.RecordObject(d, "scatter duck");
-                            d.position = new Vector3(w.x, py, w.y);
-                            EditorUtility.SetDirty(d);
-                            placed.Add(nb);
-                            found = true; moved++;
-                        }
-                }
-                // それでも駄目なら重なりを一切見ずに水の上へ。
-                // 見た目が少し団子になっても、通路に残すよりはるかにまし。
-                if (!found)
-                {
-                    for (int i = 0; i < map.nx && !found; i++)
-                        for (int j = 0; j < map.nz && !found; j++)
-                        {
-                            if (!map.free[i, j] || map.land[i, j]) continue;
-                            var w = map.World(i, j);
-                            float py = map.y[i, j] + (b.center.y - b.min.y);
-                            var nb = new Bounds(new Vector3(w.x, py, w.y), b.size);
-                            if (OverlapsWalk(map, nb, 0.12f)) continue;
-                            Undo.RecordObject(d, "scatter duck");
-                            d.position = new Vector3(w.x, py, w.y);
-                            EditorUtility.SetDirty(d);
-                            placed.Add(nb);
-                            found = true; moved++;
-                        }
-                }
-                if (!found) stranded++;
+                var aim = piles[idx % piles.Length]; idx++;
+                if (TryPlaceNear(d, b, map, stack, aim, 0.2f, 1.6f, rng)) { moved++; continue; }
+                // どうしても入らないときは水面のどこでもよいので必ず動かす
+                bool ok = false;
+                for (int i = 0; i < map.nx && !ok; i++)
+                    for (int j = 0; j < map.nz && !ok; j++)
+                    {
+                        if (!map.free[i, j] || map.land[i, j]) continue;
+                        var w = map.World(i, j);
+                        if (PlaceOn(d, b, map, stack, new Vector3(w.x, 0f, w.y), true, false)) { ok = true; moved++; }
+                    }
+                if (!ok) stranded++;
             }
+            if (hidden == 0)
+                for (int k = 1; k < carriers.Count; k++)
+                {
+                    var hd = carriers[k];
+                    var aim2 = hidePiles[(k - 1) % hidePiles.Count];
+                    if (TryPlaceNear(hd, size[hd], map, stack, aim2, 0f, 0.8f, rng)) moved++; else stranded++;
+                }
 
-            return "アヒル: " + ducks.Count + "体を " + piles.Length + "つの小さい山に配り直した（散らした "
-                 + moved + "体 ＋ 運ぶ " + carriers.Count + "体 / 削除も追加も無し）"
-                 + (stranded > 0 ? " ⚠ 置き場所が見つからなかった " + stranded + "体" : "");
+            Physics.SyncTransforms();
+            return "アヒル: " + ducks.Count + "体を " + piles.Length + "つの山に積み直した（動かした "
+                 + moved + "体 / 削除も追加も無し）"
+                 + (stranded > 0 ? " ⚠ 置けなかった " + stranded + "体" : "");
+        }
+
+        /// <summary>山の近くに置き場所を探す。見つかれば置いて true。</summary>
+        static bool TryPlaceNear(Transform d, Bounds b, FloorMap map, float[,] stack,
+                                 Vector2 aim, float rMin, float rMax, System.Random rng)
+        {
+            for (int tryN = 0; tryN < 240; tryN++)
+            {
+                float ang = (float)rng.NextDouble() * Mathf.PI * 2f;
+                float rad = rMin + (float)rng.NextDouble() * (rMax - rMin);
+                var at = new Vector3(aim.x + Mathf.Cos(ang) * rad, 0f, aim.y + Mathf.Sin(ang) * rad);
+                if (PlaceOn(d, b, map, stack, at, false, false)) return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 真下にある物（床か、先に置いたアヒル）の上に載せる。
+        /// ⚠️ 浮かせない・めり込ませない。高さは必ず下にある物から決める。
+        /// </summary>
+        static bool PlaceOn(Transform d, Bounds b, FloorMap map, float[,] stack, Vector3 at, bool relax, bool allowLand)
+        {
+            if (!map.Cell(at.x, at.z, out int ci, out int cj)) return false;
+            if (!map.free[ci, cj]) return false;
+
+            // ⚠️ 判定を footprint 全体に広げすぎない。最初は半径いっぱいの升が
+            //    すべて空いていることを求めたが、2m のアヒルだと 2.25m 四方が
+            //    まるごと空いている必要があり、**61体中46体が置けなかった**。
+            //    通れなくなるかどうかは OverlapsWalk で見れば足りる。
+            // ⚠️ **陸に置くのは指定した1体だけ。** 「中心が陸なら許す」という書き方をしたら
+            //    山の中心が岸際にあるせいで **61体中52体がプールサイドに並んだ**。
+            //    作者の指示は「もっとプールの中や山の中に分散、プールサイドは1体くらい」。
+            bool onLand = map.land[ci, cj];
+            if (onLand && !allowLand) return false;
+            var foot = new Bounds(new Vector3(at.x, 0f, at.z), b.size);
+            if (!allowLand && OverlapsWalk(map, foot, 0.12f)) return false;   // 通路を塞がない
+
+            // 下にある物（床か、先に置いたアヒル）の高さ。footprint ぶん見て一番高い所に合わせる。
+            int r = Mathf.Clamp(Mathf.CeilToInt(Mathf.Max(b.size.x, b.size.z) * 0.5f / map.step), 0, 6);
+            float top = stack[ci, cj];
+            for (int i = Mathf.Max(0, ci - r); i <= Mathf.Min(map.nx - 1, ci + r); i++)
+                for (int j = Mathf.Max(0, cj - r); j <= Mathf.Min(map.nz - 1, cj + r); j++)
+                    top = Mathf.Max(top, stack[i, j]);
+
+            // 高く積みすぎない。塔になると「山」に見えないし、上の個体に手が届かない。
+            // 元の部屋もアヒルが胸の高さまで積んであったので、2m までは許す。
+            // relax は「もう置き場所が無い」ときの逃げ道。高さは見ない。
+            if (!relax && top - map.y[ci, cj] > 2.00f) return false;
+
+            d.position = new Vector3(at.x, top + (b.center.y - b.min.y), at.z);
+            EditorUtility.SetDirty(d);
+
+            for (int i = Mathf.Max(0, ci - r); i <= Mathf.Min(map.nx - 1, ci + r); i++)
+                for (int j = Mathf.Max(0, cj - r); j <= Mathf.Min(map.nz - 1, cj + r); j++)
+                    stack[i, j] = top + b.size.y;
+            return true;
         }
 
         /// <summary>その物が「歩いて行ける床」に少しでも掛かっているか。</summary>
@@ -790,23 +812,17 @@ namespace BLIND.EditorTools
         }
 
         /// <summary>
-        /// 運ぶアヒルの置き場所を選ぶ。
-        ///
-        /// ⚠️ 「歩ける升を端から n 個」では駄目。最初の版がそれで、3体とも
-        ///    西の壁ぎわ x=-29.7 に一列に並んだ。部屋を見て回らせたいのに、
-        ///    1か所を見ればまとめて見つかってしまう。
-        ///    部屋の離れた3か所を先に決めて、そこに一番近い歩ける升を取る。
+        /// プールサイドに置く1体ぶんの場所を選ぶ。
+        /// ⚠️ 「歩ける升を端から」では駄目。西の壁ぎわに一列に並んだ。
+        ///    部屋の離れた点を先に決めて、そこに一番近い歩ける升を取る。
         /// </summary>
         static List<Vector3> PickLandSpots(FloorMap map, int n)
         {
-            // 部屋の離れた3隅。増やすときはここに足す。
             var targets = new[]
             {
-                new Vector2(-16.8f,  -8.6f),   // 北東（入口から見て奥の手前側）
-                new Vector2(-28.4f, -12.4f),   // 西の奥
-                new Vector2(-21.5f, -19.4f),   // 南（room7 へ抜ける扉の側）
-                new Vector2(-24.0f,  -8.4f),   // 4体目以降の予備
-                new Vector2(-16.5f, -13.0f),
+                new Vector2(-16.8f,  -8.6f),   // 北東（入口から歩いてすぐ）
+                new Vector2(-28.4f, -12.4f),
+                new Vector2(-21.5f, -19.4f),
             };
 
             var picked = new List<Vector3>();
@@ -818,11 +834,9 @@ namespace BLIND.EditorTools
                     for (int j = 1; j < map.nz - 1; j++)
                     {
                         if (!map.reach[i, j] || !map.free[i, j]) continue;
-                        // 縁ぎりぎりだと落ちる。四方も陸であること。
                         if (!map.reach[i - 1, j] || !map.reach[i + 1, j]
                          || !map.reach[i, j - 1] || !map.reach[i, j + 1]) continue;
                         var w = map.World(i, j);
-                        // 既に選んだ所の近くは除く
                         bool tooNear = false;
                         foreach (var q in picked)
                             if ((new Vector2(q.x, q.z) - w).sqrMagnitude < 4.0f * 4.0f) { tooNear = true; break; }
@@ -836,46 +850,55 @@ namespace BLIND.EditorTools
         }
 
         // ============================================================
-        // 運べる熱いアヒル
+        // 掴めるようにする（61体すべて）
         // ============================================================
+        /// <summary>
+        /// ⚠️ **掴めるのを熱い3体だけにしてはいけない。**
+        ///    そうすると過去人が片っ端から触るだけで正解が分かってしまい、
+        ///    サーモ役に聞く必要が消える（作者指摘）。61体すべてを掴めるようにして、
+        ///    「持てるかどうか」を手掛かりにできなくする。
+        ///
+        /// ⚠️ VRCPickup を付けると SDK がその GameObject を layer 13(Pickup) へ移す。
+        ///    アヒルは本体に MeshRenderer が付いているので、そのまま付けると
+        ///    **絵ごと 13 へ行って3役全員から消える**
+        ///    （過去人のカメラは 0/6/7/9/10/21/24 しか映さない）。
+        ///    本体は「掴む当たり判定」だけにして、見た目は子へ移す。
+        ///
+        /// ⚠️ アヒルの当たり判定は凸でない MeshCollider。そのまま Rigidbody を付けると
+        ///    Unity に弾かれる。元のは止めて掴む用の箱を足し、作り直すときは必ず元へ戻す。
+        ///
+        /// 代償：61体ぶんの VRCObjectSync と、3層×61体＝183 レンダラー。
+        /// この部屋は元から軽いので許容するが、動きが重いと感じたら
+        /// まずここ（同期する物の数）を疑うこと。
+        /// </summary>
         static string MakeCarriers(Transform room, Transform parent, List<Transform> carriers,
                                    out List<Component> items)
         {
             items = new List<Component>();
-            if (carriers.Count == 0) return "運ぶアヒル: 候補が見つからない";
+            var group = room.Find("Props_SmallDucks");
+            if (group == null) return "掴める化: Props_SmallDucks が無い";
 
-            var holder = new GameObject("Carry");
-            Undo.RegisterCreatedObjectUndo(holder, "carry ducks");
-            holder.transform.SetParent(parent, false);
-            holder.transform.position = Vector3.zero;
-
-            var tHot = BlindThermalTable.Mat("DuckHot");
+            var tHot  = BlindThermalTable.Mat("DuckHot");
+            var tCold = BlindThermalTable.Mat("Prop");
             var eProp = AssetDatabase.LoadAssetAtPath<Material>("Assets/_BLIND/Art/Materials/Echo/EchoMaterial_Prop.mat");
             if (eProp == null) eProp = AssetDatabase.LoadAssetAtPath<Material>("Assets/_BLIND/Art/Materials/EchoMaterial.mat");
 
-            var sb = new System.Text.StringBuilder("運ぶアヒル: ");
-            foreach (var d in carriers)
-            {
-                Undo.SetTransformParent(d, holder.transform, "carry duck");
+            int n = 0, skipped = 0;
+            var carrySet = new HashSet<Transform>(carriers);
+            var order = new List<Transform>();
+            foreach (Transform d in group) order.Add(d);
+            order.Sort((x, y) => string.CompareOrdinal(x.name, y.name));
 
+            foreach (var d in order)
+            {
                 var mf = d.GetComponent<MeshFilter>();
                 var mr = d.GetComponent<MeshRenderer>();
-                if (mf == null || mf.sharedMesh == null || mr == null) continue;
+                if (mf == null || mf.sharedMesh == null || mr == null) { skipped++; continue; }
+                bool hot = carrySet.Contains(d);
 
-                // ⚠️ **VRCPickup を付けると、その GameObject は SDK に layer 13(Pickup) へ
-                //    移される。** アヒルは本体に MeshRenderer が付いているので、
-                //    そのまま付けると絵ごと 13 へ行き、**3役全員から消える**
-                //    （過去人のカメラは 0/6/7/9/10/21/24 しか映さない）。
-                //    本体は「掴む当たり判定」だけにして、見た目は子へ移す。
-                //    鍵(room11)が無事だったのは、最初から本体に絵が無く
-                //    子に D/T/E を持たせる作りだったから。
                 Undo.RecordObject(mr, "hide duck body");
                 mr.enabled = false;
 
-                // ⚠️ アヒルの当たり判定は MeshCollider（凸でない）。
-                //    そのまま Rigidbody を付けると Unity に弾かれる
-                //    （Non-convex MeshCollider with non-kinematic Rigidbody）。
-                //    元のは止めて、掴む用の箱を足す。戻すときに元へ返す。
                 var mc = d.GetComponent<MeshCollider>();
                 if (mc != null) { Undo.RecordObject(mc, "off mesh collider"); mc.enabled = false; }
                 var bc = d.GetComponent<BoxCollider>();
@@ -884,9 +907,6 @@ namespace BLIND.EditorTools
                 bc.center = mb.center; bc.size = mb.size;
                 bc.isTrigger = false;
 
-                // 見た目（3役ぶん）。**本体の子**にすること。
-                // 部屋直下のバケツにまとめると、持ち上げても複製が置き去りになり
-                // 「過去人だけがアヒルを持っている」嘘になる。
                 var vis = new GameObject("DuckVision_Generated");
                 Undo.RegisterCreatedObjectUndo(vis, "duck vision");
                 vis.transform.SetParent(d, false);
@@ -894,7 +914,7 @@ namespace BLIND.EditorTools
                 vis.transform.localRotation = Quaternion.identity;
                 vis.transform.localScale = Vector3.one;
                 MakeMeshChild(vis.transform, "D_Body", LayerDefault, mf.sharedMesh, mr.sharedMaterial, false, null);
-                MakeMeshChild(vis.transform, "T_Body", LayerThermal, mf.sharedMesh, tHot, false, null);
+                MakeMeshChild(vis.transform, "T_Body", LayerThermal, mf.sharedMesh, hot ? tHot : tCold, false, null);
                 MakeMeshChild(vis.transform, "E_Body", LayerEcho, mf.sharedMesh, eProp, true, null);
 
                 var rb = d.GetComponent<Rigidbody>();
@@ -914,11 +934,16 @@ namespace BLIND.EditorTools
                     if (pick != null) SetObj(carry, "pickup", pick);
                     SetSyncMode(carry, "None");
                     PushUdon(carry);
-                    items.Add(carry);
+                    if (hot) items.Add(carry);
                 }
-                sb.Append(d.name + world(d) + " ");
+                n++;
             }
-            return sb.ToString() + "（" + items.Count + "体に 44℃ と VRCPickup を付与）";
+
+            var sb = new System.Text.StringBuilder("掴める化: " + n + "体すべてに VRCPickup+ObjectSync"
+                   + (skipped > 0 ? "（メッシュ無しで除外 " + skipped + "体）" : "")
+                   + " / うち熱い " + items.Count + "体: ");
+            foreach (var c in carriers) sb.Append(c.name + c.position.ToString("F1") + " ");
+            return sb.ToString();
         }
 
         static string world(Transform t) { return t.position.ToString("F1"); }
