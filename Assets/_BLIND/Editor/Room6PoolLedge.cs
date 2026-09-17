@@ -147,6 +147,8 @@ namespace BLIND.EditorTools
             Physics.SyncTransforms();
             string steps = BuildSteps(room, rootGo.transform, deckMat, tMat, eMat);
 
+            string rescue = WireRescue(room, rootGo, new Vector3(x0 + Width * 0.5f, 0.6f, (z0 + z1) * 0.5f));
+
             Physics.SyncTransforms();
 
             // ⚠️ アヒルを動かしたので、結合済みのサーモ・エコロケを作り直す。
@@ -158,6 +160,7 @@ namespace BLIND.EditorTools
                  + " / 深さ " + (TopY - bottomY).ToString("F2") + "m）\n"
                  + "  " + moved + "\n"
                  + "  " + steps + "\n"
+                 + "  " + rescue + "\n"
                  + "  " + vision.Split('\n')[0];
         }
 
@@ -174,7 +177,11 @@ namespace BLIND.EditorTools
         /// </summary>
         static string BuildSteps(Transform room, Transform parent, Material d, Material t, Material e)
         {
-            const int N = 4;                 // 段数
+            // ⚠️ 段数を決め打ちにしない。プールの底は場所によって 1.0〜2.0m と違い、
+            //    4段固定にしたら深い所で 1段 0.46m になって**登れなかった**
+            //    （実測：水底から入口へ戻れる升 0 / 308）。
+            //    VRChat の段差の上限はおよそ 0.35m。余裕を見て 0.28m ごとに割る。
+            const float MaxRise = 0.28f;
             const float Run = 0.34f;         // 1段の奥行き
             const float Wide = 1.30f;        // 階段の幅
             const float Grid = 0.25f;
@@ -191,7 +198,7 @@ namespace BLIND.EditorTools
                     {
                         // 隣が水で、その先も水なら「縁」。角に作ると階段が壁にめり込む。
                         var n1 = new Vector3(x, 0f, z) + dir * Grid;
-                        var n2 = new Vector3(x, 0f, z) + dir * (Run * N + 0.4f);
+                        var n2 = new Vector3(x, 0f, z) + dir * 1.6f;
                         if (IsDeck(n1.x, n1.z) || IsDeck(n2.x, n2.z)) continue;
                         float fy = PoolFloor(n2.x, n2.z);
                         if (float.IsNaN(fy)) continue;
@@ -209,13 +216,16 @@ namespace BLIND.EditorTools
                     }
                 }
 
-            // 互いに 6m 以上離れた所を選ぶ。プールのどこに落ちても近くに1つある状態にする。
+            // ⚠️ 互いに 4.5m。6m にしたら4箇所しか立たず、水底をアヒルに囲まれて
+            //    どの階段にも行けない場所が残った（実測：(-20,-16) から戻れない）。
+            //    水底はアヒルで塞がるので、階段は「近くにある」だけでは足りず
+            //    「囲まれても隣の壁づたいに届く」密度が要る。
             var picked = new List<(Vector3 at, Vector3 dir, float floorY)>();
             foreach (var cand in edges)
             {
                 bool far = true;
                 foreach (var q in picked)
-                    if (Vector3.Distance(q.at, cand.at) < 6.0f) { far = false; break; }
+                    if (Vector3.Distance(q.at, cand.at) < 4.5f) { far = false; break; }
                 if (far) picked.Add(cand);
             }
 
@@ -228,6 +238,7 @@ namespace BLIND.EditorTools
                 go.transform.position = Vector3.zero;
                 go.layer = LayerDefault;
 
+                int N = Mathf.Max(3, Mathf.CeilToInt((0f - sp.floorY) / MaxRise));
                 float rise = (0f - sp.floorY) / N;
                 bool alongX = Mathf.Abs(sp.dir.x) > 0.5f;
                 for (int k = 0; k < N; k++)
@@ -247,8 +258,73 @@ namespace BLIND.EditorTools
                 }
                 made++;
             }
-            return "プールの階段: " + made + "箇所（1段 " + (1f / N).ToString("F2")
-                 + "×深さ・幅 " + Wide.ToString("F2") + "m / 候補 " + edges.Count + "）落ちても上がれる";
+            return "プールの階段: " + made + "箇所（1段 " + MaxRise.ToString("F2")
+                 + "m 以下・幅 " + Wide.ToString("F2") + "m / 候補 " + edges.Count + "）落ちても上がれる";
+        }
+
+        /// <summary>
+        /// 落ちて動けなくなった人を引き上げる保険を付ける。
+        /// 階段だけでは、アヒルに囲まれた窪みが 78 升ぶん残るため。
+        /// </summary>
+        static string WireRescue(Transform room, GameObject root, Vector3 safeSpot)
+        {
+            var basin = room.Find("PoolBasin");
+            if (basin == null) return "救出: PoolBasin が無い";
+            var wb = basin.GetComponent<Renderer>().bounds;
+
+            var anchor = new GameObject("RescueAnchor");
+            Undo.RegisterCreatedObjectUndo(anchor, "rescue anchor");
+            anchor.transform.SetParent(root.transform, false);
+            anchor.transform.position = safeSpot;
+            anchor.transform.rotation = Quaternion.Euler(0f, 270f, 0f);   // 部屋の中を向く
+
+            var beh = AddUdon(root, "PoolRescue");
+            if (beh == null) return "救出: PoolRescue の付与に失敗";
+            var so = new SerializedObject(beh);
+            so.FindProperty("areaMin").vector3Value = new Vector3(wb.min.x - 0.5f, 0f, wb.min.z - 0.5f);
+            so.FindProperty("areaMax").vector3Value = new Vector3(wb.max.x + 0.5f, 0f, wb.max.z + 0.5f);
+            so.ApplyModifiedProperties();
+            var so2 = new SerializedObject(beh);
+            so2.FindProperty("anchor").objectReferenceValue = anchor.transform;
+            so2.ApplyModifiedProperties();
+            SetSyncMode(beh, "None");
+            PushUdon(beh);
+            return "救出: 8秒動けないままだと入口の足場 " + safeSpot.ToString("F1") + " へ戻す"
+                 + "（歩けている人は戻さない）";
+        }
+
+        static Component AddUdon(GameObject go, string typeName)
+        {
+            var t = System.Type.GetType(typeName + ", Assembly-CSharp");
+            if (t == null) { Debug.LogError("BLIND: 型が無い " + typeName); return null; }
+            var undoType = System.Type.GetType("UdonSharpEditor.UdonSharpUndo, UdonSharp.Editor");
+            Component c = null;
+            if (undoType != null)
+            {
+                var mi = undoType.GetMethod("AddComponent", new[] { typeof(GameObject), typeof(System.Type) });
+                if (mi != null) c = mi.Invoke(null, new object[] { go, t }) as Component;
+            }
+            if (c == null) c = go.AddComponent(t);
+            return c;
+        }
+
+        static void SetSyncMode(Component c, string mode)
+        {
+            var usb = c as UdonSharp.UdonSharpBehaviour; if (usb == null) return;
+            var ub = UdonSharpEditor.UdonSharpEditorUtility.GetBackingUdonBehaviour(usb); if (ub == null) return;
+            var so = new SerializedObject(ub);
+            var pr = so.FindProperty("_syncMethod"); if (pr == null) return;
+            int idx = System.Array.IndexOf(pr.enumNames, mode);
+            if (idx < 0) return;
+            pr.enumValueIndex = idx;
+            so.ApplyModifiedProperties();
+        }
+
+        static void PushUdon(Component c)
+        {
+            var usb = c as UdonSharp.UdonSharpBehaviour; if (usb == null) return;
+            if (UdonSharpEditor.UdonSharpEditorUtility.GetBackingUdonBehaviour(usb) == null) return;
+            UdonSharpEditor.UdonSharpEditorUtility.CopyProxyToUdon(usb);
         }
 
         /// <summary>そこがプールなら水底の高さ。プールでなければ NaN。</summary>

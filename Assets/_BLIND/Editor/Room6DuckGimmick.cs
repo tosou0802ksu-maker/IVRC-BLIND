@@ -149,8 +149,25 @@ namespace BLIND.EditorTools
             var sign = room.Find("Props_WetFloorSign_Sample");
             if (sign == null) return "看板: Props_WetFloorSign_Sample が無い（もう動かしてある？）";
 
-            // 台の上ではなく、プールの反対側（西寄りの床）へ寄せる。
-            var to = new Vector3(-24.2f, sign.position.y, -12.6f);
+            // 台の上ではなく、プールの反対側（東寄りの床）へ寄せる。
+            // ⚠️ y をそのまま持ってこない。元はプールの上に 1.88m で浮かせてあり、
+            //    デッキへ移すと**宙に浮いた看板**になる（実際そうなった）。
+            //    床に着けること。
+            var to = new Vector3(-22.6f, sign.position.y, -8.6f);
+            Bounds sb2 = new Bounds(); bool sh = false;
+            foreach (var mr in sign.GetComponentsInChildren<MeshRenderer>(true))
+            { if (!sh) { sb2 = mr.bounds; sh = true; } else sb2.Encapsulate(mr.bounds); }
+            if (sh)
+            {
+                var probe = Physics.RaycastAll(new Vector3(to.x, 5f, to.z), Vector3.down, 12f);
+                System.Array.Sort(probe, (a, b) => a.distance.CompareTo(b.distance));
+                foreach (var h in probe)
+                {
+                    if (h.collider.name.Contains("Duck")) continue;
+                    to.y = sign.position.y + ((5f - h.distance) - sb2.min.y);
+                    break;
+                }
+            }
             if (Vector3.Distance(sign.position, to) < 0.05f) return "看板: すでに寄せてある";
             Undo.RecordObject(sign, "move sign");
             var from = sign.position;
@@ -229,7 +246,13 @@ namespace BLIND.EditorTools
             go.transform.position = Vector3.zero;
             go.layer = LayerDefault;
 
-            var deckMat = MatOf(room, "PoolDeck");
+            // ⚠️ 台を床と同じタイルで作ると、**一段高いことが全く読めない**。
+            //    三面投影なので継ぎ目まで揃ってしまい、床の模様がそのまま乗る。
+            //    壁と同じコンクリートにすると、青いタイルの床から生えた
+            //    灰色の台としてはっきり分かれる。
+            var deckMat = MatOf(room, "PoolBasin");
+            var wallMat = MatOf(room, "Walls/WallSegment");
+            if (wallMat != null) deckMat = wallMat;
             var eMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/_BLIND/Art/Materials/EchoMaterial.mat");
             var eProp = AssetDatabase.LoadAssetAtPath<Material>("Assets/_BLIND/Art/Materials/Echo/EchoMaterial_Prop.mat");
             if (eProp == null) eProp = eMat;
@@ -330,6 +353,19 @@ namespace BLIND.EditorTools
             //    offset を 1 にしないと Clamp で端の1列が引き伸ばされる。
             mat.mainTextureScale = new Vector2(-1f, -1f);
             mat.mainTextureOffset = new Vector2(1f, 1f);
+
+            // ⚠️ 看板は**自分で光らせる**こと。西の壁は暗く、素の材質だと
+            //    黄色い板に黒い文字がほとんど沈んで読めなかった。
+            //    発光色を一様にしても地も文字も同じだけ持ち上がって意味が無い。
+            //    **同じ絵を _EmissionMap に入れる**と、地だけが光って文字は黒のまま残り、
+            //    暗い部屋でもはっきり読める（懐中電灯を入れた後も効く）。
+            mat.EnableKeyword("_EMISSION");
+            mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+            mat.SetTexture("_EmissionMap", tex);
+            mat.SetTextureScale("_EmissionMap", new Vector2(-1f, -1f));
+            mat.SetTextureOffset("_EmissionMap", new Vector2(1f, 1f));
+            mat.SetColor("_EmissionColor", new Color(0.95f, 0.90f, 0.35f));
+            EditorUtility.SetDirty(mat);
             EditorUtility.SetDirty(mat);
 
             // ⚠️ 看板は**台と同じ壁**に出す。台と看板が離れていると、
@@ -496,6 +532,19 @@ namespace BLIND.EditorTools
             var ledge = room.Find("PoolLedge_Generated");
             if (ledge != null) block.Add(Grow(ledge.GetComponent<BoxCollider>().bounds, 0.30f));
             foreach (var b in DoorZones(room)) block.Add(b);
+
+            // ⚠️ プールの階段のまわりにはアヒルを置かない。
+            //    階段の降り口が1体でも塞がると、落ちた人がそこから上がれない。
+            var ledgeRoot = room.Find("PoolLedge_Generated");
+            if (ledgeRoot != null)
+                foreach (Transform st in ledgeRoot)
+                {
+                    if (!st.name.StartsWith("Steps_")) continue;
+                    Bounds sb = new Bounds(); bool has = false;
+                    foreach (var c in st.GetComponentsInChildren<BoxCollider>())
+                    { if (!has) { sb = c.bounds; has = true; } else sb.Encapsulate(c.bounds); }
+                    if (has) block.Add(Grow(sb, 1.20f));
+                }
             return block;
         }
 
@@ -1045,7 +1094,13 @@ namespace BLIND.EditorTools
 
         static Material MatOf(Transform room, string child)
         {
-            var t = room.Find(child); if (t == null) return null;
+            var t = room.Find(child);
+            if (t == null)
+            {
+                foreach (var mr in room.GetComponentsInChildren<MeshRenderer>(true))
+                    if (mr.name == child.Substring(child.LastIndexOf('/') + 1)) return mr.sharedMaterial;
+                return null;
+            }
             var r = t.GetComponent<Renderer>(); return r != null ? r.sharedMaterial : null;
         }
 
