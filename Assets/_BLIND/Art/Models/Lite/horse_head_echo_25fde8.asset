@@ -6,7 +6,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: horse_head_echo_25fde8
+  m_Name: horse_head_echo
   serializedVersion: 11
   m_SubMeshes:
   - serializedVersion: 2

@@ -6,7 +6,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: fire_hydrant_cap_01_aged_echo_fb7868
+  m_Name: fire_hydrant_cap_01_aged_echo
   serializedVersion: 11
   m_SubMeshes:
   - serializedVersion: 2
