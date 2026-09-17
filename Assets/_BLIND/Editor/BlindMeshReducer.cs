@@ -161,7 +161,18 @@ namespace BLIND.EditorTools
             if (made == null) return null;
             made.name = src.name + suffix;
 
-            var path = LiteDir + "/" + src.name + suffix + ".asset";
+            // ⚠️ ファイル名をメッシュ名だけで作ってはいけない。
+            //    "Cube" や "polySurface1" のような名前はマップ中に何種類もあり、
+            //    **中身の違う別メッシュが同じ資産を上書きし合う**。
+            //    実際 room16 の椅子の脚(0.03×0.14×0.03m)が、同名の別メッシュの
+            //    簡略版(2.0×1.56×2.0m)に化けて部屋を突き抜けていた。
+            //    元メッシュの資産パスを混ぜて区別する。
+            //    （パスが取れない実行時生成メッシュは頂点数で代用）
+            var srcPath = AssetDatabase.GetAssetPath(src);
+            int tag = string.IsNullOrEmpty(srcPath)
+                    ? src.vertexCount * 31 + (src.isReadable ? src.triangles.Length : 0)
+                    : srcPath.GetHashCode();
+            var path = LiteDir + "/" + src.name + suffix + "_" + (tag & 0xffffff).ToString("x6") + ".asset";
             var ex = AssetDatabase.LoadAssetAtPath<Mesh>(path);
             if (ex != null)
             {

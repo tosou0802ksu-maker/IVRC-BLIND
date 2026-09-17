@@ -1087,6 +1087,16 @@ namespace BLIND.EditorTools
             EchoMatSeq.Clear();   // 箱投影マテリアルの連番を作り直す
             EchoUvCache.Clear();
 
+            // ⚠️ 前回の EchoUV_* を先に消す。名前が通し番号なので、
+            //    消さずに作り直すと「使われていない資産」が積み上がる。
+            foreach (var g in AssetDatabase.FindAssets("EchoUV_ t:Mesh", new[] { MeshDir }))
+                AssetDatabase.DeleteAsset(AssetDatabase.GUIDToAssetPath(g));
+
+            // ⚠️ 資産を1つ作るたびにインポートが走ると、全部屋で数十分かかる。
+            //    まとめて止めておく（StopAssetEditing まで必ず到達すること）。
+            AssetDatabase.StartAssetEditing();
+            try
+            {
             foreach (var rn in roomNames)
             {
                 var room = FindRoom(rn);
@@ -1501,6 +1511,8 @@ namespace BLIND.EditorTools
                     + "  温度: " + string.Join(", ", Keys(byTemp)));
                 totalTris += tTris + eTris; totalRend += tRend + eRend;
             }
+            }
+            finally { AssetDatabase.StopAssetEditing(); }
 
             AssetDatabase.SaveAssets();
             // エコロケ層を作り直した以上、必ず受信機を登録し直す。
@@ -1818,7 +1830,16 @@ namespace BLIND.EditorTools
             var safe = src.name;
             foreach (var c in new[] { '/', '\\', ' ', '(', ')', ':', '*', '?', '"', '<', '>', '|', '.' })
                 safe = safe.Replace(c, '_');
-            var path = MeshDir + "/EchoUV_" + safe + "_" + Mathf.Abs(src.GetInstanceID() % 100000) + ".asset";
+
+            // ⚠️ ファイル名を InstanceID から作ってはいけない。
+            //    "Cube" という名前のメッシュはマップ中に何十個もあり、
+            //    InstanceID の下5桁が衝突した瞬間に**別のメッシュの資産を掴む**。
+            //    実際 room16 の Cube 3個が、11倍の大きさの別メッシュになって
+            //    部屋を突き抜けていた（実測：元 3.7m → 複製 40m）。
+            //    しかも InstanceID は起動ごとに変わるので、作り直すたびに
+            //    別名の資産が増え続けるという問題もあった。
+            //    この実行の中での通し番号にする（EchoUvCache が1メッシュ1資産を保証している）。
+            var path = MeshDir + "/EchoUV_" + safe + "_" + EchoUvCache.Count.ToString("D4") + ".asset";
             var ex = AssetDatabase.LoadAssetAtPath<Mesh>(path);
             if (ex != null) { EditorUtility.CopySerialized(made, ex); Object.DestroyImmediate(made); EchoUvCache[src] = ex; return ex; }
             AssetDatabase.CreateAsset(made, path);
