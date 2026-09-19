@@ -711,7 +711,7 @@ namespace BLIND.EditorTools
             float sgn = ax == 0 ? Mathf.Sign(n.x) : ax == 1 ? Mathf.Sign(n.y) : Mathf.Sign(n.z);
 
             var lb = lr.bounds;
-            float face = ax == 0 ? (sgn > 0 ? lb.max.x : lb.min.x)
+            float faceEdge = ax == 0 ? (sgn > 0 ? lb.max.x : lb.min.x)
                        : ax == 1 ? (sgn > 0 ? lb.max.y : lb.min.y)
                                  : (sgn > 0 ? lb.max.z : lb.min.z);
 
@@ -719,7 +719,7 @@ namespace BLIND.EditorTools
             float cur = ax == 0 ? (sgn > 0 ? sb2.max.x : sb2.min.x)
                       : ax == 1 ? (sgn > 0 ? sb2.max.y : sb2.min.y)
                                 : (sgn > 0 ? sb2.max.z : sb2.min.z);
-            float want = face + sgn * Protrude;
+            float want = faceEdge + sgn * Protrude;
             var shift = Vector3.zero;
             if (ax == 0) shift.x = want - cur; else if (ax == 1) shift.y = want - cur; else shift.z = want - cur;
             go.transform.position += shift;

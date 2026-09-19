@@ -1,4 +1,4 @@
-﻿
+
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
@@ -7,16 +7,22 @@ using VRC.Udon;
 // 色ごとの扉の瞬間移動を管理する。
 //
 // ColorSignalButton から OnColorSelected(colorId) を呼ばれると、
-// その色に対応する扉だけを targetPositions の座標へ瞬間移動させる。
+// その色に対応する扉だけを対応する座標へ瞬間移動させる。
 // 一度移動した扉はそのまま残る(他の色が選ばれても戻らない)。
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class ColorDoorManager : UdonSharpBehaviour
 {
-    [Header("色ごとの扉 (index = 色番号: 赤=0, 青=1, 緑=2)")]
-    [SerializeField] private Transform[] doors;
+    [Header("赤 (0)")]
+    [SerializeField] private Transform redDoor;
+    [SerializeField] private Vector3 redTargetPosition;
 
-    [Header("色ごとの移動先座標 (doorsと同じ並び)")]
-    [SerializeField] private Vector3[] targetPositions;
+    [Header("青 (1)")]
+    [SerializeField] private Transform blueDoor;
+    [SerializeField] private Vector3 blueTargetPosition;
+
+    [Header("緑 (2)")]
+    [SerializeField] private Transform greenDoor;
+    [SerializeField] private Vector3 greenTargetPosition;
 
     [UdonSynced] private int movedFlags;
 
@@ -28,9 +34,9 @@ public class ColorDoorManager : UdonSharpBehaviour
     // ColorSignalButton から呼ばれる
     public void OnColorSelected(int colorId)
     {
-        if (colorId < 0 || colorId >= doors.Length || colorId >= targetPositions.Length)
+        if (GetDoor(colorId) == null)
         {
-            Debug.LogWarning("ColorDoorManager: colorIdが範囲外です: " + colorId);
+            Debug.LogWarning("ColorDoorManager: colorIdが範囲外か扉未設定です: " + colorId);
             return;
         }
 
@@ -59,18 +65,41 @@ public class ColorDoorManager : UdonSharpBehaviour
         return (movedFlags & (1 << colorId)) != 0;
     }
 
+    private Transform GetDoor(int colorId)
+    {
+        switch (colorId)
+        {
+            case 0: return redDoor;
+            case 1: return blueDoor;
+            case 2: return greenDoor;
+            default: return null;
+        }
+    }
+
+    private Vector3 GetTargetPosition(int colorId)
+    {
+        switch (colorId)
+        {
+            case 0: return redTargetPosition;
+            case 1: return blueTargetPosition;
+            case 2: return greenTargetPosition;
+            default: return Vector3.zero;
+        }
+    }
+
     private void ApplyState()
     {
-        for (int i = 0; i < doors.Length; i++)
+        for (int colorId = 0; colorId < 3; colorId++)
         {
-            if (doors[i] == null || i >= targetPositions.Length)
+            if (!IsMoved(colorId))
             {
                 continue;
             }
 
-            if (IsMoved(i))
+            Transform door = GetDoor(colorId);
+            if (door != null)
             {
-                doors[i].position = targetPositions[i];
+                door.position = GetTargetPosition(colorId);
             }
         }
     }
