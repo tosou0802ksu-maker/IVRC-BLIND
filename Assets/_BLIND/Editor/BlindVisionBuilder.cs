@@ -1556,7 +1556,7 @@ namespace BLIND.EditorTools
         /// 他と違うリズムで脈打つ ―― サーモ役だけが気付ける異常として置いている。
         /// どの個体になるかは名前から決まるので、作り直しても入れ替わらない。
         /// </summary>
-        static string WireBodyDrift()
+        public static string WireBodyDrift()
         {
             var driftType = System.Type.GetType("ThermalBodyDrift, Assembly-CSharp");
             if (driftType == null) return "  ThermalBodyDrift が未コンパイル。体温の揺らぎは未設定。";
@@ -1575,7 +1575,11 @@ namespace BLIND.EditorTools
                     var m = r.sharedMaterial;
                     if (m == null) continue;
                     var mn = m.name;
-                    if (mn == "Thermal_Body" || mn == "Thermal_Skin" || mn == "Thermal_Burning")
+                    // ⚠️ 体温だけでなく「余熱」「熱源」も揺らす対象に入れる。
+                    //    room8 のように通り抜けるだけの部屋は、温度が全部固定だと
+                    //    サーモ役の画面が静止画になって見るものが無くなる。
+                    if (mn == "Thermal_Body" || mn == "Thermal_Skin" || mn == "Thermal_Burning"
+                     || mn == "Thermal_LockerWarm" || mn == "Thermal_PipeHot")
                         bodies.Add(r);
                 }
 
