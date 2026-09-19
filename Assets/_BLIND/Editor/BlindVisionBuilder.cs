@@ -827,6 +827,9 @@ namespace BLIND.EditorTools
         {
             "knight", "bishop", "rook", "pawn", "queen", "king",
             "smallduck", "giantduck", "rubberduck",
+            // ⚠️ 看板は形が意味を持つ。箱に置き換わるとサーモ役には
+            //    ただの直方体になり、何が置いてあるのか分からない（作者指摘）。
+            "wetfloorsign", "props_wetfloorsign",
         };
 
         /// <summary>
@@ -1172,6 +1175,11 @@ namespace BLIND.EditorTools
                     {
                         if (t == null) continue;
                         if (t.gameObject.layer != LayerThermal && t.gameObject.layer != LayerEcho) continue;
+                        // ⚠️ ギミックが自分で作った物は残す。
+                        //    room6 の施錠扉は動く物なので、扉が自前で持っている
+                        //    T_Leaf / E_Leaf をこの掃除が毎回消していた。結果、
+                        //    **扉がサーモ役とエコロケ役にだけ見えない**状態になっていた。
+                        if (IsGimmickOwned(t)) continue;
                         var n2 = t.name;
                         if (n2.StartsWith("T_") || n2.StartsWith("E_") || n2.StartsWith(FxPrefix)) stale.Add(t.gameObject);
                     }

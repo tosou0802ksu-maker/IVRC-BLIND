@@ -34,9 +34,13 @@ namespace BLIND.EditorTools
         const string RoomName  = "room8";
         const string GroupName = "Props_WallPipes_Generated";
 
-        /// <summary>部屋の内側の範囲(world)。GeneratedRoom/Walls の実測値。</summary>
-        const float X0 = -21.3f, X1 = -9.1f;
-        const float Z0 = -47.9f, Z1 = -40.7f;
+        /// <summary>
+        /// 部屋の内側の範囲(world)。GeneratedRoom/Walls の実測値。
+        /// ⚠️ Room8Widen で部屋を広げたら、ここも必ず合わせること。
+        ///    ずれたまま流すと、配管が宙に浮くか壁にめり込む。
+        /// </summary>
+        const float X0 = -27.2f, X1 = -9.1f;
+        const float Z0 = -51.3f, Z1 = -40.7f;
         const float WallTop = 4.0f;
 
         /// <summary>壁面からの浮かせ量(m)。0 だと壁と Zファイティングを起こす。</summary>
