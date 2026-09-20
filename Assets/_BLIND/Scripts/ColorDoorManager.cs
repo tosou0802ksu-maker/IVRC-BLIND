@@ -9,6 +9,9 @@ using VRC.Udon;
 // ColorSignalButton から OnColorSelected(colorId) を呼ばれると、
 // その色に対応する扉だけを対応する座標へ瞬間移動させる。
 // 一度移動した扉はそのまま残る(他の色が選ばれても戻らない)。
+//
+// finalDoor(任意): 赤/青/緑の3色すべてが選ばれたときだけ、
+// 別枠で座標移動する第四の扉。一度開いたら閉じない。
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class ColorDoorManager : UdonSharpBehaviour
 {
@@ -23,6 +26,10 @@ public class ColorDoorManager : UdonSharpBehaviour
     [Header("緑 (2)")]
     [SerializeField] private Transform greenDoor;
     [SerializeField] private Vector3 greenTargetPosition;
+
+    [Header("全色そろった時に開く扉(任意)")]
+    [SerializeField] private Transform finalDoor;
+    [SerializeField] private Vector3 finalTargetPosition;
 
     [UdonSynced] private int movedFlags;
 
@@ -65,6 +72,11 @@ public class ColorDoorManager : UdonSharpBehaviour
         return (movedFlags & (1 << colorId)) != 0;
     }
 
+    private bool AreAllSelected()
+    {
+        return (movedFlags & 0b111) == 0b111;
+    }
+
     private Transform GetDoor(int colorId)
     {
         switch (colorId)
@@ -101,6 +113,11 @@ public class ColorDoorManager : UdonSharpBehaviour
             {
                 door.position = GetTargetPosition(colorId);
             }
+        }
+
+        if (finalDoor != null && AreAllSelected())
+        {
+            finalDoor.position = finalTargetPosition;
         }
     }
 }
