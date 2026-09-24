@@ -65,10 +65,47 @@ namespace BLIND.EditorTools
 
         const string GenMatDir = "Assets/_BLIND/Art/Materials/Gimmick";
 
+        /// <summary>
+        /// アヒルの「落ちたら戻す」高さ(m)。CarryableItem の既定値 -1.5 のままにしない。
+        ///
+        /// ⚠️ プールは深さ1〜2mで、底に沈んだアヒルは最初から y -1.5 より下にいる
+        ///    (SmallDuck_6 は -1.70)。既定値のままだと開始位置そのものが「落ちた」扱いになり、
+        ///    戻す → また落ちた判定 → 戻す…を毎フレーム繰り返してテレポートし続けた。
+        ///    プールの底より十分下に置くこと。
+        /// </summary>
+        const float DuckRespawnBelowY = -3.0f;
+
         [MenuItem("BLIND/部屋修正/7. room6のアヒルギミックを作る")]
         public static void Menu()
         {
             Debug.Log(Build());
+        }
+
+        /// <summary>
+        /// 配置は変えずに、今いるアヒル全員の「落ちたら戻す」高さだけを直す。
+        /// 7番を押し直すと配り方と「運ぶ3体」が変わるので、それを避けたいとき用。
+        /// </summary>
+        [MenuItem("BLIND/部屋修正/7b. room6のアヒルの落下判定だけ直す")]
+        public static void FixRespawnMenu()
+        {
+            var t = System.Type.GetType("CarryableItem, Assembly-CSharp");
+            if (t == null) { Debug.LogError("BLIND: CarryableItem が見つからない"); return; }
+
+            var rooms = GameObject.Find("=== ROOMS ===");
+            Transform room = null;
+            if (rooms != null) foreach (Transform r in rooms.transform) if (r.name == "room6") room = r;
+            if (room == null) { Debug.LogError("BLIND: room6 が無い"); return; }
+
+            int n = 0;
+            foreach (var c in room.GetComponentsInChildren(t, true))
+            {
+                if (!c.name.StartsWith("SmallDuck")) continue;
+                SetFloat(c, "respawnBelowY", DuckRespawnBelowY);
+                PushUdon(c);
+                n++;
+            }
+            UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(room.gameObject.scene);
+            Debug.Log("アヒル: " + n + "体の落下判定を " + DuckRespawnBelowY.ToString("F1") + "m にした（シーンを保存すること）");
         }
 
         public static string Build()
@@ -1289,6 +1326,7 @@ namespace BLIND.EditorTools
                 {
                     if (sync != null) SetObj(carry, "objectSync", sync);
                     if (pick != null) SetObj(carry, "pickup", pick);
+                    SetFloat(carry, "respawnBelowY", DuckRespawnBelowY);
                     SetSyncMode(carry, "None");
                     PushUdon(carry);
                     if (hot) items.Add(carry);
@@ -1631,6 +1669,15 @@ namespace BLIND.EditorTools
             var p = so.FindProperty(field);
             if (p == null) { Debug.LogError("BLIND: フィールドが無い " + field); return; }
             p.objectReferenceValue = value;
+            so.ApplyModifiedProperties();
+        }
+
+        static void SetFloat(Component c, string field, float value)
+        {
+            var so = new SerializedObject(c);
+            var p = so.FindProperty(field);
+            if (p == null) { Debug.LogError("BLIND: フィールドが無い " + field); return; }
+            p.floatValue = value;
             so.ApplyModifiedProperties();
         }
 
