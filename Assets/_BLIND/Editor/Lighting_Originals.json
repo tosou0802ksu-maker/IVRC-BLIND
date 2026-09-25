@@ -1,0 +1,2203 @@
+{
+    "ambient": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+    ],
+    "ambientMode": 3,
+    "lights": [
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1118994937-0",
+            "path": "=== ROOMS ===/room1/room1items/lights/PoolLight_2_2 (5)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-946064741-0",
+            "path": "=== ROOMS ===/room1/room1items/lights/PoolLight_2_2 (6)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1962178123-0",
+            "path": "=== ROOMS ===/room1/room1items/lights/PoolLight_2_2 (7)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-477246986-0",
+            "path": "=== ROOMS ===/room1/room1items/lights/PoolLight_2_2 (8)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1535695113-0",
+            "path": "=== ROOMS ===/room2/room2items/lights/PoolLight_2_2 (5)",
+            "intensity": 0.6000000238418579,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1897236249-0",
+            "path": "=== ROOMS ===/room2/room2items/lights/PoolLight_2_2 (10)",
+            "intensity": 0.6000000238418579,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1973314693-0",
+            "path": "=== ROOMS ===/room2/room2items/lights/PoolLight_2_2 (6)",
+            "intensity": 0.6000000238418579,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-337178830-0",
+            "path": "=== ROOMS ===/room2/room2items/lights/PoolLight_2_2 (9)",
+            "intensity": 0.6000000238418579,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-885570060-0",
+            "path": "=== ROOMS ===/room2/room2items/lights/PoolLight_2_2 (7)",
+            "intensity": 0.6000000238418579,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1584622923-0",
+            "path": "=== ROOMS ===/room2/room2items/lights/PoolLight_2_2 (8)",
+            "intensity": 0.6000000238418579,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-94187636-0",
+            "path": "=== ROOMS ===/room2/room2items/lights/PoolLight_2_2 (1)",
+            "intensity": 1.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1539021508-0",
+            "path": "=== ROOMS ===/room2/room2items/lights/PoolLight_2_2 (14)",
+            "intensity": 1.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2139789155-0",
+            "path": "=== ROOMS ===/room2/room2items/lights/PoolLight_2_2 (2)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1346811335-0",
+            "path": "=== ROOMS ===/room2/room2items/lights/PoolLight_2_2 (13)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1105917244-0",
+            "path": "=== ROOMS ===/room2/room2items/lights/PoolLight_2_2 (3)",
+            "intensity": 3.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-949901310-0",
+            "path": "=== ROOMS ===/room2/room2items/lights/PoolLight_2_2 (12)",
+            "intensity": 3.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1526423211-0",
+            "path": "=== ROOMS ===/room2/room2items/lights/PoolLight_2_2 (4)",
+            "intensity": 3.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1512682599-0",
+            "path": "=== ROOMS ===/room2/room2items/lights/PoolLight_2_2 (15)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1536856369-0",
+            "path": "=== ROOMS ===/room2/room2items/lights/PoolLight_2_2 (16)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-854983096-0",
+            "path": "=== ROOMS ===/room2/room2items/lights/PoolLight_2_2 (17)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1768273457-0",
+            "path": "=== ROOMS ===/room2/room2items/lights/PoolLight_2_2 (18)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-970871117-0",
+            "path": "=== ROOMS ===/room3/room3items/light_set_garage/SpotLight_room3_Left",
+            "intensity": 4.0,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-530380896-0",
+            "path": "=== ROOMS ===/room3/room3items/light_set_right1/SpotLight_room3_Left",
+            "intensity": 5.0,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-60445772-0",
+            "path": "=== ROOMS ===/room3/room3items/light_set_right2/SpotLight_room3_Left",
+            "intensity": 5.0,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1258913844-0",
+            "path": "=== ROOMS ===/room3/room3items/light_set_right3/SpotLight_room3_Left",
+            "intensity": 5.0,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-835429318-0",
+            "path": "=== ROOMS ===/room3/room3items/light_set_left1/SpotLight_room3_Left",
+            "intensity": 5.0,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1901923987-0",
+            "path": "=== ROOMS ===/room3/room3items/light_set_left2/SpotLight_room3_Left",
+            "intensity": 5.0,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1311009208-0",
+            "path": "=== ROOMS ===/room3/room3items/light_set_left3/SpotLight_room3_Left",
+            "intensity": 5.0,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1761130091-0",
+            "path": "=== ROOMS ===/room4/room4items/lightsning/PoolLight_2_2 (5)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1119669967-0",
+            "path": "=== ROOMS ===/room4/room4items/lightsning/PoolLight_2_2 (9)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1668784738-0",
+            "path": "=== ROOMS ===/room4/room4items/lightsning/PoolLight_2_2 (6)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1673543497-0",
+            "path": "=== ROOMS ===/room4/room4items/lightsning/PoolLight_2_2 (7)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1105028735-0",
+            "path": "=== ROOMS ===/room4/room4items/lightsning/PoolLight_2_2 (11)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1668829787-0",
+            "path": "=== ROOMS ===/room4/room4items/lightsning/PoolLight_2_2 (8)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-54554363-0",
+            "path": "=== ROOMS ===/room4/room4items/lightsning/PoolLight_2_2 (12)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1116477041-0",
+            "path": "=== ROOMS ===/room4/room4items/lightsning/PoolLight_2_2 (10)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1115426662-0",
+            "path": "=== ROOMS ===/room4/room4items/lightsning/PoolLight_2_2 (13)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1272894297-0",
+            "path": "=== ROOMS ===/room5/room5items/lightsss/Spot Light",
+            "intensity": 5.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-228438274-0",
+            "path": "=== ROOMS ===/room5/room5items/lightsss/Spot Light (2)",
+            "intensity": 5.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1209428222-0",
+            "path": "=== ROOMS ===/room5/room5items/lightsss/Spot Light (1)",
+            "intensity": 5.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-61682306-0",
+            "path": "=== ROOMS ===/room6/Lights/PoolLight_0_0",
+            "intensity": 1.6575000286102296,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-28662771-0",
+            "path": "=== ROOMS ===/room6/Lights/PoolLight_0_1",
+            "intensity": 0.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-180750022-0",
+            "path": "=== ROOMS ===/room6/Lights/PoolLight_0_2",
+            "intensity": 0.10000000149011612,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1486930318-0",
+            "path": "=== ROOMS ===/room6/Lights/PoolLight_1_0",
+            "intensity": 1.0,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-940004278-0",
+            "path": "=== ROOMS ===/room6/Lights/PoolLight_1_1",
+            "intensity": 0.7800000309944153,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2015263963-0",
+            "path": "=== ROOMS ===/room6/Lights/PoolLight_1_2",
+            "intensity": 0.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2020956198-0",
+            "path": "=== ROOMS ===/room6/Lights/PoolLight_2_0",
+            "intensity": 2.242500066757202,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1624249084-0",
+            "path": "=== ROOMS ===/room6/Lights/PoolLight_2_1",
+            "intensity": 2.7300000190734865,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1792360857-0",
+            "path": "=== ROOMS ===/room6/Lights/PoolLight_2_2",
+            "intensity": 0.9750000238418579,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1383053633-0",
+            "path": "=== ROOMS ===/room8/Lights/RoomLight_2_1.9",
+            "intensity": 2.0999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2095024125-0",
+            "path": "=== ROOMS ===/room8/Lights/RoomLight_2_5.1",
+            "intensity": 2.0999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1054499894-0",
+            "path": "=== ROOMS ===/room8/Lights/RoomLight_6_1.9",
+            "intensity": 1.0,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1250701531-0",
+            "path": "=== ROOMS ===/room8/Lights/RoomLight_6_5.1",
+            "intensity": 0.6499999761581421,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-132464482-0",
+            "path": "=== ROOMS ===/room8/Lights/RoomLight_10_1.9",
+            "intensity": 1.899999976158142,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-907975481-0",
+            "path": "=== ROOMS ===/room8/Lights/RoomLight_10_5.1",
+            "intensity": 0.30000001192092898,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-868294340-0",
+            "path": "=== ROOMS ===/room8/Lights/RoomLight_x-11_z-49",
+            "intensity": 2.0999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1353316973-0",
+            "path": "=== ROOMS ===/room8/Lights/RoomLight_x-15_z-49",
+            "intensity": 2.0999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-764214772-0",
+            "path": "=== ROOMS ===/room8/Lights/RoomLight_x-19_z-49",
+            "intensity": 2.0999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2120374796-0",
+            "path": "=== ROOMS ===/room8/Lights/RoomLight_x-23_z-43",
+            "intensity": 2.0999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1248148939-0",
+            "path": "=== ROOMS ===/room8/Lights/RoomLight_x-23_z-46",
+            "intensity": 2.0999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-126831348-0",
+            "path": "=== ROOMS ===/room8/Lights/RoomLight_x-23_z-49",
+            "intensity": 2.0999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-114793075-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (2)/PoolLight_2_2 (5)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1477896252-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (2)/PoolLight_2_2 (9)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1633912391-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (2)/PoolLight_2_2 (6)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1023507000-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (2)/PoolLight_2_2 (7)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-250220225-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (2)/PoolLight_2_2 (11)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1140807279-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (2)/PoolLight_2_2 (8)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1796662536-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (2)/PoolLight_2_2 (12)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-745792891-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (2)/PoolLight_2_2 (10)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-72953911-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (2)/PoolLight_2_2 (13)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-119019352-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (3)/PoolLight_2_2 (5)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2059032338-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (3)/PoolLight_2_2 (9)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1873946107-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (3)/PoolLight_2_2 (6)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1348843334-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (3)/PoolLight_2_2 (7)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-18843667-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (3)/PoolLight_2_2 (11)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1170868991-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (3)/PoolLight_2_2 (8)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1814718547-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (3)/PoolLight_2_2 (12)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-898401508-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (3)/PoolLight_2_2 (10)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1070562272-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (3)/PoolLight_2_2 (13)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1612135689-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (4)/PoolLight_2_2 (5)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-507674982-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (4)/PoolLight_2_2 (9)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1213631255-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (4)/PoolLight_2_2 (6)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1941571198-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (4)/PoolLight_2_2 (7)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-164555969-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (4)/PoolLight_2_2 (11)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-718242220-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (4)/PoolLight_2_2 (8)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-393581660-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (4)/PoolLight_2_2 (12)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1315343633-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (4)/PoolLight_2_2 (10)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-879946264-0",
+            "path": "=== ROOMS ===/room9/room910items/lights/lights (4)/PoolLight_2_2 (13)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-595346912-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_0/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-885224815-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_1/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2096646740-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_2/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1364008126-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_3/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-123476116-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_4/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-809173135-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_5/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1199041112-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_6/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1247286858-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_7/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-248666166-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_8/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-89269273-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_9/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1950568886-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_10/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1850452189-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_11/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-397509054-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_12/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-313102894-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_13/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-411219262-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_14/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-694004566-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_15/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-624379809-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_16/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1228211677-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_17/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1033936624-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_18/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-617445768-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_19/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-274667083-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_20/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1421419751-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_21/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-882935856-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_22/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-671586269-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_23/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-511373139-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_24/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-653862866-0",
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_25/Light",
+            "intensity": 2.5999999046325685,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-319966252-0",
+            "path": "=== ROOMS ===/room11/KeyProp_Generated/KeyLamp_Generated/Light_KeyShelf",
+            "intensity": 4.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1852709487-0",
+            "path": "=== ROOMS ===/room12/GeneratedRoom/Walls/Spot Light (3)",
+            "intensity": 1.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-923119019-0",
+            "path": "=== ROOMS ===/room12/GeneratedRoom/Walls/Spot Light (11)",
+            "intensity": 1.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-626511842-0",
+            "path": "=== ROOMS ===/room12/GeneratedRoom/Walls/Spot Light (4)",
+            "intensity": 1.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1779395128-0",
+            "path": "=== ROOMS ===/room12/GeneratedRoom/Walls/Spot Light (5)",
+            "intensity": 1.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-82553657-0",
+            "path": "=== ROOMS ===/room12/GeneratedRoom/Walls/Spot Light (6)",
+            "intensity": 1.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-649502423-0",
+            "path": "=== ROOMS ===/room12/GeneratedRoom/Walls/Spot Light (9)",
+            "intensity": 1.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1013870394-0",
+            "path": "=== ROOMS ===/room12/GeneratedRoom/Walls/Spot Light (7)",
+            "intensity": 1.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1301570505-0",
+            "path": "=== ROOMS ===/room12/GeneratedRoom/Walls/Spot Light (10)",
+            "intensity": 1.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1108086380-0",
+            "path": "=== ROOMS ===/room12/GeneratedRoom/Walls/Spot Light (8)",
+            "intensity": 1.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-988026070-0",
+            "path": "=== ROOMS ===/room12/GeneratedRoom/Walls/Spot Light (12)",
+            "intensity": 1.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-412606596-0",
+            "path": "=== ROOMS ===/room12/room12items/quiz/Spot Light",
+            "intensity": 5.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2136250985-0",
+            "path": "=== ROOMS ===/room12/room12items/quiz/Spot Light (1)",
+            "intensity": 5.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1403079609-0",
+            "path": "=== ROOMS ===/room12/room12items/quiz/Spot Light (2)",
+            "intensity": 5.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2108811607-0",
+            "path": "=== ROOMS ===/room13/room14_item/Spot Light (3)",
+            "intensity": 2.6600000858306886,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-61476785-0",
+            "path": "=== ROOMS ===/room13/room14_item/Spot Light (4)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1084275014-0",
+            "path": "=== ROOMS ===/room14/room14items/lights (5)/PoolLight_2_2 (5)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1101312645-0",
+            "path": "=== ROOMS ===/room14/room14items/lights (5)/PoolLight_2_2 (9)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-997482649-0",
+            "path": "=== ROOMS ===/room14/room14items/lights (5)/PoolLight_2_2 (6)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1363975252-0",
+            "path": "=== ROOMS ===/room14/room14items/lights (5)/PoolLight_2_2 (10)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-284311271-0",
+            "path": "=== ROOMS ===/room14/room14items/lights (5)/PoolLight_2_2 (7)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1284953991-0",
+            "path": "=== ROOMS ===/room14/room14items/lights (5)/PoolLight_2_2 (13)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1836115018-0",
+            "path": "=== ROOMS ===/room14/room14items/lights (5)/PoolLight_2_2 (11)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1719992168-0",
+            "path": "=== ROOMS ===/room14/room14items/lights (5)/PoolLight_2_2 (8)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-888998060-0",
+            "path": "=== ROOMS ===/room14/room14items/lights (5)/PoolLight_2_2 (14)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1485781260-0",
+            "path": "=== ROOMS ===/room14/room14items/lights (5)/PoolLight_2_2 (12)",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-791650380-0",
+            "path": "=== ROOMS ===/room15/Lighting/Pendant_0/Light",
+            "intensity": 3.164656400680542,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-340411313-0",
+            "path": "=== ROOMS ===/room15/Lighting/Pendant_1/Light",
+            "intensity": 0.699999988079071,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1716038102-0",
+            "path": "=== ROOMS ===/room15/Lighting/Pendant_2/Light",
+            "intensity": 1.0499999523162842,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-244363399-0",
+            "path": "=== ROOMS ===/room15/Lighting/Pendant_3/Light",
+            "intensity": 0.0,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-120834128-0",
+            "path": "=== ROOMS ===/room15/Lighting/Pendant_4/Light",
+            "intensity": 0.699999988079071,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-643702693-0",
+            "path": "=== ROOMS ===/room15/Lighting/Pendant_5/Light",
+            "intensity": 2.450000047683716,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-558222679-0",
+            "path": "=== ROOMS ===/room15/Lighting/Pendant_6/Light",
+            "intensity": 1.0499999523162842,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-331739556-0",
+            "path": "=== ROOMS ===/room15/Lighting/FillCool/CoolFill_0",
+            "intensity": 0.29750001430511477,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2077467401-0",
+            "path": "=== ROOMS ===/room15/Lighting/FillCool/CoolFill_1",
+            "intensity": 0.29750001430511477,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1591216932-0",
+            "path": "=== ROOMS ===/room15/Prop_GiantHand/HoleLight",
+            "intensity": 1.5,
+            "shadows": 2
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-105730902-0",
+            "path": "=== ROOMS ===/room16/GeneratedRoom/Ceiling/Spot Light (3)",
+            "intensity": 10.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2070918398-0",
+            "path": "=== ROOMS ===/room16/GeneratedRoom/Ceiling/Spot Light (4)",
+            "intensity": 10.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-133935284-0",
+            "path": "=== ROOMS ===/room16/GeneratedRoom/Ceiling/Spot Light (5)",
+            "intensity": 10.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1581980462-0",
+            "path": "=== ROOMS ===/room17/room17items/lights/ittun_light",
+            "intensity": 15.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1340735882-0",
+            "path": "=== ROOMS ===/room18/Lighting/Light_0",
+            "intensity": 0.8500000238418579,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-372613468-0",
+            "path": "=== ROOMS ===/room18/Lighting/Light_1",
+            "intensity": 0.8500000238418579,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-233955591-0",
+            "path": "=== ROOMS ===/room18/Lighting/Light_3",
+            "intensity": 0.8500000238418579,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1709288167-0",
+            "path": "=== ROOMS ===/room18/Lighting/Light_4",
+            "intensity": 1.0499999523162842,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1802280594-0",
+            "path": "=== ROOMS ===/room18/Lighting/Light_5",
+            "intensity": 0.8500000238418579,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1019323391-0",
+            "path": "=== ROOMS ===/room18/Lighting/Light_7",
+            "intensity": 0.8500000238418579,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1093904877-0",
+            "path": "=== ROOMS ===/room18/Lighting/Light_8",
+            "intensity": 0.8500000238418579,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-543725637-0",
+            "path": "=== ROOMS ===/room18/Prop_BurningMannequin/Mannequin/FireLight",
+            "intensity": 2.0,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-783766992-0",
+            "path": "=== ROOMS ===/room18/RingLight_0",
+            "intensity": 0.8999999761581421,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-400183503-0",
+            "path": "=== ROOMS ===/room18/RingLight_1",
+            "intensity": 0.8999999761581421,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2061687470-0",
+            "path": "=== ROOMS ===/room18/RingLight_2",
+            "intensity": 0.8999999761581421,
+            "shadows": 0
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1337305698-0",
+            "path": "=== ROOMS ===/room18/RingLight_3",
+            "intensity": 0.8999999761581421,
+            "shadows": 0
+        }
+    ],
+    "mats": [
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1318902504-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room1/room1items/light/typeBlight (0)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1755906541-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room1/room1items/light/typeBlight (1)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1052939007-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room1/room1items/light/typeBlight (3)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-418143322-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room1/room1items/light/typeBlight (2)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1675518436-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room4/room4items/lights/light (1)/typeBlight2 (1)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1537327699-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room4/room4items/lights/light (1)/typeBlight2 (2)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1170411827-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room4/room4items/lights/light (1)/typeBlight2 (3)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1304346413-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room4/room4items/lights/light (2)/typeBlight3 (1)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-75714546-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room4/room4items/lights/light (2)/typeBlight3 (2)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1427959030-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room4/room4items/lights/light (2)/typeBlight3 (3)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1569889476-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room4/room4items/lights/light(0)/typeBlight1 (1)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1886660443-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room4/room4items/lights/light(0)/typeBlight1 (2)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1419395491-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room4/room4items/lights/light(0)/typeBlight1 (3)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-972337723-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room5/room5items/lights/Sphere",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1162995954-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room5/room5items/lights/Sphere (2)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-344603768-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room5/room5items/lights/Sphere (1)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-590897022-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room6/LightPanels/LightPanel_2.67_2.33",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1963663681-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room6/LightPanels/LightPanel_2.67_11.67",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel_Dim.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1225241676-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room6/LightPanels/LightPanel_8_2.33",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1179178294-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room6/LightPanels/LightPanel_8_7",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel_Dim.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-596894843-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room6/LightPanels/LightPanel_13.33_2.33",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1770838432-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room6/LightPanels/LightPanel_13.33_7",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1693128517-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room6/LightPanels/LightPanel_13.33_11.67",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel_Dim.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-905082172-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/LightPanels/LightPanel_2_1.9",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1744654486-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/LightPanels/LightPanel_2_5.1",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-821961634-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/LightPanels/LightPanel_6_1.9",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1001470302-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/LightPanels/LightPanel_6_5.1",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel_Dim.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-339270823-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/LightPanels/LightPanel_10_1.9",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-349725084-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/LightPanels/LightPanel_10_5.1",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-126566417-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/LightPanels/LightPanel_x-11_z-49",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1863046839-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/LightPanels/LightPanel_x-15_z-49",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2103385282-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/LightPanels/LightPanel_x-19_z-49",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1990560939-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/LightPanels/LightPanel_x-23_z-43",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-552246196-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/LightPanels/LightPanel_x-23_z-46",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-37581504-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/LightPanels/LightPanel_x-23_z-49",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1145754936-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (1)/light (1)/typeBlight2 (1)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1983511416-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (1)/light (1)/typeBlight2 (2)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1876396355-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (1)/light (1)/typeBlight2 (3)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1146012153-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (1)/light (2)/typeBlight3 (1)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-821370970-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (1)/light (2)/typeBlight3 (2)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-575665245-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (1)/light (2)/typeBlight3 (3)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-139427850-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (1)/light(0)/typeBlight1 (1)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2062358719-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (1)/light(0)/typeBlight1 (2)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1902743767-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (1)/light(0)/typeBlight1 (3)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-71428559-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (2)/light (1)/typeBlight2 (1)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1713379825-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (2)/light (1)/typeBlight2 (2)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-510834328-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (2)/light (1)/typeBlight2 (3)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1060873996-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (2)/light (2)/typeBlight3 (1)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-73375414-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (2)/light (2)/typeBlight3 (2)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1146987637-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (2)/light (2)/typeBlight3 (3)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1898536666-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (2)/light(0)/typeBlight1 (1)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1564713021-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (2)/light(0)/typeBlight1 (2)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-145651657-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (2)/light(0)/typeBlight1 (3)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-386418202-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (3)/light (1)/typeBlight2 (1)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2121949318-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (3)/light (1)/typeBlight2 (2)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1033571271-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (3)/light (1)/typeBlight2 (3)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-776530556-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (3)/light (2)/typeBlight3 (1)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2144837309-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (3)/light (2)/typeBlight3 (2)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1353658037-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (3)/light (2)/typeBlight3 (3)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1197659535-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (3)/light(0)/typeBlight1 (1)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1279032675-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (3)/light(0)/typeBlight1 (2)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1347333042-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room9/room910items/lightss/lights (3)/light(0)/typeBlight1 (3)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1899665552-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_0/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-209440228-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_1/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-397801131-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_2/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-600382963-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_3/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-56501515-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_4/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1729913677-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_5/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-106575190-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_6/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1366430665-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_7/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1822356987-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_8/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-402565655-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_9/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1161490586-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_10/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-37126085-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_11/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-80546700-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_12/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-555110201-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_13/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-852507551-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_14/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-483837398-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_15/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-479536512-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_16/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-209108396-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_17/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-742209378-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_18/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1989992986-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_19/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1822938253-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_20/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1575238687-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_21/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-94473899-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_22/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1022474293-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_23/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-237197362-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_24/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-728200645-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/Room12_Lights/Fluoro_25/Lens",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_LampLens.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-121628161-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room12/room12items/capsules/Capsule (3)",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_LampGlass.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1027180117-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room12/room12items/capsules/Capsule",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_LampGlass.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-318997152-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room12/room12items/capsules/Capsule (2)",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_LampGlass.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-719697905-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room12/room12items/capsules/Capsule (1)",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_LampGlass.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-21363249-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room12/room12items/capsules/Capsule (8)",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_LampGlass.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-9602891-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room12/room12items/capsules/Capsule (4)",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_LampGlass.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-200593534-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room12/room12items/capsules/Capsule (5)",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_LampGlass.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-839733226-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room12/room12items/capsules/Capsule (9)",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_LampGlass.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2059019840-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room12/room12items/capsules/Capsule (6)",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_LampGlass.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1741476705-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room12/room12items/capsules/Capsule (7)",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_LampGlass.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-80675376-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room14/room14items/lights/lights (4)/light (1)/typeBlight2 (1)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2087344024-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room14/room14items/lights/lights (4)/light (1)/typeBlight2 (2)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1453774809-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room14/room14items/lights/lights (4)/light (1)/typeBlight2 (3)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-122004590-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room14/room14items/lights/lights (4)/light(0)/typeBlight1 (1)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1783021474-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room14/room14items/lights/lights (4)/light(0)/typeBlight1 (2)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1016703340-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room14/room14items/lights/lights (4)/light(0)/typeBlight1 (3)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-563011824-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room14/room14items/lights/lights (5)/light (1)/typeBlight2 (2)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-287992890-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room14/room14items/lights/lights (5)/light (1)/typeBlight2 (3)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-151462520-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room14/room14items/lights/lights (5)/light(0)/typeBlight1 (2)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1842591209-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room14/room14items/lights/lights (5)/light(0)/typeBlight1 (3)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1809543712-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/Lighting/Pendant_0/Globe",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_LampGlass.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1029898554-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/Lighting/Pendant_1/Globe",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_LampGlass.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1256724832-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/Lighting/Pendant_2/Globe",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_LampGlass.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-631105482-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/Lighting/Pendant_3/Globe",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_LampGlass.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1550667707-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/Lighting/Pendant_4/Globe",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_LampGlass.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-714838263-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/Lighting/Pendant_5/Globe",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_LampGlass.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-735657714-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/Lighting/Pendant_6/Globe",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_LampGlass.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1583500764-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room16/GeneratedRoom/Ceiling/Capsule",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_LampGlass.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1024343770-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room16/GeneratedRoom/Ceiling/Capsule (1)",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_LampGlass.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1313295659-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room16/GeneratedRoom/Ceiling/Capsule (2)",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_LampGlass.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-813965411-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object/Plane (2)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-173792861-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object/Plane (4)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-393266589-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object/Plane (3)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1120890995-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (7)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-685718720-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (6)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-747707908-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (5)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1613306693-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (7)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1538012048-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (6)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-104837360-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (5)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-757310438-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (7)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2089910121-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (6)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-136294544-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (5)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-889310477-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (7)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-290509641-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (6)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1131007335-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (5)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1073000522-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (7)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-746666208-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (6)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-569087363-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (5)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-157794491-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (7)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-876864414-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (6)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-237771936-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (5)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1883320576-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (6)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1309621744-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (5)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-322029322-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (6)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1153167302-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (5)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2011024350-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (6)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-98280339-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (5)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-66616402-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (6)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-179188468-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (5)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1950808119-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (6)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-991208844-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (5)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-496738772-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (6)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-255949867-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (5)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-637943434-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (6)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1065248573-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (5)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1855479868-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (6)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1451985465-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (5)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-10113651-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (2)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1444524170-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (4)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1294198313-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (5)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1041202206-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (6)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1031632140-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (7)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-462853290-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (5)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1588402266-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (6)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-209113726-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (7)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-773240558-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (4)/Plane (3)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2089811925-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (3)/Plane (2)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1435029025-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (3)/Plane (4)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-827532395-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (3)/Plane (5)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1157089671-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (3)/Plane (6)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-595674619-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (3)/Plane (7)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1499970338-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (3)/Plane (3)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-169714056-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (2)/Plane (7)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1440086309-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (2)/Plane (3)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-676536052-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (2)/Plane (6)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1677779388-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (2)/Plane (5)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-859669851-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (2)/Plane (4)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1429543363-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/chess light 3d object (2)/Plane (2)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-981388327-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/Plane (2)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-615413905-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/Plane (4)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2938969-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/Plane (5)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1509488324-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/Plane (7)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-39112270-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/room17items/chess/chess light 3d object (1)/Plane (3)",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-224767928-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room18/Lighting/LightPanel_0",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-340693842-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room18/Lighting/LightPanel_1",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1325567920-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room18/Lighting/LightPanel_3",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-40265673-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room18/Lighting/LightPanel_4",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1510147661-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room18/Lighting/LightPanel_5",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1971931782-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room18/Lighting/LightPanel_7",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-728579425-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room18/Lighting/LightPanel_8",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_LightPanel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1239333420-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room19/room19items/typeBlight1",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-748210910-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room19/room19items/typeBlight2",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-11121574-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room19/room19items/typeBlight3",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2128506804-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room19/room19items/typeBlight4",
+            "mat": "Assets/_BLIND/Art/Materials/light.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2071508164-0",
+            "slot": 1,
+            "path": "=== ROOMS ===/room2/room2items/keikoutous/keikoutou(1)",
+            "mat": "Assets/_BLIND/Art/Models/8ban/keikoutoutexture/mounted_fluorescent_lights_glass2.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1398344312-0",
+            "slot": 1,
+            "path": "=== ROOMS ===/room2/room2items/keikoutous/keikoutou (2)",
+            "mat": "Assets/_BLIND/Art/Models/8ban/keikoutoutexture/mounted_fluorescent_lights_glass2.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1593516144-0",
+            "slot": 1,
+            "path": "=== ROOMS ===/room2/room2items/keikoutous/keikoutou (3)",
+            "mat": "Assets/_BLIND/Art/Models/8ban/keikoutoutexture/mounted_fluorescent_lights_glass2.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2008689688-0",
+            "slot": 1,
+            "path": "=== ROOMS ===/room2/room2items/keikoutous/keikoutou(4)",
+            "mat": "Assets/_BLIND/Art/Models/8ban/keikoutoutexture/mounted_fluorescent_lights_glass 1.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-493272564-0",
+            "slot": 1,
+            "path": "=== ROOMS ===/room2/room2items/keikoutous/keikoutou(5)",
+            "mat": "Assets/_BLIND/Art/Models/8ban/keikoutoutexture/mounted_fluorescent_lights_glass 1.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1192838859-0",
+            "slot": 1,
+            "path": "=== ROOMS ===/room2/room2items/keikoutous/keikoutou (6)",
+            "mat": "Assets/_BLIND/Art/Models/8ban/keikoutoutexture/mounted_fluorescent_lights_glass.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1937461879-0",
+            "slot": 1,
+            "path": "=== ROOMS ===/room2/room2items/keikoutous/keikoutou(7)",
+            "mat": "Assets/_BLIND/Art/Models/8ban/keikoutoutexture/mounted_fluorescent_lights_glass.mat"
+        }
+    ]
+}

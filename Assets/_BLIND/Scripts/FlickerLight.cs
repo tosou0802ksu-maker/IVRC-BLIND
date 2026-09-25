@@ -44,6 +44,16 @@ public class FlickerLight : UdonSharpBehaviour
     [Tooltip("0 にすると完全に消える。0.12 くらい残すと「消えかけ」に見えて、暗所でも位置を見失わない。")]
     [SerializeField] private float floorLevel = 0.12f;
 
+    [Header("明滅の種類")]
+    [Tooltip("0 = 切れかけの蛍光灯（落ち着かずにちらつき、たまに一瞬落ちる）\n" +
+             "1 = 切れかけの電球（ほぼ点いているが、数秒おきに一度つまずいてから消え、戻る）")]
+    [SerializeField] private int style = 0;
+
+    [Header("時間のずらし(秒)")]
+    [Tooltip("同じ種類の灯りが部屋をまたいで同時に明滅すると、機械が制御しているように見える。" +
+             "灯りごとに違う値を入れて、ばらばらに壊れているように見せる。")]
+    [SerializeField] private float phaseOffset = 0f;
+
     [Header("更新間隔(秒)")]
     [Tooltip("毎フレーム更新する必要は無い。0.033 秒ごとで十分ちらついて見える。")]
     [SerializeField] private float updateInterval = 0.033f;
@@ -67,7 +77,8 @@ public class FlickerLight : UdonSharpBehaviour
         if (timer < updateInterval) return;
         timer = 0f;
 
-        float level = Level(Time.time);
+        float t = Time.time + phaseOffset;
+        float level = style == 1 ? BulbLevel(t) : Level(t);
 
         if (target != null) target.intensity = baseIntensity * level;
 
@@ -111,6 +122,28 @@ public class FlickerLight : UdonSharpBehaviour
         // まれに二度落ちさせる（完全な周期に聞こえないように）
         float phase2 = Mathf.Repeat(t, 7.3f);
         if (phase2 < 0.06f) v *= 0.25f;
+
+        return Mathf.Clamp(v, floorLevel, 1f);
+    }
+
+    /// <summary>
+    /// 切れかけの電球。ほとんどの時間は普通に点いていて、
+    /// 9.7 秒ごとに「一度つまずいてから、しばらく消えて、戻る」。
+    ///
+    /// 蛍光灯型と違って普段は落ち着いているので、消えた瞬間に目が行く。
+    /// 人形や鏡のある部屋で「消えている間に何かが動いたかもしれない」と思わせる用途。
+    ///
+    /// ⚠️ 1 秒間の明滅は 2 回まで（つまずき 1 回＋消灯 1 回）。
+    ///    WCAG の目安（1 秒に 3 回を超えない）を下回るようにしてある。つまずきを増やさないこと。
+    /// </summary>
+    private float BulbLevel(float t)
+    {
+        // 普段のわずかな揺れ。完全に一定だと電球に見えない
+        float v = 0.93f + 0.04f * Mathf.Sin(t * 2.3f) + 0.03f * Mathf.Sin(t * 7.9f + 0.7f);
+
+        float cyc = Mathf.Repeat(t, 9.7f);
+        if (cyc < 0.08f) v *= 0.35f;                     // つまずき
+        else if (cyc > 0.26f && cyc < 0.95f) v = 0f;     // 消灯（下限 floorLevel まで落ちる）
 
         return Mathf.Clamp(v, floorLevel, 1f);
     }
