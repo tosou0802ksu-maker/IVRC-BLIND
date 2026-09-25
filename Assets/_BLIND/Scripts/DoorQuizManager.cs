@@ -1,53 +1,38 @@
-﻿
+
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
-using VRC.Udon.Common.Interfaces;
 
-// ドア選択式クイズ(1問分)。
+// ドア選択式クイズ(1問分)の「扉の移動」担当。
 //
 // 仕様:
-//   ・3枚のドアのうち1枚が正解
-//   ・正解ドアをInteract → ドアが指定座標へ瞬間移動(開く)
-//   ・不正解ドアをInteract → 全員チェックポイントへ戻される
-//   ・正解するまで何度でも挑戦可能
+//   ・どの扉でも Interact → その扉が指定座標へ瞬間移動(開く)。正誤はまだ分からない
+//   ・開いている扉は1枚だけ。別の扉を開けると前の扉は閉じる
+//   ・正誤・効果音・リスポーンは扉の先に置いた DoorPassJudge が担当する
+//     (くぐった時に判定するため。不正解なら DoorPassJudge が CloseDoor を呼ぶ)
+//   ・正解の扉をくぐったら MarkSolved で開きっぱなしに固定する
 //   ・3セット配置しても各インスタンスが独立しているため混線しない
 //
 // ドアの閉じた位置は Start() で自動記憶する。
-// 開いた位置は doorOpenPositions で Inspector から指定する。
+// 開いた位置は doorXOpenPosition で Inspector から指定する（不正解の扉も必要）。
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class DoorQuizManager : UdonSharpBehaviour
 {
-    [Header("正解のドア番号(0始まり)")]
-    [SerializeField] private int correctDoorIndex;
-
     [Header("ドア(3枚)")]
     [SerializeField] private Transform door0;
     [SerializeField] private Transform door1;
     [SerializeField] private Transform door2;
 
-    [Header("ドアの開いた位置(ローカル座標・3つ分・正解ドアのみ使用)")]
+    [Header("ドアの開いた位置(ローカル座標・3つ分)")]
     [SerializeField] private Vector3 door0OpenPosition;
     [SerializeField] private Vector3 door1OpenPosition;
     [SerializeField] private Vector3 door2OpenPosition;
 
-    [Header("不正解時の復帰先")]
-    [SerializeField] private CheckpointManager checkpointManager;
+    // 開いている扉の番号。-1 = 全部閉じている
+    [UdonSynced] private int openDoorIndex = -1;
 
-    [Header("音声(任意)")]
-    [SerializeField] private AudioClip correctClip;
-    [SerializeField] private AudioClip wrongClip;
-    [Tooltip("鳴らすスピーカー(任意)。空ならこのオブジェクトの位置でそのまま鳴らす。")]
-    [SerializeField] private AudioSource correctSound;
-    [SerializeField] private AudioSource wrongSound;
-
-    [Header("不正解音からテレポートまでの待ち時間（秒）")]
-    [SerializeField] private float wrongDelay = 0.8f;
-
-    private bool wrongPending;
-
-    // 0 = 未回答 / 1 = 正解済み
+    // 正解の扉をくぐったら 1。以降は扉を動かさない
     [UdonSynced] private int solvedState;
 
     // 閉じた位置を自動記憶
@@ -69,94 +54,60 @@ public class DoorQuizManager : UdonSharpBehaviour
         ApplyState();
     }
 
-    // DoorQuizChoice から呼ばれる
+    // DoorQuizChoice から呼ばれる。名前は既存の配線を活かすためそのまま
     public void SubmitChoice(int doorIndex)
     {
         if (solvedState != 0) return;
+        if (openDoorIndex == doorIndex) return;
 
-        if (doorIndex == correctDoorIndex)
-        {
-            if (!Networking.IsOwner(gameObject))
-            {
-                Networking.SetOwner(Networking.LocalPlayer, gameObject);
-            }
-
-            solvedState = 1;
-            RequestSerialization();
-
-            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(OnCorrect));
-        }
-        else
-        {
-            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(OnWrong));
-        }
-    }
-
-    public void OnCorrect()
-    {
+        TakeOwnership();
+        openDoorIndex = doorIndex;
+        RequestSerialization();
         ApplyState();
-        PlaySound(correctClip, correctSound);
     }
 
-    // 全員のクライアントで動く。
-    // ⚠️ 音を鳴らした直後に戻すと音源から離れて聞こえないので、少し待ってから戻す。
-    // ⚠️ ここで TriggerDeath を呼ばないこと。OnWrong 自体が全員で動いているので、
-    //    3人ぶん合図が飛んで3回戻される。自分だけ戻す RespawnAll を直接呼ぶ。
-    public void OnWrong()
+    // DoorPassJudge から呼ばれる（不正解の扉をくぐった本人だけが呼ぶ）
+    public void CloseDoor(int doorIndex)
     {
-        if (wrongPending) return;
-        wrongPending = true;
+        if (solvedState != 0) return;
+        if (openDoorIndex != doorIndex) return;
 
-        PlaySound(wrongClip, wrongSound);
-        SendCustomEventDelayedSeconds(nameof(RespawnAfterWrong), wrongDelay);
+        TakeOwnership();
+        openDoorIndex = -1;
+        RequestSerialization();
+        ApplyState();
     }
 
-    public void RespawnAfterWrong()
+    // DoorPassJudge から呼ばれる（正解の扉をくぐった本人だけが呼ぶ）
+    public void MarkSolved(int doorIndex)
     {
-        wrongPending = false;
+        if (solvedState != 0) return;
 
-        if (checkpointManager != null)
-        {
-            checkpointManager.RespawnAll();
-        }
+        TakeOwnership();
+        solvedState = 1;
+        openDoorIndex = doorIndex;
+        RequestSerialization();
+        ApplyState();
     }
 
-    // clip が空なら、以前の設定(AudioSource に音を入れてある)をそのまま鳴らす
-    private void PlaySound(AudioClip clip, AudioSource source)
+    public bool IsOpen(int doorIndex)
     {
-        if (clip == null)
-        {
-            if (source != null)
-            {
-                source.Play();
-            }
-            return;
-        }
+        return openDoorIndex == doorIndex;
+    }
 
-        if (source != null)
+    private void TakeOwnership()
+    {
+        if (!Networking.IsOwner(gameObject))
         {
-            source.PlayOneShot(clip);
-        }
-        else
-        {
-            AudioSource.PlayClipAtPoint(clip, transform.position);
+            Networking.SetOwner(Networking.LocalPlayer, gameObject);
         }
     }
 
     private void ApplyState()
     {
-        if (solvedState == 1)
-        {
-            // 正解ドアだけを開いた位置へ移動
-            MoveDoor(correctDoorIndex, true);
-        }
-        else
-        {
-            // 全ドアを閉じた位置に戻す
-            MoveDoor(0, false);
-            MoveDoor(1, false);
-            MoveDoor(2, false);
-        }
+        MoveDoor(0, openDoorIndex == 0);
+        MoveDoor(1, openDoorIndex == 1);
+        MoveDoor(2, openDoorIndex == 2);
     }
 
     private void MoveDoor(int index, bool open)
