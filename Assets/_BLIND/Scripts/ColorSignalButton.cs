@@ -22,6 +22,8 @@ public class ColorSignalButton : UdonSharpBehaviour
     [SerializeField] private ColorLampManager lampManager;
 
     [Header("効果音(任意)")]
+    [SerializeField] private AudioClip pressClip;
+    [Tooltip("鳴らすスピーカー(任意)。空ならボタンの位置でそのまま鳴らす。")]
     [SerializeField] private AudioSource pressSound;
 
     private bool pressed;
@@ -45,7 +47,7 @@ public class ColorSignalButton : UdonSharpBehaviour
             lampManager.OnColorSelected(colorId);
         }
 
-        if (pressSound != null)
+        if (pressClip != null || pressSound != null)
         {
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(PlayPressSoundGlobal));
         }
@@ -54,9 +56,23 @@ public class ColorSignalButton : UdonSharpBehaviour
     // ネットワーク越しに全員のクライアントで実行される
     public void PlayPressSoundGlobal()
     {
+        if (pressClip == null)
+        {
+            // 以前の設定(AudioSource に音を入れてある)もそのまま鳴らす
+            if (pressSound != null)
+            {
+                pressSound.Play();
+            }
+            return;
+        }
+
         if (pressSound != null)
         {
-            pressSound.Play();
+            pressSound.PlayOneShot(pressClip);
+        }
+        else
+        {
+            AudioSource.PlayClipAtPoint(pressClip, transform.position);
         }
     }
 }
