@@ -36,8 +36,16 @@ public class DoorQuizManager : UdonSharpBehaviour
     [SerializeField] private CheckpointManager checkpointManager;
 
     [Header("音声(任意)")]
+    [SerializeField] private AudioClip correctClip;
+    [SerializeField] private AudioClip wrongClip;
+    [Tooltip("鳴らすスピーカー(任意)。空ならこのオブジェクトの位置でそのまま鳴らす。")]
     [SerializeField] private AudioSource correctSound;
     [SerializeField] private AudioSource wrongSound;
+
+    [Header("不正解音からテレポートまでの待ち時間（秒）")]
+    [SerializeField] private float wrongDelay = 0.8f;
+
+    private bool wrongPending;
 
     // 0 = 未回答 / 1 = 正解済み
     [UdonSynced] private int solvedState;
@@ -87,23 +95,51 @@ public class DoorQuizManager : UdonSharpBehaviour
     public void OnCorrect()
     {
         ApplyState();
-
-        if (correctSound != null)
-        {
-            correctSound.Play();
-        }
+        PlaySound(correctClip, correctSound);
     }
 
+    // 全員のクライアントで動く。
+    // ⚠️ 音を鳴らした直後に戻すと音源から離れて聞こえないので、少し待ってから戻す。
+    // ⚠️ ここで TriggerDeath を呼ばないこと。OnWrong 自体が全員で動いているので、
+    //    3人ぶん合図が飛んで3回戻される。自分だけ戻す RespawnAll を直接呼ぶ。
     public void OnWrong()
     {
-        if (wrongSound != null)
-        {
-            wrongSound.Play();
-        }
+        if (wrongPending) return;
+        wrongPending = true;
+
+        PlaySound(wrongClip, wrongSound);
+        SendCustomEventDelayedSeconds(nameof(RespawnAfterWrong), wrongDelay);
+    }
+
+    public void RespawnAfterWrong()
+    {
+        wrongPending = false;
 
         if (checkpointManager != null)
         {
-            checkpointManager.TriggerDeath();
+            checkpointManager.RespawnAll();
+        }
+    }
+
+    // clip が空なら、以前の設定(AudioSource に音を入れてある)をそのまま鳴らす
+    private void PlaySound(AudioClip clip, AudioSource source)
+    {
+        if (clip == null)
+        {
+            if (source != null)
+            {
+                source.Play();
+            }
+            return;
+        }
+
+        if (source != null)
+        {
+            source.PlayOneShot(clip);
+        }
+        else
+        {
+            AudioSource.PlayClipAtPoint(clip, transform.position);
         }
     }
 

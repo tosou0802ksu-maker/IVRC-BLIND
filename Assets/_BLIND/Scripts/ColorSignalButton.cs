@@ -21,6 +21,9 @@ public class ColorSignalButton : UdonSharpBehaviour
     [SerializeField] private ColorDoorManager doorManager;
     [SerializeField] private ColorLampManager lampManager;
 
+    [Header("セーブ地点。押すと 色番号+1 番(赤=CP_1 / 青=CP_2 / 緑=CP_3)が復帰地点になる")]
+    [SerializeField] private CheckpointManager checkpointManager;
+
     [Header("効果音(任意)")]
     [SerializeField] private AudioClip pressClip;
     [Tooltip("鳴らすスピーカー(任意)。空ならボタンの位置でそのまま鳴らす。")]
@@ -45,6 +48,12 @@ public class ColorSignalButton : UdonSharpBehaviour
         if (lampManager != null)
         {
             lampManager.OnColorSelected(colorId);
+        }
+
+        // checkpoints[0] はスタート地点なので +1 する
+        if (checkpointManager != null)
+        {
+            checkpointManager.SetCheckpointDirect(colorId + 1);
         }
 
         if (pressClip != null || pressSound != null)

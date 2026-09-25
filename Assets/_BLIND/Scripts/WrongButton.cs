@@ -7,7 +7,8 @@ using VRC.Udon.Common.Interfaces;
 // 押したら「間違い」になるボタン。ボタンにこれ1つを付けるだけで動く。
 //
 // 仕様:
-//   ・誰かが Interact → 全員に間違いの効果音 → 少し待って全員をリスポーン地点へテレポート
+//   ・誰かが Interact → 全員に間違いの効果音 → 少し待って全員をテレポート
+//   ・戻る先は Respawn Point。空ならセーブ地点（CheckpointManager）
 //   ・待っている間の連打は無視する
 //
 // ⚠️ テレポートを遅らせているのは、音がボタンの位置から鳴るため。
@@ -23,7 +24,9 @@ public class WrongButton : UdonSharpBehaviour
     [Tooltip("鳴らすスピーカー(任意)。空ならボタンの位置でそのまま鳴らす。")]
     [SerializeField] private AudioSource wrongSound;
 
-    [Header("リスポーン地点（位置と向きを使う）")]
+    [Header("戻る先。Respawn Point が空ならセーブ地点へ戻る")]
+    [SerializeField] private CheckpointManager checkpointManager;
+    [Tooltip("入れた時だけ、セーブ地点ではなくこの場所へ戻す（位置と向きを使う）。")]
     [SerializeField] private Transform respawnPoint;
 
     [Header("効果音からテレポートまでの待ち時間（秒）")]
@@ -61,8 +64,19 @@ public class WrongButton : UdonSharpBehaviour
     {
         busy = false;
 
+        if (respawnPoint == null)
+        {
+            // OnWrong は全員のクライアントで動いているので、ここでは自分だけ戻せばよい。
+            // TriggerDeath を呼ぶと3人ぶん合図が飛んで3回戻されるので使わない。
+            if (checkpointManager != null)
+            {
+                checkpointManager.RespawnAll();
+            }
+            return;
+        }
+
         VRCPlayerApi local = Networking.LocalPlayer;
-        if (local == null || respawnPoint == null) return;
+        if (local == null) return;
         local.TeleportTo(respawnPoint.position, respawnPoint.rotation);
     }
 }
