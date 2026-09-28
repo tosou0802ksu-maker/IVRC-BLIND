@@ -1128,6 +1128,10 @@ namespace BLIND.EditorTools
                                      + string.Join(", ", rescued.ConvertAll(x => x.name).ToArray()));
                     Object.DestroyImmediate(old.gameObject);
                 }
+                // [KeepT] の付いた物は、消す前にサーモのマテリアルを覚えておき、作り直した後に戻す
+                var keptT = SaveKeptThermal(room);
+                int noEcho = 0;   // [NoE] でエコロケを出さなかった数
+
                 // 動く熱源の複製と、本体の下のセット(Vision_Generated)は
                 // バケツの外にぶら下がっているので、名前で探して消す
                 var doomedFx = new List<GameObject>();
@@ -1198,6 +1202,7 @@ namespace BLIND.EditorTools
                     bool echo;
                     var key = Classify(mr, out echo);
                     if (key == null) { skipped++; continue; }
+                    if (echo && HasTag(mr.transform, room, NoEchoTag)) { echo = false; noEcho++; }
 
                     if (movable.Contains(mr.transform))
                     {
@@ -1511,6 +1516,10 @@ namespace BLIND.EditorTools
                 tTris += tTrisPair; tRend += tRendPair;
                 eTris += eTrisPair; eRend += eRendPair;
 
+                string keptLog = RestoreKeptThermal(keptT);
+                if (keptLog.Length > 0) log.AppendLine("  " + rn + ": " + keptLog);
+                if (noEcho > 0) log.AppendLine("  " + rn + ": " + NoEchoTag + " でエコロケを出さなかった " + noEcho + " 個");
+
                 log.AppendLine(rn.PadRight(8)
                     + " 元 " + used.ToString().PadLeft(4) + " 個(簡易化 " + proxied + " / 除外 " + skipped + ")"
                     + " → サーモ " + tRend + " 枚/" + tTris.ToString("N0") + "tri"
@@ -1771,6 +1780,80 @@ namespace BLIND.EditorTools
         /// 元の親の下に一度作ってローカルTRSをそのまま写してから付け替えるので、
         /// 親側に回転やスケールが掛かっていても位置がずれない。
         /// </summary>
+        // ------------------------------------------------------------
+        // [KeepT] : 手で貼ったサーモのマテリアルを作り直しで消さない
+        // ------------------------------------------------------------
+        /// <summary>
+        /// 本体か、その親のどれかの名前にこれが入っていると、サーモ(T_)のマテリアルを守る。
+        /// 形(メッシュ・位置)は毎回作り直す。守るのはマテリアルだけ。エコロケ(E_)は守らない。
+        ///
+        /// ⚠️ Vision_Generated や T_○○ に付けても効かない。作り直しで毎回消えるため。
+        /// ⚠️ 判定に使う単語(floor, wall など)とかぶらない綴りにしてある。
+        /// </summary>
+        public const string KeepThermalTag = "[KeepT]";
+
+        /// <summary>
+        /// 本体か、その親のどれかの名前にこれが入っていると、エコロケ(E_)を作らない。
+        /// 作り直しのたびに E_ は消えるので、付けて作り直せば取り除かれ、以後も貼られない。
+        /// サーモ(T_)は今まで通り作る。レーザーと同じ扱い（echo = false）。
+        /// </summary>
+        public const string NoEchoTag = "[NoE]";
+
+        class KeptThermal
+        {
+            public Transform source;   // 本体
+            public string childName;   // T_○○
+            public Material[] mats;
+        }
+
+        static bool HasTag(Transform t, Transform room, string tag)
+        {
+            for (var p = t; p != null && p != room; p = p.parent)
+                if (p.name.Contains(tag)) return true;
+            return false;
+        }
+
+        static bool HasKeepThermal(Transform t, Transform room)
+        {
+            return HasTag(t, room, KeepThermalTag);
+        }
+
+        static List<KeptThermal> SaveKeptThermal(Transform room)
+        {
+            var kept = new List<KeptThermal>();
+            foreach (var t in room.GetComponentsInChildren<Transform>(true))
+            {
+                if (t == null || t.name != PairGroup || t.parent == null) continue;
+                if (!HasKeepThermal(t.parent, room)) continue;
+                foreach (Transform c in t)
+                {
+                    if (!c.name.StartsWith("T_")) continue;
+                    var r = c.GetComponent<Renderer>();
+                    if (r == null) continue;
+                    kept.Add(new KeptThermal { source = t.parent, childName = c.name, mats = r.sharedMaterials });
+                }
+            }
+            return kept;
+        }
+
+        static string RestoreKeptThermal(List<KeptThermal> kept)
+        {
+            if (kept.Count == 0) return "";
+            int ok = 0;
+            var missed = new List<string>();
+            foreach (var k in kept)
+            {
+                var pair = k.source != null ? k.source.Find(PairGroup) : null;
+                var c = pair != null ? pair.Find(k.childName) : null;
+                var r = c != null ? c.GetComponent<Renderer>() : null;
+                if (r == null) { missed.Add(k.source != null ? k.source.name : k.childName); continue; }
+                r.sharedMaterials = k.mats;
+                ok++;
+            }
+            return KeepThermalTag + " でサーモのマテリアルを守った " + ok + " 個"
+                 + (missed.Count > 0 ? "（作り直し後に見つからず戻せなかった: " + string.Join(", ", missed.ToArray()) + "）" : "");
+        }
+
         /// <summary>本体の下の入れ物を用意する（無ければ作る）。</summary>
         static Transform EnsurePair(Transform src)
         {

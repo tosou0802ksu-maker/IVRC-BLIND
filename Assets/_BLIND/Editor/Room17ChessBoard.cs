@@ -261,6 +261,39 @@ namespace BLIND.EditorTools
             EditorUtility.DisplayDialog("BLIND", msg, "OK");
         }
 
+        /// <summary>
+        /// 名前に yukaarutokoro を含むサーモ(Thermal 層 22)の見た目を、全部 Thermal_Cardboard にする。
+        /// ⚠️ サーモを作り直すと名前から決め直されて戻る。残したいなら本体か親の名前に [KeepT] を付ける。
+        /// </summary>
+        [MenuItem("BLIND/部屋修正/yukaarutokoroのサーモを段ボールにする")]
+        public static void TilesToCardboardMenu()
+        {
+            const int LayerThermal = 22;
+            var mat = BlindThermalTable.Mat("Cardboard");
+            if (mat == null) { EditorUtility.DisplayDialog("BLIND", "Thermal_Cardboard.mat が見つからない", "OK"); return; }
+
+            Undo.SetCurrentGroupName("yukaarutokoro サーモ段ボール");
+            int group = Undo.GetCurrentGroup();
+            int n = 0;
+            foreach (var r in Object.FindObjectsOfType<Renderer>(true))
+            {
+                if (r.gameObject.layer != LayerThermal) continue;
+                if (!r.name.Contains("yukaarutokoro")) continue;
+                Undo.RecordObject(r, "thermal cardboard");
+                var mats = new Material[Mathf.Max(r.sharedMaterials.Length, 1)];
+                for (int i = 0; i < mats.Length; i++) mats[i] = mat;
+                r.sharedMaterials = mats;
+                EditorSceneManager.MarkSceneDirty(r.gameObject.scene);
+                n++;
+            }
+            Undo.CollapseUndoOperations(group);
+
+            var msg = "yukaarutokoro のサーモ " + n + " 個を Thermal_Cardboard にした（Ctrl+Z で戻せる）\n"
+                    + "サーモを作り直すと戻るので、残すなら本体か親の名前に " + BlindVisionBuilder.KeepThermalTag + " を付けること";
+            Debug.Log(msg);
+            EditorUtility.DisplayDialog("BLIND", msg, "OK");
+        }
+
         static List<Transform> Children(Transform t)
         {
             var list = new List<Transform>();
