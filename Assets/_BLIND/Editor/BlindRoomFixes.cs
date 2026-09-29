@@ -162,6 +162,15 @@ namespace BLIND.EditorTools
         /// </summary>
         public static string FixRoom9FakeWall()
         {
+            // ⚠️ 2026-09-29 に廃止。テストプレイで「出口が塞がっていて分からない」と迷ったため、
+            //    作者の判断で仕掛けをやめて、過去人にも出口を普通に見せることにした。
+            //    （サーモ・エコロケの複製まで作られて全員に壁に見えていた事故も重なった）
+            //    このメニューを流すと板が復活するので、何もせずに戻る。
+            return "この仕掛けは 2026-09-29 に廃止しました（room8 東の出口は全員に見える）。何もしていません。";
+        }
+
+        static string FixRoom9FakeWall_Retired()
+        {
             var room9 = Object.FindObjectsOfType<Transform>(true).FirstOrDefault(t => t.name == "room9");
             if (room9 == null) return "room9 が見つかりません。";
 
