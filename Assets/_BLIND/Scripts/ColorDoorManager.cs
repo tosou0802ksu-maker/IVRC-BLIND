@@ -12,6 +12,9 @@ using VRC.Udon;
 //
 // finalDoor(任意): 赤/青/緑の3色すべてが選ばれたときだけ、
 // 別枠で座標移動する第四の扉。一度開いたら閉じない。
+//
+// allSelectedClip(任意): 全色そろった瞬間から allSelectedDelay 秒後に、全員の耳元で1回だけ鳴らす。
+// 途中参加の人には鳴らさない。
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class ColorDoorManager : UdonSharpBehaviour
 {
@@ -31,7 +34,18 @@ public class ColorDoorManager : UdonSharpBehaviour
     [SerializeField] private Transform finalDoor;
     [SerializeField] private Vector3 finalTargetPosition;
 
+    [Header("全色そろった時のSE(任意)")]
+    [SerializeField] private AudioClip allSelectedClip;
+    [Tooltip("全色そろってから鳴らすまでの秒数")]
+    [SerializeField] private float allSelectedDelay = 1.0f;
+    [Tooltip("鳴らすスピーカー(任意)。空なら各プレイヤーの耳元で鳴らす（どこにいても同じ音量）。")]
+    [SerializeField] private AudioSource allSelectedSpeaker;
+
     [UdonSynced] private int movedFlags;
+
+    // 全色そろった SE を、このクライアントで鳴らした(または鳴らさないと決めた)か
+    private bool allSelectedHandled;
+    private bool receivedOnce;
 
     void Start()
     {
@@ -64,7 +78,39 @@ public class ColorDoorManager : UdonSharpBehaviour
 
     public override void OnDeserialization()
     {
+        // 途中参加で、最初に受け取った時点ですでに全色そろっていたら SE は鳴らさない
+        if (!receivedOnce)
+        {
+            receivedOnce = true;
+            if (AreAllSelected()) allSelectedHandled = true;
+        }
         ApplyState();
+    }
+
+    // 全員のクライアントで、同期値から「そろった瞬間」を見つけて1回だけ予約する。
+    // ネットワークイベントを使わないので、音が二重に鳴らない。
+    private void CheckAllSelectedSound()
+    {
+        if (allSelectedHandled || !AreAllSelected()) return;
+        allSelectedHandled = true;
+        if (allSelectedClip == null) return;
+        SendCustomEventDelayedSeconds(nameof(PlayAllSelectedSound), allSelectedDelay);
+    }
+
+    public void PlayAllSelectedSound()
+    {
+        if (allSelectedClip == null) return;
+
+        if (allSelectedSpeaker != null)
+        {
+            allSelectedSpeaker.spatialBlend = 0f;   // 距離で小さくならない音にする
+            allSelectedSpeaker.PlayOneShot(allSelectedClip);
+            return;
+        }
+
+        VRCPlayerApi local = Networking.LocalPlayer;
+        if (local == null) return;
+        AudioSource.PlayClipAtPoint(allSelectedClip, local.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position);
     }
 
     private bool IsMoved(int colorId)
@@ -119,5 +165,7 @@ public class ColorDoorManager : UdonSharpBehaviour
         {
             finalDoor.position = finalTargetPosition;
         }
+
+        CheckAllSelectedSound();
     }
 }

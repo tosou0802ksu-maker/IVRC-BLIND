@@ -29,6 +29,9 @@ public class WrongButton : UdonSharpBehaviour
     [Tooltip("入れた時だけ、セーブ地点ではなくこの場所へ戻す（位置と向きを使う）。")]
     [SerializeField] private Transform respawnPoint;
 
+    [Header("戻る時に目の前に出す文字(任意)。空なら CheckpointManager の標準の文字")]
+    [TextArea] [SerializeField] private string deathMessage;
+
     [Header("効果音からテレポートまでの待ち時間（秒）")]
     [SerializeField] private float teleportDelay = 0.8f;
 
@@ -68,9 +71,10 @@ public class WrongButton : UdonSharpBehaviour
         {
             // OnWrong は全員のクライアントで動いているので、ここでは自分だけ戻せばよい。
             // TriggerDeath を呼ぶと3人ぶん合図が飛んで3回戻されるので使わない。
+            // 効果音は OnWrong で鳴らし済みなので、文字だけ出して戻す
             if (checkpointManager != null)
             {
-                checkpointManager.RespawnAll();
+                checkpointManager.RespawnWithMessage(deathMessage);
             }
             return;
         }
@@ -78,5 +82,9 @@ public class WrongButton : UdonSharpBehaviour
         VRCPlayerApi local = Networking.LocalPlayer;
         if (local == null) return;
         local.TeleportTo(respawnPoint.position, respawnPoint.rotation);
+        if (checkpointManager != null)
+        {
+            checkpointManager.ShowDeathMessage(deathMessage);
+        }
     }
 }

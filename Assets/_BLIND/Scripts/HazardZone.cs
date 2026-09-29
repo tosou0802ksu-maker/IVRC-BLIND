@@ -3,6 +3,7 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
+using VRC.Udon.Common.Interfaces;
 
 // 落とし穴 / レーザー / シャワー / スプリンクラー など、
 // 触れると死亡判定になるゾーンの共通スクリプト。
@@ -26,6 +27,10 @@ public class HazardZone : UdonSharpBehaviour
 
     [Header("作動中だけ表示するオブジェクト(任意)")]
     [SerializeField] private GameObject activeVisual;
+
+    [Header("死亡演出(任意)。空なら CheckpointManager の標準の文字・音")]
+    [TextArea] [SerializeField] private string deathMessage;
+    [SerializeField] private AudioClip deathClip;
 
     private bool isActive = true;
     private float timer;
@@ -85,9 +90,19 @@ public class HazardZone : UdonSharpBehaviour
             return;
         }
 
+        // この罠の文字と音を全員に出すため、TriggerDeath ではなく自分のイベントで全員に知らせる
         if (checkpointManager != null)
         {
-            checkpointManager.TriggerDeath();
+            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(OnDeathGlobal));
+        }
+    }
+
+    // 全員のクライアントで動く。各自が自分だけを戻し、この罠の文字と音を出す
+    public void OnDeathGlobal()
+    {
+        if (checkpointManager != null)
+        {
+            checkpointManager.RespawnWith(deathMessage, deathClip);
         }
     }
 }

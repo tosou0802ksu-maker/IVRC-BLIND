@@ -64,6 +64,7 @@ public class PlayerVisionController : UdonSharpBehaviour
 
     // 「現在だけに存在する物」を置くレイヤー。過去の人には見えない。
     public const int LayerNowOnly = 25;
+    public const int LayerHud = 5;   // UI。死亡時の文字など、全役に見せる物
 
     private ViewRole currentRole;
 
@@ -163,6 +164,11 @@ public class PlayerVisionController : UdonSharpBehaviour
             mask = 0;
             blackout = true;
         }
+
+        // 死亡時の文字(CheckpointManager の deathHud)は UI レイヤーに置いてある。
+        // 役ごとにカメラの映すレイヤーが完全に分かれているので、ここで全員に足さないと
+        // 誰か1人にしか見えない。UI レイヤーはシーンで他に使っていない。
+        mask = mask | (1 << LayerHud);
 
         VRCCameraSettings screen = VRCCameraSettings.ScreenCamera;
         if (screen != null)

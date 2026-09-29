@@ -36,6 +36,9 @@ public class DoorPassJudge : UdonSharpBehaviour
     [Header("不正解の戻り先")]
     [SerializeField] private CheckpointManager checkpointManager;
 
+    [Header("不正解で戻る時に目の前に出す文字(任意)。空なら CheckpointManager の標準の文字")]
+    [TextArea] [SerializeField] private string deathMessage;
+
     [Header("不正解音からテレポートまでの待ち時間（秒）")]
     [SerializeField] private float wrongDelay = 0.8f;
 
@@ -85,9 +88,10 @@ public class DoorPassJudge : UdonSharpBehaviour
     {
         wrongPending = false;
 
+        // 効果音は OnWrong で鳴らし済みなので、文字だけ出して戻す
         if (checkpointManager != null)
         {
-            checkpointManager.RespawnAll();
+            checkpointManager.RespawnWithMessage(deathMessage);
         }
     }
 
