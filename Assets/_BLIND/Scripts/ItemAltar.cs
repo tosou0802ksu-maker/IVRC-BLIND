@@ -167,7 +167,9 @@ public class ItemAltar : UdonSharpBehaviour
 
         shownMask = placedMask;
 
-        if (!instant && placeSound != null && placedMask != full)
+        // 置くたびに鳴らす（3体目も）。2026-09-30 作者の指示。
+        // 以前は3体目だけ鳴らさず、扉の開く音だけにしていた。
+        if (!instant && placeSound != null)
         {
             placeSound.Play();
         }
@@ -195,7 +197,8 @@ public class ItemAltar : UdonSharpBehaviour
         else if (!wasOpen)
         {
             slide = 0f;
-            if (openSound != null) openSound.Play();
+            // 3体目の「置いた音」と重ならないよう、少し遅らせて鍵の開く音を鳴らす
+            if (openSound != null) openSound.PlayDelayed(0.5f);
         }
     }
 }

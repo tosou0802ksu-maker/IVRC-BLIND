@@ -146,12 +146,13 @@ public class CheckpointManager : UdonSharpBehaviour
     // 罠ごとの文字・音を持たないギミック(TriggerDeath)はここに来て、標準の文字と音を出す。
     public void RespawnAll()
     {
-        RespawnWith("", null);
+        RespawnWith("", null, 1f);
     }
 
     // 罠ごとの文字と効果音で戻す。空なら標準の文字・音になる。
     // ⚠️ 全員のクライアントで呼ぶこと(HazardZone は自分のネットワークイベントから呼ぶ)。
-    public void RespawnWith(string message, AudioClip clip)
+    // volume: 効果音の大きさ(0〜1)。炎の音などは素材そのものが大きく、耳元で鳴らすと驚くので罠ごとに下げられる。
+    public void RespawnWith(string message, AudioClip clip, float volume)
     {
         if (!RespawnLocal()) return;
         ShowDeathMessage(message);
@@ -159,7 +160,7 @@ public class CheckpointManager : UdonSharpBehaviour
         AudioClip c = clip != null ? clip : defaultDeathClip;
         if (c != null)
         {
-            PlayAtHead(c);
+            PlayAtHead(c, volume);
         }
         else if (deathSound != null)
         {
@@ -253,11 +254,11 @@ public class CheckpointManager : UdonSharpBehaviour
     }
 
     // どこにいても同じ音量で聞こえるよう、耳元で鳴らす
-    private void PlayAtHead(AudioClip clip)
+    private void PlayAtHead(AudioClip clip, float volume)
     {
         VRCPlayerApi local = Networking.LocalPlayer;
         if (local == null) return;
-        AudioSource.PlayClipAtPoint(clip, local.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position);
+        AudioSource.PlayClipAtPoint(clip, local.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position, volume);
     }
 
     private Transform GetCurrentPoint()

@@ -31,6 +31,8 @@ public class HazardZone : UdonSharpBehaviour
     [Header("死亡演出(任意)。空なら CheckpointManager の標準の文字・音")]
     [TextArea] [SerializeField] private string deathMessage;
     [SerializeField] private AudioClip deathClip;
+    [Tooltip("死亡時の効果音の大きさ(0〜1)。炎の音は素材が大きく、耳元でいきなり鳴ると驚くので下げてある。")]
+    [Range(0f, 1f)] [SerializeField] private float deathVolume = 1f;
 
     private bool isActive = true;
     private float timer;
@@ -102,7 +104,7 @@ public class HazardZone : UdonSharpBehaviour
     {
         if (checkpointManager != null)
         {
-            checkpointManager.RespawnWith(deathMessage, deathClip);
+            checkpointManager.RespawnWith(deathMessage, deathClip, deathVolume);
         }
     }
 }

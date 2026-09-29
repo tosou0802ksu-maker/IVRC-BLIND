@@ -59,11 +59,12 @@ namespace BLIND.EditorTools
         /// </summary>
         static readonly Dictionary<string, Level> RoomLevel = new Dictionary<string, Level>
         {
-            { "room1",  Level.Bright }, { "room2",  Level.Dim  }, { "room3",  Level.Dim  },
-            { "room4",  Level.Dim    }, { "room5",  Level.Dim  }, { "room6",  Level.Bright },
-            { "room7",  Level.Dark   }, { "room8",  Level.Dark }, { "room9",  Level.Dim  },
+            // 2026-09-30: 落とし穴の部屋(3/4/9/14)を Dim→Dark、プール(6)を Bright→Dim（作者の指示「もっと暗くしていい」）
+            { "room1",  Level.Bright }, { "room2",  Level.Dim  }, { "room3",  Level.Dark },
+            { "room4",  Level.Dark   }, { "room5",  Level.Dim  }, { "room6",  Level.Dim  },
+            { "room7",  Level.Dark   }, { "room8",  Level.Dark }, { "room9",  Level.Dark },
             { "room10", Level.Dark   }, { "room11", Level.Dim  }, { "room12", Level.Dark },
-            { "room13", Level.Keep   }, { "room14", Level.Dim  }, { "room15", Level.Dark },
+            { "room13", Level.Keep   }, { "room14", Level.Dark }, { "room15", Level.Dark },
             { "room16", Level.Bright }, { "room17", Level.Dim  }, { "room18", Level.Dark },
             { "room19", Level.Dim    },
         };
