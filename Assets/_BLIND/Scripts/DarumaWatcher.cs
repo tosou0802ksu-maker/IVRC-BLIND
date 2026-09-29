@@ -270,6 +270,9 @@ public class DarumaWatcher : UdonSharpBehaviour
         if (player != null && player.isLocal)
         {
             localInside = false;
+            // 掛け声は部屋の中の人だけに聞かせる。3D音源でも VRChat は
+            // 遠くまで減衰しきらず、壁越しに隣の部屋まで届いてしまった。
+            if (chantSound != null) chantSound.Stop();
         }
     }
 
@@ -563,6 +566,8 @@ public class DarumaWatcher : UdonSharpBehaviour
     private void PlayChant()
     {
         if (chantSound == null) return;
+        // 部屋の外にいる人には鳴らさない（位相の計算は続ける）
+        if (!localInside) { chantSound.Stop(); return; }
         if (UseClipSet() && phaseLength > 0.0001f)
         {
             // 速さに一番近い1本を選び、そのまま鳴らす（音程は変えない）

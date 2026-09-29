@@ -34,7 +34,7 @@ namespace BLIND.EditorTools
         public const string OutDir = "Assets/_BLIND/SE";
         public const string BaseName = "Daruma_Chant";
 
-        const float G4 = 392.00f, E4 = 329.63f, D4 = 293.66f, C4 = 261.63f;
+        const float G4 = 392.00f, F4 = 349.23f, E4 = 329.63f, D4 = 293.66f, C4 = 261.63f;
         const float Rest = 0f;
         const float Unit = 0.25f;     // 1拍の長さ(秒, 速さ1のとき)
         const int Rate = 44100;
@@ -44,7 +44,7 @@ namespace BLIND.EditorTools
 
         // 音節ごとの 音程・長さ(拍)・前の音とつなぐか（「ー」）
         static readonly string[] Syl = { "ダ", "ー", "る", "ま", "さ", "ん", "が", "（息）", "こ", "ー", "ろ", "ん", "だ", "ー" };
-        static readonly float[] Freq = {  G4,  G4,   G4,   G4,   G4,   G4,   G4,   Rest,    G4,  G4,   E4,   D4,   C4,  C4 };
+        static readonly float[] Freq = {  G4,  G4,   G4,   G4,   G4,   G4,   G4,   Rest,    G4,  G4,   G4,   G4,   F4,  F4 };
         static readonly float[] Len  = { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.3f, 0.6f,    1.0f, 0.9f, 1.0f, 1.0f, 1.0f, 1.8f };
         static readonly bool[] Tie   = { false, true, false, false, false, false, false, false, false, true, false, false, false, true };
         /// <summary>振り向きが始まる音節（「だ」）の番号</summary>
@@ -186,6 +186,7 @@ namespace BLIND.EditorTools
         static string NoteName(float f)
         {
             if (Mathf.Abs(f - G4) < 1) return "ソ";
+            if (Mathf.Abs(f - F4) < 1) return "ファ";
             if (Mathf.Abs(f - E4) < 1) return "ミ";
             if (Mathf.Abs(f - D4) < 1) return "レ";
             if (Mathf.Abs(f - C4) < 1) return "ド";
