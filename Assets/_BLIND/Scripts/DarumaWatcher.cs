@@ -114,9 +114,14 @@ public class DarumaWatcher : UdonSharpBehaviour
     [SerializeField] private float chantLead = 3.175f;
     [Tooltip("「だー」の長さ(秒, 速さ1のとき)。この間に振り向く。")]
     [SerializeField] private float chantTurn = 0.875f;
-    [Tooltip("唱える速さの範囲。本物の遊びと同じく、毎回速く唱えたり遅く唱えたりする。速いほど音も高くなる。")]
+    [Tooltip("唱える速さの範囲（chantClips が空のときだけ使う。再生速度で伸び縮みさせるので音程も変わる）。")]
     [SerializeField] private float chantSpeedMin = 0.85f;
     [SerializeField] private float chantSpeedMax = 1.5f;
+    [Tooltip("速さ違いで焼いた掛け声（DarumaChantBaker）。毎回この中から1本選ぶ。" +
+             "再生速度を変えないので、速く唱えても音程は変わらない。")]
+    [SerializeField] private AudioClip[] chantClips;
+    [Tooltip("chantClips それぞれの速さ（並びは chantClips と1対1）。")]
+    [SerializeField] private float[] chantSpeeds;
     private float lastAwayLength;
     [Tooltip("捕まえた瞬間の音。")]
     [SerializeField] private AudioSource caughtSound;
@@ -294,7 +299,11 @@ public class DarumaWatcher : UdonSharpBehaviour
         {
             // 掛け声があるときは、唱える速さから背を向ける長さを決める。
             // 「だ」の直前まで唱え終わった瞬間に振り向き始める。
-            if (UseChant())
+            if (UseClipSet())
+            {
+                phaseLength = chantLead / chantSpeeds[Random.Range(0, chantSpeeds.Length)];
+            }
+            else if (UseChant())
             {
                 phaseLength = chantLead / Random.Range(chantSpeedMin, chantSpeedMax);
             }
@@ -522,7 +531,8 @@ public class DarumaWatcher : UdonSharpBehaviour
             if (punish)
             {
                 // 掛け声があるときは、いちばん遅い速さで唱える長さにする
-                phaseLength = UseChant() ? chantLead / chantSpeedMin : awayMax;
+                phaseLength = UseClipSet() ? chantLead / SlowestSpeed()
+                            : UseChant() ? chantLead / chantSpeedMin : awayMax;
                 lastAwayLength = phaseLength;
                 RequestSerialization();
                 PlayChant();   // 長さが変わったので、速さを合わせて唱え直す
@@ -530,9 +540,22 @@ public class DarumaWatcher : UdonSharpBehaviour
         }
     }
 
+    private bool UseClipSet()
+    {
+        return chantSound != null && chantClips != null && chantSpeeds != null
+            && chantClips.Length > 0 && chantClips.Length == chantSpeeds.Length && chantLead > 0.0001f;
+    }
+
     private bool UseChant()
     {
-        return chantSound != null && chantSound.clip != null && chantLead > 0.0001f;
+        return UseClipSet() || (chantSound != null && chantSound.clip != null && chantLead > 0.0001f);
+    }
+
+    private float SlowestSpeed()
+    {
+        float m = chantSpeeds[0];
+        for (int i = 1; i < chantSpeeds.Length; i++) if (chantSpeeds[i] < m) m = chantSpeeds[i];
+        return m;
     }
 
     // 背を向けている長さ(phaseLength, 同期済み)から速さを逆算して唱える。
@@ -540,7 +563,20 @@ public class DarumaWatcher : UdonSharpBehaviour
     private void PlayChant()
     {
         if (chantSound == null) return;
-        if (UseChant() && phaseLength > 0.0001f)
+        if (UseClipSet() && phaseLength > 0.0001f)
+        {
+            // 速さに一番近い1本を選び、そのまま鳴らす（音程は変えない）
+            float want = chantLead / phaseLength;
+            int best = 0; float bd = 999f;
+            for (int i = 0; i < chantSpeeds.Length; i++)
+            {
+                float d = Mathf.Abs(chantSpeeds[i] - want);
+                if (d < bd) { bd = d; best = i; }
+            }
+            chantSound.clip = chantClips[best];
+            chantSound.pitch = 1.0f;
+        }
+        else if (UseChant() && phaseLength > 0.0001f)
         {
             chantSound.pitch = Mathf.Clamp(chantLead / phaseLength, 0.5f, 2.0f);
         }
