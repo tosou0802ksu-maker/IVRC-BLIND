@@ -1196,6 +1196,10 @@ namespace BLIND.EditorTools
                 {
                     if (!mr.gameObject.activeInHierarchy) continue;
                     if (mr.gameObject.layer == LayerThermal || mr.gameObject.layer == LayerEcho) continue;
+                    // ⚠️ Memory(24) は「過去人にだけ見える物」。サーモ・エコロケの複製を作ってはいけない。
+                    //    room8 東の Memory_SealedDoorway_East（過去人にだけ壁に見える開口）を複製してしまい、
+                    //    全員に壁に見えて出口が分からなくなった（2026-09-29 テストプレイ）。
+                    if (mr.gameObject.layer == 24) continue;
                     if (mr.name.StartsWith(FxPrefix)) continue;   // 前回の複製を材料にしない
                     if (IsGimmickOwned(mr.transform)) continue;   // 下のコメント参照
 

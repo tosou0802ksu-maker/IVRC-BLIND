@@ -35,6 +35,13 @@ public class ItemAltar : UdonSharpBehaviour
     [Tooltip("この距離まで近づけると受け皿に座る(m)。皿を狙わせない。")]
     [SerializeField] private float snapRadius = 1.20f;
 
+    [Tooltip("台の中心から上にどこまでを「台の上」とみなすか(m)。\n" +
+             "⚠️ 高さを距離に含めてはいけない。手に持った物は胸の高さ(1.2〜1.4m)にあり、" +
+             "台の中心(0.5m)との高さの差だけで 0.7〜0.9m 食うので、水平に 0.8m 以内まで寄らないと" +
+             "認識しなかった（テストプレイで「3体目が中々認識しない」）。デスクトップは持った物を下げられない。")]
+    [SerializeField] private float heightAbove = 1.8f;
+    [SerializeField] private float heightBelow = 0.6f;
+
     [Header("開く扉")]
     [SerializeField] private Transform doorLeaf;
     [SerializeField] private Vector3 closedLocalPos;
@@ -105,10 +112,19 @@ public class ItemAltar : UdonSharpBehaviour
             // ⚠️ 判定するのは**運んでいる本人のクライアントだけ**。
             //    IsHeld() は OnPickup/OnDrop 由来なので掴んだ本人しか true にならない。
             //    全員が測ると同じフレームに3人が所有権を取り合う。
-            if (!it.IsHeld()) continue;
+            //
+            // 台の上に**落として置いた**物も数える。落とした後の持ち主は落とした本人のままなので、
+            // 「持っている本人」の代わりに「持ち主」が測れば、やはり1人だけが判定する。
+            // （以前は持っている最中だけ数えたので、台に置いて手を離すと認識されなかった）
+            bool mine = it.IsHeld() || Networking.IsOwner(Networking.LocalPlayer, it.gameObject);
+            if (!mine) continue;
 
+            // 水平距離と高さを分けて測る（heightAbove の説明を参照）
             Vector3 d = it.transform.position - altarCenter.position;
+            float h = d.y;
+            d.y = 0f;
             if (d.sqrMagnitude > snapRadius * snapRadius) continue;
+            if (h > heightAbove || h < -heightBelow) continue;
 
             VRCPlayerApi me = Networking.LocalPlayer;
             if (Utilities.IsValid(me) && !Networking.IsOwner(me, gameObject))

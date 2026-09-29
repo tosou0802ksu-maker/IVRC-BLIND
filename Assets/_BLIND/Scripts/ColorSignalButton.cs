@@ -29,6 +29,11 @@ public class ColorSignalButton : UdonSharpBehaviour
     [Tooltip("鳴らすスピーカー(任意)。空ならボタンの位置でそのまま鳴らす。")]
     [SerializeField] private AudioSource pressSound;
 
+    [Header("押したときに一緒に知らせる相手(任意)")]
+    [Tooltip("room13 の青ボタンでレーザーを止めるために追加（LaserSwitch.TurnOff）。空なら何もしない。")]
+    [SerializeField] private UdonSharpBehaviour alsoNotify;
+    [SerializeField] private string alsoNotifyEvent = "TurnOff";
+
     private bool pressed;
 
     public override void Interact()
@@ -50,6 +55,10 @@ public class ColorSignalButton : UdonSharpBehaviour
             lampManager.OnColorSelected(colorId);
         }
 
+        if (alsoNotify != null)
+        {
+            alsoNotify.SendCustomEvent(alsoNotifyEvent);
+        }
         // checkpoints[0] はスタート地点なので +1 する
         if (checkpointManager != null)
         {
