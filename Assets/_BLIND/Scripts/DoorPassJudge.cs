@@ -54,6 +54,11 @@ public class DoorPassJudge : UdonSharpBehaviour
             return;
         }
 
+        // 自分の扉が開いている時だけ反応する。
+        // 正解後は正解の扉しか開かないので、間違いの箱はここで自動的に無効になる。
+        // 閉じた扉の裏側から触れて戻される事故も防ぐ。
+        if (doorQuizManager != null && !doorQuizManager.IsOpen(doorIndex)) return;
+
         if (wrongPending) return;
         SendCustomNetworkEvent(NetworkEventTarget.All, nameof(OnWrong));
         // 扉を閉じるのはくぐった本人だけ（全員で閉じると所有権の取り合いになる）

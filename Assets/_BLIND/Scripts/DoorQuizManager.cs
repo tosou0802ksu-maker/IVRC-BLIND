@@ -12,6 +12,7 @@ using VRC.Udon;
 //   ・正誤・効果音・リスポーンは扉の先に置いた DoorPassJudge が担当する
 //     (くぐった時に判定するため。不正解なら DoorPassJudge が CloseDoor を呼ぶ)
 //   ・正解の扉をくぐったら MarkSolved で開きっぱなしに固定する
+//     残り2枚の扉は Use 表示を消し、DoorPassJudge 側も扉が閉じているので反応しない
 //   ・3セット配置しても各インスタンスが独立しているため混線しない
 //
 // ドアの閉じた位置は Start() で自動記憶する。
@@ -40,11 +41,16 @@ public class DoorQuizManager : UdonSharpBehaviour
     private Vector3 door1ClosedPosition;
     private Vector3 door2ClosedPosition;
 
+    // 扉の子にある DoorQuizChoice。正解後に間違いの扉の Use 表示を消すために使う
+    private DoorQuizChoice choice0;
+    private DoorQuizChoice choice1;
+    private DoorQuizChoice choice2;
+
     void Start()
     {
-        if (door0 != null) door0ClosedPosition = door0.localPosition;
-        if (door1 != null) door1ClosedPosition = door1.localPosition;
-        if (door2 != null) door2ClosedPosition = door2.localPosition;
+        if (door0 != null) { door0ClosedPosition = door0.localPosition; choice0 = door0.GetComponentInChildren<DoorQuizChoice>(); }
+        if (door1 != null) { door1ClosedPosition = door1.localPosition; choice1 = door1.GetComponentInChildren<DoorQuizChoice>(); }
+        if (door2 != null) { door2ClosedPosition = door2.localPosition; choice2 = door2.GetComponentInChildren<DoorQuizChoice>(); }
 
         ApplyState();
     }
@@ -108,6 +114,12 @@ public class DoorQuizManager : UdonSharpBehaviour
         MoveDoor(0, openDoorIndex == 0);
         MoveDoor(1, openDoorIndex == 1);
         MoveDoor(2, openDoorIndex == 2);
+
+        // 正解後は、正解以外の扉の Use 表示を消す（同期値から全員がそれぞれ消す）
+        bool solved = solvedState != 0;
+        if (choice0 != null) choice0.DisableInteractive = solved && openDoorIndex != 0;
+        if (choice1 != null) choice1.DisableInteractive = solved && openDoorIndex != 1;
+        if (choice2 != null) choice2.DisableInteractive = solved && openDoorIndex != 2;
     }
 
     private void MoveDoor(int index, bool open)
