@@ -74,7 +74,11 @@ namespace BLIND.EditorTools
         ///    光を 10% にしても目には約 35% に見える（実測: 平均輝度 60.6 → 36.9）。
         ///    「暗い」と感じさせるには 2〜3% まで落とす必要がある。
         /// </summary>
-        const float DimScale  = 0.15f;
+        /// 2026-09-29: Dim を 0.15 → 0.08 に下げた（「薄暗いをもう少し暗く」）。
+        ///   15% / 8% / 5% で撮り比べた結果、8% でもだるま・落とし穴・チェス盤・通路は読めた。
+        ///   落とし穴の部屋は環境光が支配的で、ライトを下げても穴の見え方はほぼ変わらない。
+        ///   5% は落とし穴の床と穴が溶け始めたので採らなかった。
+        const float DimScale  = 0.08f;
         const float DarkScale = 0.03f;
 
         /// <summary>
@@ -84,7 +88,7 @@ namespace BLIND.EditorTools
         /// 0 にはしない。器具がかすかに光っているほうが「電気が弱っている」と読めるし、
         /// 完全な暗闇にしないという要件にも効く。
         /// </summary>
-        const float DimEmission  = 0.35f;
+        const float DimEmission  = 0.25f;   // 2026-09-29: 0.35 → 0.25（DimScale と合わせて下げた）
         const float DarkEmission = 0.12f;
 
         /// <summary>
@@ -175,14 +179,30 @@ namespace BLIND.EditorTools
             public Color color = Color.white;
             public float intensity;      // newAt のときだけ使う
             public float range;
+            public float live = -1f;     // 既存の灯りの強さ（元に対する倍率）。負なら FlickerLive
         }
+
+        /// <summary>
+        /// 部屋の壁・床・天井（GeneratedRoom の RoomSurface）の色に掛ける倍率。
+        ///
+        /// room8: ロッカーが「不自然に黒い」（2026-09-25 指摘）。
+        ///   ロッカーは金属で、金属は反射でしか光らない。この部屋は反射が無い
+        ///   （ReflectionProbe が未ベイク・環境反射 0）ので金属は真っ黒になる。
+        ///   一方で壁はコンクリの白っぽい色(0.78)で環境光を拾うため明るく、黒いロッカーが浮いていた。
+        ///   ⚠️ ロッカーの材質は他メンバーのアセット(Locker_HQ)で共有なので触らない。
+        ///      部屋のほうを暗くして、黒が「暗がりの金属」に見えるようにする。
+        /// </summary>
+        static readonly Dictionary<string, float> SurfaceTint = new Dictionary<string, float>
+        {
+            { "room8", 0.40f },
+        };
 
         static readonly FlickerSpec[] Flickers =
         {
             // 地下通路の蛍光灯。切れかけて鳴っている
             new FlickerSpec { room = "room2",  style = 0 },
-            // ロッカー室の天井パネル
-            new FlickerSpec { room = "room8",  style = 0 },
+            // ロッカー室の天井パネル。60% だと壁が明るくなりすぎてロッカーの黒が浮いたので 30%
+            new FlickerSpec { room = "room8",  style = 0, live = 0.30f },
             // 人形の部屋の吊り下げ灯。消えている数秒の間に人形が動いたかもしれない、と思わせる
             new FlickerSpec { room = "room15", style = 1 },
             // シャワー室には灯りが1つも無い（器具はあるが Light が付いていない）。
@@ -293,7 +313,11 @@ namespace BLIND.EditorTools
                     if (it.propertyType != SerializedPropertyType.ObjectReference) continue;
                     var o = it.objectReferenceValue;
                     var l = o as Light;
-                    if (l == null && o is GameObject g) l = g.GetComponentInChildren<Light>(true);
+                    // ⚠️ GameObject を参照している場合は、**その物自身に付いている Light だけ**を見る。
+                    //    子まで探してはいけない。RoomVisibilityManager（仲間が 2026-09-28 に追加）は
+                    //    部屋を丸ごと GameObject で参照しているので、子まで探すと
+                    //    「各部屋の最初のライト」がギミックの灯りと誤判定され、暗い部屋でも元の明るさに戻る。
+                    if (l == null && o is GameObject g) l = g.GetComponent<Light>();
                     if (l != null) set.Add(l);
                 }
             }
@@ -375,6 +399,7 @@ namespace BLIND.EditorTools
             }
 
             int swapped = SwapLampMaterials(store, out var lampByRoom);
+            int tinted = SwapSurfaceTint(store);
             // 明滅は最後。灯りの選び方と強さは、記録してある元の値を基準にする
             string flick = BuildFlickers(store);
 
@@ -387,6 +412,7 @@ namespace BLIND.EditorTools
             var sb = new System.Text.StringBuilder("== 過去人の暗闇を適用 ==\n");
             sb.AppendLine("環境光: 黒 → " + AmbientDark + "（ガンマ）");
             sb.AppendLine("照明器具の発光を暗い版へ: " + swapped + " スロット差し替え  " + lampByRoom);
+            sb.AppendLine("壁・床の色を暗く: " + tinted + " スロット差し替え");
             sb.AppendLine("記録: 新規 " + recorded + " 灯 / 記録済み合計 " + store.lights.Count + " 灯 → " + OriginalsPath);
             foreach (var c in count)
             {
@@ -505,7 +531,7 @@ namespace BLIND.EditorTools
                         { bd = d; target = l; fixture = fx; bestHasFixture = has; bestOrig = oi; }
                     }
                     if (target == null) { sb.AppendLine("  " + s.room + ": 明滅させる灯りが無い"); Undo.DestroyObjectImmediate(root); continue; }
-                    baseI = bestOrig * FlickerLive;
+                    baseI = bestOrig * (s.live > 0f ? s.live : FlickerLive);
                     // エディタ上（FlickerLight が動いていない状態）でも実行時と同じ明るさに見えるように
                     Undo.RecordObject(target, "flicker base");
                     target.intensity = baseI;
@@ -540,7 +566,7 @@ namespace BLIND.EditorTools
                         if (m.HasProperty("_EmissionColor") && m.GetColor("_EmissionColor").maxColorComponent > ec.maxColorComponent)
                             ec = m.GetColor("_EmissionColor");
                     }
-                    ec *= FlickerLive;
+                    ec *= (s.live > 0f ? s.live : FlickerLive);
                 }
 
                 var so = new SerializedObject(fl);
@@ -666,6 +692,8 @@ namespace BLIND.EditorTools
                         }
                         else continue;   // 記録の無い暗い版（手で貼った等）は触らない
                         if (orig == null) continue;
+                        // 壁・床の暗い版（SwapSurfaceTint の担当）は照明器具として扱わない
+                        if (!LampMaterials.Contains(orig.name)) continue;
 
                         var want = darken ? Variant(orig, lv) : orig;
                         if (cur != want) { mats[i] = want; changed = true; n++; }
@@ -684,6 +712,77 @@ namespace BLIND.EditorTools
             var parts = new List<string>();
             foreach (var kv in perRoom) parts.Add(kv.Key + "=" + kv.Value);
             summary = parts.Count > 0 ? "（" + string.Join(" ", parts) + "）" : "";
+            return n;
+        }
+
+        /// <summary>壁・床の材質の「色だけ暗くした版」。倍率ごとに1つ。</summary>
+        static Material TintVariant(Material src, float k)
+        {
+            var key = AssetDatabase.GetAssetPath(src) + "|tint" + k;
+            if (variantCache.TryGetValue(key, out var hit) && hit != null) return hit;
+            if (!AssetDatabase.IsValidFolder(VariantDir))
+                AssetDatabase.CreateFolder("Assets/_BLIND/Art/Materials", "Dark");
+            var path = VariantDir + "/" + src.name + "_x" + Mathf.RoundToInt(k * 100) + ".mat";
+            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m == null) { m = new Material(src); AssetDatabase.CreateAsset(m, path); }
+            m.shader = src.shader;
+            m.CopyPropertiesFromMaterial(src);
+            m.shaderKeywords = src.shaderKeywords;
+            if (src.HasProperty("_Color"))
+            {
+                var c = src.GetColor("_Color");
+                m.SetColor("_Color", new Color(c.r * k, c.g * k, c.b * k, c.a));
+            }
+            EditorUtility.SetDirty(m);
+            variantCache[key] = m;
+            return m;
+        }
+
+        /// <summary>
+        /// SurfaceTint に載っている部屋の壁・床・天井を暗い色の版に、それ以外は元に揃える。
+        /// 対象は GeneratedRoom の中の RoomSurface だけ（小物やロッカーは触らない）。
+        /// </summary>
+        static int SwapSurfaceTint(Store store)
+        {
+            var byKey = new Dictionary<string, MatOrig>();
+            foreach (var o in store.mats) byKey[o.id + "#" + o.slot] = o;
+            int n = 0;
+            foreach (Transform r in GameObject.Find("=== ROOMS ===").transform)
+            {
+                var gr = r.Find("GeneratedRoom");
+                if (gr == null) continue;
+                float k = SurfaceTint.TryGetValue(r.name, out var t) ? t : 1f;
+
+                foreach (var mr in gr.GetComponentsInChildren<MeshRenderer>(true))
+                {
+                    if (mr.gameObject.layer != 0) continue;
+                    var mats = mr.sharedMaterials;
+                    bool changed = false; string id = null;
+                    for (int i = 0; i < mats.Length; i++)
+                    {
+                        var cur = mats[i];
+                        if (cur == null) continue;
+                        bool surface = cur.shader != null && cur.shader.name == "BLIND/RoomSurface";
+                        bool variant = IsVariant(cur);
+                        if (!surface && !variant) continue;
+                        if (id == null) id = Id(mr);
+                        var key = id + "#" + i;
+                        Material orig;
+                        if (byKey.TryGetValue(key, out var mo)) orig = AssetDatabase.LoadAssetAtPath<Material>(mo.mat);
+                        else if (surface && !variant)
+                        {
+                            orig = cur;
+                            mo = new MatOrig { id = id, slot = i, path = PathOf(mr.transform), mat = AssetDatabase.GetAssetPath(cur) };
+                            store.mats.Add(mo); byKey[key] = mo;
+                        }
+                        else continue;
+                        if (orig == null || LampMaterials.Contains(orig.name)) continue;
+                        var want = k < 0.999f ? TintVariant(orig, k) : orig;
+                        if (cur != want) { mats[i] = want; changed = true; n++; }
+                    }
+                    if (changed) { Undo.RecordObject(mr, "surface tint"); mr.sharedMaterials = mats; EditorUtility.SetDirty(mr); }
+                }
+            }
             return n;
         }
 

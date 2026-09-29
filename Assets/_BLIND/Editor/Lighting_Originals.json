@@ -2198,6 +2198,1134 @@
             "slot": 1,
             "path": "=== ROOMS ===/room2/room2items/keikoutous/keikoutou(7)",
             "mat": "Assets/_BLIND/Art/Models/8ban/keikoutoutexture/mounted_fluorescent_lights_glass.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1616001751-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room6/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1748398432-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room6/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1339253340-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room6/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-448829797-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room6/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-808529697-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room6/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1303729139-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room6/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1601019962-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room6/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2079942-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room6/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-200062342-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room6/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-942362890-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room6/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1801499406-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room6/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1381171246-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room6/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1572086826-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room6/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1530119572-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room6/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1444079681-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room6/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2014758322-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room6/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Pool_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-586373294-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Tiles110_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1486894109-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Concrete048_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1897494142-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Concrete048_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-842057401-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Concrete048_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-648415287-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Concrete048_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-466208919-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Concrete048_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1118930048-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Concrete048_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-655336436-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Concrete048_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-546256330-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Concrete048_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-803138101-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Concrete048_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-619181325-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Concrete048_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1796004363-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Concrete048_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1452964817-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Concrete048_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-678183308-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Concrete048_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-884707837-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Concrete048_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1314093446-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Concrete048_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-509625725-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room8/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Concrete048_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-802698426-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1538980680-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-90202949-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-152410584-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1765679476-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-146889498-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1057161774-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-805235243-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1290645128-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-687461561-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1394350968-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-962496717-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-47096163-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-657186379-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1210922173-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1012686797-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1276210507-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1728235015-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1730448425-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2000719484-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1310106867-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1370301528-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1301660425-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-541321098-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1536202487-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-91766008-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1510178531-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-53595212-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1998095556-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1431622743-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-874756236-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-309239629-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-794118296-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-601654261-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1143213314-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1070605268-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1253316695-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-566334649-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2076557498-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-118914905-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1846764217-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-55550641-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1010388427-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-219109739-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1046194991-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1451888507-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1819747806-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-632182967-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2024323043-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-743889163-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-324476448-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1289309331-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1777799901-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-101660437-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1030424879-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-206061331-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-917626962-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1187826152-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-86822589-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1097129758-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-422037319-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-805972457-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1527851062-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2131520788-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2022165914-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1398631911-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1781574869-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1730065365-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1617032921-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1641891858-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-524712413-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-657266548-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-280509553-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1715951105-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-494283027-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1951203977-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1202910918-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-17086337-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-344977561-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2027285471-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-373229712-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-3664826-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2011964600-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1635377103-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-709360712-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1627424279-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-118776363-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1243443808-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-883030193-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-488464747-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-611406920-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1409027735-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1215139332-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room11/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2079992443-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room12/GeneratedRoom/Ceiling/CeilingPanel",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Tiles110_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2002955866-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_Parquet.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2035583617-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_Panel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-325220257-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_Panel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1197272382-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_Panel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-203413764-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_PanelTrim.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-785452424-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_PanelTrim.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1675491751-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_PanelTrim.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1907803606-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_PanelTrim.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-474624355-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_Panel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-499020837-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_Panel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-384185806-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_Panel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1259912518-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_PanelTrim.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1243215631-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_PanelTrim.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2110724946-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_PanelTrim.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-338269159-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_PanelTrim.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-108409576-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_Panel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1490267317-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_Panel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-687756947-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_Panel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1196678757-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_Panel.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1738893174-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_PanelTrim.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-248881465-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_PanelTrim.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-13002688-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_PanelTrim.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1950151221-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room15/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room16_PanelTrim.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1410191873-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room16/GeneratedRoom/Walls/WallSegment (23)",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Dado.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-855696833-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room16/GeneratedRoom/Walls/WallSegment (24)",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Dado.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-185591510-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room16/GeneratedRoom/Ceiling/CeilingPanel",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Office_Ceiling.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1808897358-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1831436120-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1952938942-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1022231090-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1735335030-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-360203947-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1834067425-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-487904813-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-166602725-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1179546755-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2092792166-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room18/GeneratedRoom/Floor/FloorTile",
+            "mat": "Assets/_BLIND/Art/Materials/Room15_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-941587614-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room18/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room15_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-60237418-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room18/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room15_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1225354748-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room18/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room15_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2023553159-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room18/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room15_DoorFrame.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1499565483-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room18/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room15_DoorFrame.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-795102709-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room18/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room15_DoorFrame.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-691184570-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room18/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room15_DoorFrame.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1271375506-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room18/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room15_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1022306867-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room18/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room15_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1324278726-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room18/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room15_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-63528100-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room18/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room15_DoorFrame.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-626246024-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room18/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room15_DoorFrame.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-692139368-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room18/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room15_DoorFrame.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-305128951-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room18/GeneratedRoom/Walls/DoorFrame/FramePiece",
+            "mat": "Assets/_BLIND/Art/Materials/Room15_DoorFrame.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-371414953-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room18/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room15_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-914697226-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room18/GeneratedRoom/Walls/WallSegment",
+            "mat": "Assets/_BLIND/Art/Materials/Room15_Wall.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-986572489-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room18/GeneratedRoom/Ceiling/CeilingPanel",
+            "mat": "Assets/_BLIND/Art/Materials/Room_Office_Ceiling.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1663203129-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/GeneratedRoom/Walls/WallSegment (1)",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-794380788-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/GeneratedRoom/Walls/WallSegment (3)",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1136552279-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/GeneratedRoom/Walls/WallSegment (4)",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2022027786-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/GeneratedRoom/Walls/WallSegment (2)",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-1851759333-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/GeneratedRoom/Walls/WallSegment (5)",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-171777248-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/GeneratedRoom/Walls/WallSegment (6)",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_Floor.mat"
+        },
+        {
+            "id": "GlobalObjectId_V1-2-87b944d2abf0b40f289aedf5e89fafad-2134628328-0",
+            "slot": 0,
+            "path": "=== ROOMS ===/room17/GeneratedRoom/Ceiling",
+            "mat": "Assets/_BLIND/Art/Materials/Room12_CeilingTile.mat"
         }
     ]
 }
