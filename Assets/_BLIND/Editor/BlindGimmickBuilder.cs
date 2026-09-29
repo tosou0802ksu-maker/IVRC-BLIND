@@ -44,6 +44,20 @@ namespace BLIND.EditorTools
         const float PitDepth = 5.0f;
 
         /// <summary>
+        /// 落下判定が始まる深さ(m)。落ちてから復帰までの時間 t = √(2h/g)。
+        /// 4.9m で約 1.0 秒。穴の見た目の底(PitDepth=5m)の直前にしてある。
+        /// </summary>
+        const float FallStartDepth = 4.9f;
+        /// <summary>落下判定の厚み(m)。1秒落ちた時点で秒速約10m なので、1フレームで突き抜けない厚さ。</summary>
+        const float FallZoneThickness = 4.0f;
+        /// <summary>
+        /// 落下判定を穴の範囲より各辺これだけ広げる(m)。
+        /// VRChat は落下中も横に動けるので、1秒落ちる間に最大約4mずれる。
+        /// 広げないと判定の外へ抜けて、ワールドの復帰高さ(y=-100)まで落ち続ける。
+        /// </summary>
+        const float FallZoneMargin = 4.0f;
+
+        /// <summary>
         /// 縦坑の側面をいくつの帯に割るか。
         ///
         /// エコロケは「UVの端」にしか線を引かないので、側面が1枚の面だと
@@ -612,14 +626,18 @@ namespace BLIND.EditorTools
                 }
 
                 // --- 落下判定 ---
+                // 判定の上面は穴の底のすぐ上（FallStartDepth）。落ちてから復帰まで約1.0秒。
+                // ⚠️ 以前は深さ1mから判定していて、落ちて0.45秒で復帰した。
+                //    「落ちている感じがしない」（2026-09-29 テストプレイ）ので、穴の底まで落とす。
+                //    これより深くすると穴の見た目の底(PitDepth)を突き抜けて、何も無い空間が見える。
                 var fall = new GameObject("FallZone");
                 Undo.RegisterCreatedObjectUndo(fall, "fall zone");
                 fall.transform.SetParent(rootGo.transform, false);
                 fall.layer = LayerDefault;
-                fall.transform.position = new Vector3((s.fx0 + s.fx1) * 0.5f, -PitDepth * 0.6f, (s.fz0 + s.fz1) * 0.5f);
+                fall.transform.position = new Vector3((s.fx0 + s.fx1) * 0.5f, -(FallStartDepth + FallZoneThickness * 0.5f), (s.fz0 + s.fz1) * 0.5f);
                 var bc = fall.AddComponent<BoxCollider>();
                 bc.isTrigger = true;
-                bc.size = new Vector3(s.fx1 - s.fx0, PitDepth * 0.8f, s.fz1 - s.fz0);
+                bc.size = new Vector3(s.fx1 - s.fx0 + FallZoneMargin * 2f, FallZoneThickness, s.fz1 - s.fz0 + FallZoneMargin * 2f);
                 var hz = AddUdon(fall, "HazardZone");
                 if (hz != null) { SetObj(hz, "checkpointManager", cm); PushUdon(hz); }
 
@@ -630,11 +648,11 @@ namespace BLIND.EditorTools
                     Undo.RegisterCreatedObjectUndo(gfall, "fall zone gap");
                     gfall.transform.SetParent(rootGo.transform, false);
                     gfall.layer = LayerDefault;
-                    gfall.transform.position = new Vector3((s.fx0 + s.fx1) * 0.5f, -PitDepth * 0.6f,
+                    gfall.transform.position = new Vector3((s.fx0 + s.fx1) * 0.5f, -(FallStartDepth + FallZoneThickness * 0.5f),
                                                            (s.gz0 + s.gz1) * 0.5f);
                     var gbc = gfall.AddComponent<BoxCollider>();
                     gbc.isTrigger = true;
-                    gbc.size = new Vector3(s.fx1 - s.fx0, PitDepth * 0.8f, s.gz1 - s.gz0);
+                    gbc.size = new Vector3(s.fx1 - s.fx0 + FallZoneMargin * 2f, FallZoneThickness, s.gz1 - s.gz0 + FallZoneMargin * 2f);
                     var ghz = AddUdon(gfall, "HazardZone");
                     if (ghz != null) { SetObj(ghz, "checkpointManager", cm); PushUdon(ghz); }
                 }
