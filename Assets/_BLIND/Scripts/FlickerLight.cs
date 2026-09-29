@@ -54,6 +54,12 @@ public class FlickerLight : UdonSharpBehaviour
              "灯りごとに違う値を入れて、ばらばらに壊れているように見せる。")]
     [SerializeField] private float phaseOffset = 0f;
 
+    [Header("音（任意）")]
+    [Tooltip("灯りのそばで鳴らす蛍光灯のパチパチ音（ループ）。明るさに合わせて音量が上下し、" +
+             "灯りが落ちる瞬間は音も落ちる。光と音が同じ計算から出るので必ずそろう。")]
+    [SerializeField] private AudioSource buzz;
+    [SerializeField] private float buzzVolume = 0.6f;
+
     [Header("更新間隔(秒)")]
     [Tooltip("毎フレーム更新する必要は無い。0.033 秒ごとで十分ちらついて見える。")]
     [SerializeField] private float updateInterval = 0.033f;
@@ -81,6 +87,7 @@ public class FlickerLight : UdonSharpBehaviour
         float level = style == 1 ? BulbLevel(t) : Level(t);
 
         if (target != null) target.intensity = baseIntensity * level;
+        if (buzz != null) buzz.volume = buzzVolume * level;
 
         if (emissive != null)
         {

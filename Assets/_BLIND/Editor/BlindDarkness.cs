@@ -581,6 +581,9 @@ namespace BLIND.EditorTools
                 so.FindProperty("style").intValue = s.style;
                 // 部屋ごとにずらす。同じ種類が同時に明滅すると制御された機械に見える
                 so.FindProperty("phaseOffset").floatValue = 1.37f + i * 3.11f;
+                // 蛍光灯のパチパチ音。灯りの位置で鳴らし、明るさに合わせて FlickerLight が音量を上下させる
+                var buzz = MakeBuzz(holder.transform, target.transform.position);
+                if (buzz != null) so.FindProperty("buzz").objectReferenceValue = buzz;
                 so.ApplyModifiedProperties();
                 SetSyncNone(fl);
                 UdonSharpEditor.UdonSharpEditorUtility.CopyProxyToUdon(fl as UdonSharp.UdonSharpBehaviour);
@@ -592,6 +595,31 @@ namespace BLIND.EditorTools
                             + (fixture != null ? " / 器具 " + fixture.name + " も明滅" : " / 器具の発光なし"));
             }
             return sb.ToString();
+        }
+
+        /// <summary>蛍光灯のパチパチ音（2026-09-30 作者が指定した素材）。</summary>
+        public const string BuzzClipPath = "Assets/_BLIND/SE/Fluorescent_Light-Noise02-2(Crackle).mp3";
+
+        /// <summary>
+        /// 灯りの位置に、近づくと聞こえるパチパチ音を置く。
+        /// 立体音で 1.5m 以内は最大、7m で聞こえなくなる。部屋の隅まで聞こえると
+        /// どの灯りが鳴っているか分からなくなるので、近くだけにしてある。
+        /// </summary>
+        public static AudioSource MakeBuzz(Transform parent, Vector3 at)
+        {
+            var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(BuzzClipPath);
+            if (clip == null) return null;
+            var old = parent.Find("Buzz_Generated");
+            if (old != null) Undo.DestroyObjectImmediate(old.gameObject);
+            var go = new GameObject("Buzz_Generated");
+            Undo.RegisterCreatedObjectUndo(go, "buzz");
+            go.transform.SetParent(parent, false);
+            go.transform.position = at;
+            var a = go.AddComponent<AudioSource>();
+            a.clip = clip; a.loop = true; a.playOnAwake = true; a.volume = 0.6f;
+            a.spatialBlend = 1f; a.rolloffMode = AudioRolloffMode.Linear;
+            a.minDistance = 1.5f; a.maxDistance = 7f; a.dopplerLevel = 0f;
+            return a;
         }
 
         static Light FindRoomLight(Transform room)
