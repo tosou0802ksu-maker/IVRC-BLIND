@@ -10,10 +10,11 @@ using VRC.Udon.Common.Interfaces;
 //   背を向けている間だけ進める → 振り向いたら止まる
 // を繰り返す。振り向いている間に動いた人は**名指しされる**。
 //
-// ⚠️ この部屋では死なない（`punish` 既定 false）。意図した設計。
-//    ゲートボタン(＝復帰地点)を押す前の部屋なので、ここで殺すと
-//    まだ稼いでいない進行度まで巻き戻る形になり、テンポだけが悪くなる。
-//    緊張の担当は落とし穴部屋。ここは「動いたのが誰か分かる」だけで足りる。
+// ⚠️ 2026-09-30 から**この部屋でも死ぬ**（シーンで `punish` = true）。作者の判断。
+//    以前は「ゲートボタン前の部屋で殺すと巻き戻りが大きい」ので死なない設計にしていたが、
+//    捕まっても何も起きないと緊張が無い、とテストプレイで分かった。
+//    死ぬときは棚のミニだるまが捕まった人の顔へ飛んでくる（DarumaSwarm）。
+//    名指し(accuseDuration)の間に飛ばし、当たった瞬間＝名指しの終わりに全員復帰。
 //
 // **このギミックの肝は「だるまが、動いた人の方を向く」こと。**
 // 誰かが捕まったとき、だるまはその人の方へ首を回してそのまま追い続ける。
@@ -107,8 +108,25 @@ public class DarumaWatcher : UdonSharpBehaviour
     [Header("演出(任意)")]
     [Tooltip("「だるまさんがころんだ」の声。背を向けた瞬間に鳴らす。")]
     [SerializeField] private AudioSource chantSound;
+
+    [Header("掛け声と振り向きを合わせる（chantSound があるときだけ）")]
+    [Tooltip("掛け声の「だ」の直前までの長さ(秒, 速さ1のとき)。ここまで背を向けている。DarumaChantBaker が書き込む。")]
+    [SerializeField] private float chantLead = 3.175f;
+    [Tooltip("「だー」の長さ(秒, 速さ1のとき)。この間に振り向く。")]
+    [SerializeField] private float chantTurn = 0.875f;
+    [Tooltip("唱える速さの範囲。本物の遊びと同じく、毎回速く唱えたり遅く唱えたりする。速いほど音も高くなる。")]
+    [SerializeField] private float chantSpeedMin = 0.85f;
+    [SerializeField] private float chantSpeedMax = 1.5f;
+    private float lastAwayLength;
     [Tooltip("捕まえた瞬間の音。")]
     [SerializeField] private AudioSource caughtSound;
+
+    [Header("死亡演出（punish のときだけ）")]
+    [Tooltip("棚のミニだるまを捕まった人へ飛ばす。空なら飛ばさずに死ぬだけ。")]
+    [SerializeField] private DarumaSwarm swarm;
+    [TextArea] [SerializeField] private string deathMessage = "だるまさんに見つかった";
+    [SerializeField] private AudioClip deathClip;
+    [Range(0f, 1f)] [SerializeField] private float deathVolume = 1.0f;
 
     [Header("「今 振り向いた」を見せる")]
     // ⚠️ 振り向きが見えないと、このギミックはただの理不尽な即死になる。
@@ -209,6 +227,13 @@ public class DarumaWatcher : UdonSharpBehaviour
         frozenValid = false;
         eligible = false;
 
+        // 唱えている途中で開けられたら、その場で止める。
+        // クリア後は掛け声を一切鳴らさず、首だけでプレイヤーを追う（UpdateRotation の cleared）。
+        if (chantSound != null)
+        {
+            chantSound.Stop();
+        }
+
         // 名指し中に開けられた場合に備えて、位相を無害な所へ戻しておく。
         if (Networking.IsOwner(gameObject))
         {
@@ -267,12 +292,31 @@ public class DarumaWatcher : UdonSharpBehaviour
 
         if (next == PhaseAway)
         {
-            phaseLength = Random.Range(awayMin, awayMax);
+            // 掛け声があるときは、唱える速さから背を向ける長さを決める。
+            // 「だ」の直前まで唱え終わった瞬間に振り向き始める。
+            if (UseChant())
+            {
+                phaseLength = chantLead / Random.Range(chantSpeedMin, chantSpeedMax);
+            }
+            else
+            {
+                phaseLength = Random.Range(awayMin, awayMax);
+            }
+            lastAwayLength = phaseLength;
             accusedId = -1;
         }
         else if (next == PhaseTurn)
         {
-            phaseLength = turnDuration;
+            // 「だー」の間に振り向く。唱える速さに合わせて振り向きの速さも変わる。
+            // 速すぎると反応できないので 0.45 秒より速くはしない。
+            if (UseChant() && lastAwayLength > 0.0001f)
+            {
+                phaseLength = Mathf.Max(0.45f, chantTurn * (lastAwayLength / chantLead));
+            }
+            else
+            {
+                phaseLength = turnDuration;
+            }
         }
         else if (next == PhaseWatch)
         {
@@ -306,16 +350,19 @@ public class DarumaWatcher : UdonSharpBehaviour
 
         if (phase == PhaseAway)
         {
-            if (chantSound != null)
-            {
-                chantSound.Play();
-            }
+            PlayChant();
         }
         else if (phase == PhaseAccuse)
         {
             if (caughtSound != null)
             {
                 caughtSound.Play();
+            }
+
+            // 死ぬ設定なら、名指しの間にミニだるまを飛ばす（全員の画面で同じ演出）
+            if (punish && swarm != null)
+            {
+                swarm.Launch(accusedId, phaseLength);
             }
 
             // ⚠️ 復帰地点(CP_2_Blue)が**この部屋の中**にあるので、
@@ -421,6 +468,15 @@ public class DarumaWatcher : UdonSharpBehaviour
 
         UpdateCatch();
 
+        // ⚠️ オーナーが部屋を出ると、その人の画面では部屋ごと非表示（RoomVisibilityManager）になり、
+        //    このスクリプトも止まる。位相を進める人がいなくなって、部屋に残った人のだるまが固まる。
+        //    部屋の中にいる人が「予定の長さを 1.5 秒過ぎても次に進まない」と気づいたら、
+        //    自分がオーナーを引き継いで進める。
+        if (!Networking.IsOwner(gameObject) && localInside && phaseTimer > phaseLength + 1.5f)
+        {
+            Networking.SetOwner(Networking.LocalPlayer, gameObject);
+        }
+
         // 進行はオーナーだけ。全員が進めると位相が割れる。
         if (!Networking.IsOwner(gameObject))
         {
@@ -452,7 +508,9 @@ public class DarumaWatcher : UdonSharpBehaviour
                 deathSent = true;
                 if (punish && checkpointManager != null)
                 {
-                    checkpointManager.TriggerDeath();
+                    // この部屋専用の文字と音を全員に出すため、自分のイベントで全員に知らせる
+                    // （HazardZone と同じ作り。TriggerDeath だと標準の文字・音になる）
+                    SendCustomNetworkEvent(NetworkEventTarget.All, nameof(OnCaughtDeathGlobal));
                 }
             }
             EnterPhase(PhaseAway);
@@ -463,9 +521,39 @@ public class DarumaWatcher : UdonSharpBehaviour
             // 殺さない設定なら止める理由が無いので、普通の長さのまま回す。
             if (punish)
             {
-                phaseLength = awayMax;
+                // 掛け声があるときは、いちばん遅い速さで唱える長さにする
+                phaseLength = UseChant() ? chantLead / chantSpeedMin : awayMax;
+                lastAwayLength = phaseLength;
                 RequestSerialization();
+                PlayChant();   // 長さが変わったので、速さを合わせて唱え直す
             }
+        }
+    }
+
+    private bool UseChant()
+    {
+        return chantSound != null && chantSound.clip != null && chantLead > 0.0001f;
+    }
+
+    // 背を向けている長さ(phaseLength, 同期済み)から速さを逆算して唱える。
+    // 速さは同期しない。phaseLength が全員同じなので、全員が同じ速さで唱える。
+    private void PlayChant()
+    {
+        if (chantSound == null) return;
+        if (UseChant() && phaseLength > 0.0001f)
+        {
+            chantSound.pitch = Mathf.Clamp(chantLead / phaseLength, 0.5f, 2.0f);
+        }
+        chantSound.Stop();
+        chantSound.Play();
+    }
+
+    // 全員のクライアントで動く。各自が自分だけを戻し、この部屋の文字と音を出す。
+    public void OnCaughtDeathGlobal()
+    {
+        if (checkpointManager != null)
+        {
+            checkpointManager.RespawnWith(deathMessage, deathClip, deathVolume);
         }
     }
 
