@@ -79,8 +79,10 @@ namespace BLIND.EditorTools
         ///   15% / 8% / 5% で撮り比べた結果、8% でもだるま・落とし穴・チェス盤・通路は読めた。
         ///   落とし穴の部屋は環境光が支配的で、ライトを下げても穴の見え方はほぼ変わらない。
         ///   5% は落とし穴の床と穴が溶け始めたので採らなかった。
-        const float DimScale  = 0.08f;
-        const float DarkScale = 0.03f;
+        /// 2026-09-30: 0.08/0.03 → 0.05/0.015（作者「過去人の視認性をもっと下げていい、エコロケの仕事が減りすぎ」）。
+        ///   過去人に部屋の奥まで見えると、エコロケが道を探す意味が無くなる。
+        const float DimScale  = 0.05f;
+        const float DarkScale = 0.015f;
 
         /// <summary>
         /// 照明器具の発光（天井パネル・電球）に掛ける倍率。
@@ -89,8 +91,8 @@ namespace BLIND.EditorTools
         /// 0 にはしない。器具がかすかに光っているほうが「電気が弱っている」と読めるし、
         /// 完全な暗闇にしないという要件にも効く。
         /// </summary>
-        const float DimEmission  = 0.25f;   // 2026-09-29: 0.35 → 0.25（DimScale と合わせて下げた）
-        const float DarkEmission = 0.12f;
+        const float DimEmission  = 0.15f;   // 2026-09-29: 0.35 → 0.25、09-30: → 0.15（DimScale と合わせて下げた）
+        const float DarkEmission = 0.06f;   // 2026-09-30: 0.12 → 0.06
 
         /// <summary>
         /// 暗くする照明器具の材質（名前の完全一致）。
@@ -117,7 +119,8 @@ namespace BLIND.EditorTools
         /// 真っ黒だと光の届かない所が完全に消える。ここを上げすぎると懐中電灯の意味が無くなる。
         /// 青みを入れるのは、暗所で人の目が青寄りに感じる（プルキンエ現象）のに合わせるため。
         /// </summary>
-        static readonly Color AmbientDark = new Color(0.10f, 0.11f, 0.14f, 1f);
+        /// 2026-09-30: (0.10, 0.11, 0.14) → 半分。光の外は輪郭がかろうじて分かる程度にした。
+        static readonly Color AmbientDark = new Color(0.05f, 0.055f, 0.07f, 1f);
 
         /// <summary>
         /// 暗くしてはいけない灯り（名前の部分一致）。
@@ -887,9 +890,15 @@ namespace BLIND.EditorTools
         ///    届かせたい距離の 2 倍以上を取る。70 なら 27m 先で約 21% 残る。
         ///    代わりに手元(2m)はほぼ 100% になり、近くの壁は白く飛ぶ。本物の懐中電灯もそうなる。
         /// </summary>
-        const float BeamRange = 70f;
-        const float BeamAngle = 50f;
-        const float BeamIntensity = 4.5f;
+        ///
+        /// 2026-09-30: 70/50°/4.5 → 20/40°/3.5。
+        ///   作者「過去人の視認性をもっと下げていい、エコロケの仕事が減りすぎ」。
+        ///   70 だと room9 の入口から 25m 奥の壁と、途中の落とし穴が全部見えていた。
+        ///   20 なら 5m 先で約 4 割、10m 先で約 1.5 割しか残らず、足元の数歩だけが読める。
+        ///   遠くの穴や道はエコロケに聞くしかない、という役割分担に戻す。
+        const float BeamRange = 20f;
+        const float BeamAngle = 40f;
+        const float BeamIntensity = 3.5f;
 
         static string BuildFlashlight()
         {
