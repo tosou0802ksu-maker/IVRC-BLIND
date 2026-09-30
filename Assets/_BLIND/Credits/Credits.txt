@@ -1,0 +1,84 @@
+# ゴール(room19)のクレジット看板の中身。
+# 書き換えたら Unity のメニュー「BLIND/クレジット/看板を作り直す」を押す。
+#
+# 書き方:
+#   # で始まる行      … 看板には出ない（メモ用）
+#   [見出し]          … 見出し
+#   ---               … ここで次の列へ
+#   それ以外          … 「作品名　作者　URL」（区切りは全角スペース）。そのまま1行で出る
+#
+# ⚠️ 看板のフォントは英数字しか出ない（LiberationSans）。日本語を入れると□になる。
+# ⚠️ 【要確認】の行は、出典を確かめてから # を外すこと。
+
+[3D Models - Sketchfab (CC BY 4.0)]
+Penguin plush　SunnyBuns　https://sketchfab.com/3d-models/penguin-plush-228fddb7362f42e2a349b84cbe8191b4
+Exit Sign　Jimmy Johansson　https://sketchfab.com/3d-models/exit-sign-f44e87830ed642afb62840565f830282
+Spot Light /// Holofote　EnrycoDosSantos　https://sketchfab.com/3d-models/spot-light-holofote-99c3be8102664bc6aec2081d2c4e33b1
+Vents　DJMaesen　https://sketchfab.com/3d-models/vents-166b894c533845bbb9d216526a512c2b
+Mannequin　monostudio　https://sketchfab.com/3d-models/mannequin-a1b42c76d45d4d989754071b75b30df6
+Mannequin head　scbenoit　https://sketchfab.com/3d-models/mannequin-head-d465a1f697b54136b65288ce9c23b16f
+Daruma　Ramujiro　https://sketchfab.com/3d-models/daruma-deb599b14ece4825a46045be9dce3589
+Daruma　awoisoak　https://sketchfab.com/3d-models/daruma-a51cbc16ae384ebfb19db2c5653166b4
+Red Button　Wolfmic　https://sketchfab.com/3d-models/red-button-e7685cccf7364682bc6a7883d0b8c503
+Shower fixture　Blizzy　https://sketchfab.com/3d-models/shower-fixture-454856edbb67415bae8ff1f23d2e6512
+Small Drain Cover Decal　romullus　https://sketchfab.com/3d-models/small-drain-cover-decal-2a2483b7a8db41c6bfac93f2293aea6e
+Worn Ceiling Light　DeadEndGames　https://sketchfab.com/3d-models/worn-ceiling-light-b1634e813f5d4337ac40a003aed76f73
+Light Fixture - Ceiling Recessed　MozillaHubs　https://sketchfab.com/3d-models/light-fixture-ceiling-recessed-269fd427629548a8a0949a6493c5b223
+Outdor Ceiling Light　JeetuArts　https://sketchfab.com/3d-models/outdor-ceiling-light-c73188c7440b43d08b3fdd7292939ae3
+Fluorescent Lamp/Light - 4096px²　Mark Peters　https://sketchfab.com/3d-models/fluorescent-lamplight-4096px2-af6ccbb048594b848f2af232307cab60
+Wires　Bulat.Shakirov　https://sketchfab.com/3d-models/wires-fca671dcab294aff97fc422915e791ef
+Electrical Wiring　Zillious　https://sketchfab.com/3d-models/electrical-wiring-0088c99f46aa4661b0dc91dbf7119c88
+Trash Bag　furkankucukkisnisci　https://sketchfab.com/3d-models/trash-bag-8bdd5976c0e54b4fb41fd8cc12fee52d
+---
+Electric cable - 13MB　Mehdi Shahsavan　https://sketchfab.com/3d-models/electric-cable-13mb-1f6a4938769846b1ae9b512038aec5f8
+Sony PVM-14L2 CRT TV　Poring　https://sketchfab.com/3d-models/sony-pvm-14l2-crt-tv-ab19c2419c2647299ce96d027b3e7f5e
+Old Metal Folding Chair　MaX3Dd　https://sketchfab.com/3d-models/old-metal-folding-chair-bc526e9ae4954ecf82c9caf35d8e6bdd
+Flat Bench　Sousinho　https://sketchfab.com/3d-models/flat-bench-b56ab6e2b50246c88c7f72a4f16fc857
+1990's CRT Television　joemauke　https://sketchfab.com/3d-models/1990s-crt-television-83e9602e7f954f71b3df397825e70c69
+CRT TV　Keon1x　https://sketchfab.com/3d-models/crt-tv-7e19d474af4449e69c03dc661e7967dc
+Light Ceiling Lamp - 4MB　Mehdi Shahsavan　https://sketchfab.com/3d-models/light-ceiling-lamp-4mb-14ffe646139346aabe7ca6c6db3ba9dd
+TV　CN Entertainment　https://sketchfab.com/3d-models/tv-1b7eff20a86b4cc692bc4222ac1ac252
+Low Poly Doors　justice2free　https://sketchfab.com/3d-models/low-poly-doors-a73b0088058646d0a710377abaa2ed5a
+Meuble Tv　charles.cla　https://sketchfab.com/3d-models/meuble-tv-e13fdf534dac4bf9809d6891951d838c
+Window Frame　kshsh　https://sketchfab.com/3d-models/window-frame-0ceb3436b5884703851cab6ed888925f
+Hospital Trolley　creative_beast　https://sketchfab.com/3d-models/hospital-trolley-6fa14ba57e324d288b5a42632f19d97f
+Chair Hospital　Khafesus　https://sketchfab.com/3d-models/chair-hospital-baaa4ec5d6d34ad49004e4d151b43aa2
+Chess Set　esraaelsayed　https://sketchfab.com/3d-models/chess-set-15486320eaca45b18d00bf048273204b
+# 【要確認】シーンで使っているが一覧に無い Sketchfab らしきモデル（フォルダ名）:
+#   voodoo-doll / camera-11 / metal-table / riminal5(roadblock, traffic cone, signs) /
+#   backheya910/woodybord(Sign) / backheya1/Antique chair / room19(Table 7, OldForniture, tourch_textured) /
+#   room11/sm_Tuyaux_grillage_1m
+---
+[3D Models - Other]
+Spot Light　iPoly3D　https://poly.pizza (CC0)
+Animated Human　Quaternius　https://quaternius.com (CC0)
+Rubber Duck　Poly Haven　https://polyhaven.com (CC0)
+Wet Floor Sign　Poly Haven　https://polyhaven.com (CC0)
+Horse Head　Poly Haven　https://polyhaven.com (CC0)
+Korean Fire Extinguisher　Poly Haven　https://polyhaven.com (CC0)
+Fire Hydrant　Poly Haven　https://polyhaven.com (CC0)
+Wooden Bookshelf Worn　Poly Haven　https://polyhaven.com (CC0)
+Flashlight　RRFreelance　Unity Asset Store
+Particle Pack　Unity Technologies　Unity Asset Store
+# 【要確認】Asset Store などから入れたらしいパック（作者・入手先を確かめて # を外す）:
+# Locker HQ　【作者】　Unity Asset Store
+# Free Doll　RamsterZ　Unity Asset Store
+# Mix Furniture Pack　ZNS3D　Unity Asset Store
+# Modular Sewer Props　Ata Khani　Unity Asset Store
+# CRT Monitor　Pekdata　Unity Asset Store
+# Mannequin　【作者】　【入手先】
+# Industrial Pipeline　【作者】　【入手先】
+# Udon Clock　【作者】　【入手先】
+# Blue Garage　Meshy AI（無料プランで生成したなら CC BY 4.0 で「Meshy」の表記が必要）
+
+[Textures]
+ambientCG　https://ambientcg.com (CC0)
+Poly Haven　https://polyhaven.com (CC0)
+Particle Pack　Kenney　https://kenney.nl (CC0)
+
+[Sound]
+OtoLogic　https://otologic.jp (CC BY 4.0)
+# 【要確認】ほかの効果音の配布元（ファイル名からの推測）:
+#   決定ボタンを押す38 / 鍵を開ける / 打撃6 / 打撃7 / 火炎魔法2 / ハッチ開閉01 / クイズ正解3 / クイズ不正解2 / 電気バチバチ … 効果音ラボ？
+#   dragon-studio-button-press / storm-rain-thunder … Pixabay？
+#   six / shower / レーザー / 妨害電波 / 焚き火 / 水のしたたる洞窟 / Radio Tuning to FM … 不明
