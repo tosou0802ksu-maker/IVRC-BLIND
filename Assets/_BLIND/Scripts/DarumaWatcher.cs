@@ -123,6 +123,20 @@ public class DarumaWatcher : UdonSharpBehaviour
     [Tooltip("chantClips それぞれの速さ（並びは chantClips と1対1）。")]
     [SerializeField] private float[] chantSpeeds;
     private float lastAwayLength;
+
+    [Header("掛け声が聞こえる範囲（ワールド座標の箱）")]
+    // ⚠️ 距離で減衰させる 3D 音だと、細長い room11（33m）の奥まで届かせようとすると
+    //    壁越しに隣の部屋まで漏れる。VRChat は AudioSource に空間音響を自動で付けて
+    //    減衰を上書きすることもある。そこで 2D 音にし、**頭がどの箱にあるか**で音量を決める。
+    [Tooltip("この箱の中（room11 全体）では chantVolume で聞こえる。")]
+    [SerializeField] private Vector3 hearMin = new Vector3(6.0f, -2.0f, -58.0f);
+    [SerializeField] private Vector3 hearMax = new Vector3(14.9f, 6.0f, -24.6f);
+    [SerializeField] private float chantVolume = 0.85f;
+    [Tooltip("この箱の中（隣の room10）では壁越しにうっすら聞こえる。")]
+    [SerializeField] private Vector3 faintMin = new Vector3(-9.5f, -2.0f, -58.4f);
+    [SerializeField] private Vector3 faintMax = new Vector3(6.0f, 6.0f, -47.6f);
+    [SerializeField] private float faintVolume = 0.08f;
+    private float shownChantVolume;
     [Tooltip("捕まえた瞬間の音。")]
     [SerializeField] private AudioSource caughtSound;
 
@@ -270,9 +284,6 @@ public class DarumaWatcher : UdonSharpBehaviour
         if (player != null && player.isLocal)
         {
             localInside = false;
-            // 掛け声は部屋の中の人だけに聞かせる。3D音源でも VRChat は
-            // 遠くまで減衰しきらず、壁越しに隣の部屋まで届いてしまった。
-            if (chantSound != null) chantSound.Stop();
         }
     }
 
@@ -462,6 +473,7 @@ public class DarumaWatcher : UdonSharpBehaviour
 
         UpdateRotation(dt);
         UpdateHeat();
+        UpdatePresence();
 
         // クリア後は位相を進めず、捕まえもしない。首を回すだけ。
         if (cleared)
@@ -543,6 +555,50 @@ public class DarumaWatcher : UdonSharpBehaviour
         }
     }
 
+    // 頭の位置から「部屋の中か」と掛け声の音量を決める。
+    // ⚠️ 部屋は RoomVisibilityManager で丸ごと出し入れされる。非表示の間に扉をくぐると
+    //    トリガーの「入った」を取りこぼし、中にいるのに外扱い（声が鳴らず判定もされない）になった。
+    //    トリガーは残しつつ、位置でも毎フレーム確かめる。
+    private void UpdatePresence()
+    {
+        VRCPlayerApi lp = Networking.LocalPlayer;
+        if (lp == null) return;
+        Vector3 head = lp.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position;
+
+        // 判定の対象も位置で決める。トリガーの「出た」を取りこぼして
+        // 別の部屋で歩いているだけの人が捕まる、という事故も防げる。
+        bool inHear = InBox(head, hearMin, hearMax);
+        if (inHear && !localInside)
+        {
+            insideSince = Time.timeSinceLevelLoad;
+
+            // 部屋が非表示だった間は音源も止まっている。唱えている途中に入ってきたら、
+            // 今唱えているところから鳴らし直す（次の回まで無音にしない）。
+            if (!cleared && phase == PhaseAway && chantSound != null && !chantSound.isPlaying)
+            {
+                PlayChant();
+                if (chantSound.clip != null && phaseTimer < chantSound.clip.length)
+                {
+                    chantSound.time = phaseTimer;
+                }
+            }
+        }
+        localInside = inHear;
+
+        if (chantSound == null) return;
+        float want = inHear ? chantVolume : (InBox(head, faintMin, faintMax) ? faintVolume : 0.0f);
+        if (want != shownChantVolume)
+        {
+            shownChantVolume = want;
+            chantSound.volume = want;
+        }
+    }
+
+    private bool InBox(Vector3 p, Vector3 mn, Vector3 mx)
+    {
+        return p.x >= mn.x && p.x <= mx.x && p.y >= mn.y && p.y <= mx.y && p.z >= mn.z && p.z <= mx.z;
+    }
+
     private bool UseClipSet()
     {
         return chantSound != null && chantClips != null && chantSpeeds != null
@@ -566,8 +622,6 @@ public class DarumaWatcher : UdonSharpBehaviour
     private void PlayChant()
     {
         if (chantSound == null) return;
-        // 部屋の外にいる人には鳴らさない（位相の計算は続ける）
-        if (!localInside) { chantSound.Stop(); return; }
         if (UseClipSet() && phaseLength > 0.0001f)
         {
             // 速さに一番近い1本を選び、そのまま鳴らす（音程は変えない）
