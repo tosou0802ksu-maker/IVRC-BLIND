@@ -76,6 +76,9 @@ ambientCG　https://ambientcg.com (CC0)
 Poly Haven　https://polyhaven.com (CC0)
 Particle Pack　Kenney　https://kenney.nl (CC0)
 
+[Music]
+Post-Dream - Liminal Horror & Dreamcore Ambient Pack　Crow Shade　https://crowshade.itch.io/post-dream-music (CC BY 4.0)
+
 [Sound]
 OtoLogic　https://otologic.jp (CC BY 4.0)
 # 【要確認】ほかの効果音の配布元（ファイル名からの推測）:

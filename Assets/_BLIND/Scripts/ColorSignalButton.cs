@@ -10,6 +10,7 @@ using VRC.Udon.Common.Interfaces;
 // 押すと ColorDoorManager と ColorLampManager の両方へ「この色が選ばれた」と
 // 直接通知する。実際の移動や同期は各マネージャー側が担当するので、
 // このスクリプトはただの送信機。
+// 視点シャッフル(ViewpointShuffleManager.ShuffleForColor)にも知らせる。各色の初回だけシャッフルされる。
 //
 // 効果音は全プレイヤーに聞こえるように SendCustomNetworkEvent で鳴らす。
 public class ColorSignalButton : UdonSharpBehaviour
@@ -28,6 +29,9 @@ public class ColorSignalButton : UdonSharpBehaviour
     [SerializeField] private AudioClip pressClip;
     [Tooltip("鳴らすスピーカー(任意)。空ならボタンの位置でそのまま鳴らす。")]
     [SerializeField] private AudioSource pressSound;
+
+    [Header("視点シャッフル(任意)。この色が初めて押されたときに1回だけシャッフルする")]
+    [SerializeField] private ViewpointShuffleManager shuffleManager;
 
     [Header("押したときに一緒に知らせる相手(任意)")]
     [Tooltip("room13 の青ボタンでレーザーを止めるために追加（LaserSwitch.TurnOff）。空なら何もしない。")]
@@ -63,6 +67,12 @@ public class ColorSignalButton : UdonSharpBehaviour
         if (checkpointManager != null)
         {
             checkpointManager.SetCheckpointDirect(colorId + 1);
+        }
+
+        // 2回目以降(別の人が同じ色を押した等)は ShuffleForColor 側で無視される
+        if (shuffleManager != null)
+        {
+            shuffleManager.ShuffleForColor(colorId);
         }
 
         if (pressClip != null || pressSound != null)

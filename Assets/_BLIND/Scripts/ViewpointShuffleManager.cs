@@ -12,7 +12,12 @@ using VRC.Udon;
 // として計算する。役割の実体を同期する必要はなく、roleOffset 1個の
 // 同期だけで全員が矛盾なく同じ役割分担にたどり着ける。
 //
-// ShuffleRoles() は ShuffleSequenceManager からのみ呼ばれる想定。
+// 入退室で rank が変わるので、OnPlayerJoined / OnPlayerLeft でも計算し直す。
+// (これをしないと、誰かが抜けた後に入ってきた人が、残っている人と同じ役割になる)
+//
+// シャッフルの入口は2つ。
+//   ShuffleForColor(colorId) … セーブポイントのボタン(ColorSignalButton)から。各色の初回だけ。
+//   ShuffleRoles()           … ShuffleSequenceManager から(現在シーンにボタンが無く未使用)。
 public class ViewpointShuffleManager : UdonSharpBehaviour
 {
     [Header("このクライアントのローカル視点コントローラ")]
@@ -26,8 +31,15 @@ public class ViewpointShuffleManager : UdonSharpBehaviour
 
     [UdonSynced] public int roleOffset;
 
+    // ShuffleForColor で、どの色でシャッフル済みかのビット(赤=1, 青=2, 緑=4)。
+    // roleOffset と同じ同期で送るので、後から押した人・途中参加の人も「済み」が分かる。
+    [UdonSynced] public int shuffledColorFlags;
+
     // デバッグ切り替えで上書きした役割。-1 なら未使用(通常の計算に従う)。
     private int debugRole = -1;
+
+    // GetPlayers 用の使い回し配列(呼ぶたびに new しないため)。足りなくなったら作り直す。
+    private VRCPlayerApi[] playersBuffer = new VRCPlayerApi[16];
 
     void Start()
     {
@@ -58,6 +70,22 @@ public class ViewpointShuffleManager : UdonSharpBehaviour
         ApplyRoleForLocalPlayer();
     }
 
+    // 自分が入室したときは、すでにいる全員(自分を含む)の分だけ呼ばれる。
+    // 入ってくる人の playerId は既存の全員より大きいので既存の人の rank は変わらないが、
+    // Start の時点で人数がそろっているとは限らないので、ここでも計算し直す。
+    public override void OnPlayerJoined(VRCPlayerApi player)
+    {
+        ApplyRoleForLocalPlayer();
+    }
+
+    // 抜けた人より playerId が大きい人は rank が1つ繰り上がるので計算し直す。
+    // この時点で GetPlayers に抜けた人がまだ含まれるかは公式に書かれていないため、明示的に除く。
+    public override void OnPlayerLeft(VRCPlayerApi player)
+    {
+        int leftId = player != null ? player.playerId : -1;
+        ApplyRoleForLocalPlayerExcluding(leftId);
+    }
+
     public void ShuffleRoles()
     {
         if (!Networking.IsOwner(gameObject))
@@ -65,13 +93,56 @@ public class ViewpointShuffleManager : UdonSharpBehaviour
             Networking.SetOwner(Networking.LocalPlayer, gameObject);
         }
 
-        roleOffset = (roleOffset + 1) % 3;
+        AdvanceRoleOffset();
         RequestSerialization();
 
         ApplyRoleForLocalPlayer();
     }
 
+    // セーブポイントのボタン(ColorSignalButton)から呼ばれる。
+    // その色で初めて呼ばれたときだけシャッフルする(赤=0, 青=1, 緑=2)。
+    // ColorSignalButton の「押した」印は各クライアントごとなので、
+    // ここで全体の「済み」を見ないと、同じ色を3人が押すと3回シャッフルされてしまう。
+    public void ShuffleForColor(int colorId)
+    {
+        if (colorId < 0 || colorId > 2)
+        {
+            return;
+        }
+
+        int bit = 1 << colorId;
+        if ((shuffledColorFlags & bit) != 0)
+        {
+            return;
+        }
+
+        if (!Networking.IsOwner(gameObject))
+        {
+            Networking.SetOwner(Networking.LocalPlayer, gameObject);
+        }
+
+        shuffledColorFlags |= bit;
+        AdvanceRoleOffset();
+        RequestSerialization();
+
+        ApplyRoleForLocalPlayer();
+    }
+
+    private void AdvanceRoleOffset()
+    {
+        // +1 か +2 をランダムに選ぶ(+0 は選ばない)。
+        // 3人の役割の入れ替え方のうち「全員の役割が必ず変わる」のはこの2通りだけ。
+        // Random.Range(int, int) は上限を含まないので 1 か 2 が返る。
+        roleOffset = (roleOffset + Random.Range(1, 3)) % 3;
+    }
+
     private void ApplyRoleForLocalPlayer()
+    {
+        ApplyRoleForLocalPlayerExcluding(-1);
+    }
+
+    // excludedPlayerId: rank の計算から除く playerId。除かないときは -1。
+    private void ApplyRoleForLocalPlayerExcluding(int excludedPlayerId)
     {
         if (localVisionController == null)
         {
@@ -85,7 +156,7 @@ public class ViewpointShuffleManager : UdonSharpBehaviour
             return;
         }
 
-        int rank = GetLocalPlayerRank();
+        int rank = GetLocalPlayerRank(excludedPlayerId);
         if (rank < 0)
         {
             return;
@@ -95,28 +166,39 @@ public class ViewpointShuffleManager : UdonSharpBehaviour
         localVisionController.SetRole((ViewRole)roleValue);
     }
 
-    // playerIdの昇順で自分が何番目(0始まり)かを返す。
-    private int GetLocalPlayerRank()
+    // playerIdの昇順で自分が何番目(0始まり)かを返す。excludedPlayerId の人は数えない。
+    private int GetLocalPlayerRank(int excludedPlayerId)
     {
         if (Networking.LocalPlayer == null)
         {
             return -1;
         }
 
-        VRCPlayerApi[] players = new VRCPlayerApi[VRCPlayerApi.GetPlayerCount()];
-        VRCPlayerApi.GetPlayers(players);
+        int count = VRCPlayerApi.GetPlayerCount();
+        if (playersBuffer == null || playersBuffer.Length < count)
+        {
+            playersBuffer = new VRCPlayerApi[count * 2];
+        }
+        VRCPlayerApi.GetPlayers(playersBuffer);
 
         int localId = Networking.LocalPlayer.playerId;
         int rank = 0;
 
-        for (int i = 0; i < players.Length; i++)
+        for (int i = 0; i < count; i++)
         {
-            if (players[i] == null)
+            VRCPlayerApi p = playersBuffer[i];
+            if (p == null)
             {
                 continue;
             }
 
-            if (players[i].playerId < localId)
+            int id = p.playerId;
+            if (id == excludedPlayerId)
+            {
+                continue;
+            }
+
+            if (id < localId)
             {
                 rank++;
             }
