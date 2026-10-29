@@ -224,7 +224,11 @@ namespace BLIND.EditorTools
         static void BuildWallPatch(Transform p, Material mWall, Material mDado)
         {
             const float OldZ1 = 20.10f;              // 伸ばす前の北端
+            // SizeZ も OldZ1 も定数なので「この return には来ない」と警告(CS0162)が出る。
+            // 部屋の長さを戻したときのための確認なので、行は残して警告だけ止める。
+#pragma warning disable CS0162
             if (SizeZ <= OldZ1 + 0.2f) return;       // 伸ばしていないなら不要
+#pragma warning restore CS0162
 
             float z0 = OldZ1, z1 = SizeZ - 0.10f;
             float zc = (z0 + z1) * 0.5f, zl = z1 - z0;

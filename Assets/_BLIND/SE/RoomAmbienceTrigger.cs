@@ -17,7 +17,6 @@ public class RoomAmbienceTrigger : UdonSharpBehaviour
     public float fadeSpeed = 2f; // 大きいほど速く切り替わる
 
     private float targetBgmVolume;
-    private bool playerInside = false;
 
     void Start()
     {
@@ -30,7 +29,6 @@ public class RoomAmbienceTrigger : UdonSharpBehaviour
     {
         if (!player.isLocal) return;
 
-        playerInside = true;
         targetBgmVolume = bgmDuckedVolume;
 
         if (roomAmbience != null && !roomAmbience.isPlaying)
@@ -41,7 +39,6 @@ public class RoomAmbienceTrigger : UdonSharpBehaviour
     {
         if (!player.isLocal) return;
 
-        playerInside = false;
         targetBgmVolume = bgmNormalVolume;
 
         if (roomAmbience != null)
