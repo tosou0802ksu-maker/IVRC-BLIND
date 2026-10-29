@@ -66,6 +66,16 @@ public class MannequinProxyRig : UdonSharpBehaviour
     private MaterialPropertyBlock propertyBlock;
     private bool initialized;
 
+    // 大きさ・向き合わせ用。
+    // マネキンは元の大きさだと脚だけで約1.8m(全高 約4.3m)あり、そのままでは人より2倍以上大きい。
+    // 毎フレーム「プレイヤーの脚の長さ ÷ マネキンの脚の長さ」で全体を拡大縮小する。
+    private float restLegLength;
+    private Vector3 baseScale;
+    private Quaternion armatureRestRot;
+    // 体全体の向き(プレイヤーの水平の向き)。Aim で静止姿勢をこの向きに回してから手足を合わせる。
+    // (手足の向きだけ合わせると、体の正面がずっと同じ方を向いたままになるため)
+    private Quaternion currentYaw = Quaternion.identity;
+
     void Start()
     {
         propertyBlock = new MaterialPropertyBlock();
@@ -97,6 +107,14 @@ public class MannequinProxyRig : UdonSharpBehaviour
         if (rightHip != null) { rightHipRestDir = DirToChild(rightHip); rightHipRestRot = rightHip.rotation; }
         if (rightLeg != null) { rightLegRestDir = DirToChild(rightLeg); rightLegRestRot = rightLeg.rotation; }
         if (rightCalf != null) { rightCalfRestDir = DirToChild(rightCalf); rightCalfRestRot = rightCalf.rotation; }
+
+        baseScale = transform.localScale;
+        if (armature != null) armatureRestRot = armature.rotation;
+        // 太ももの付け根(leg)から足首(calf の子 = foot)まで
+        if (leftLeg != null && leftCalf != null && leftCalf.childCount > 0)
+        {
+            restLegLength = Vector3.Distance(leftLeg.position, leftCalf.GetChild(0).position);
+        }
 
         initialized = true;
     }
@@ -158,8 +176,20 @@ public class MannequinProxyRig : UdonSharpBehaviour
         Vector3 rightLowerLeg = player.GetBonePosition(HumanBodyBones.RightLowerLeg);
         Vector3 rightFoot = player.GetBonePosition(HumanBodyBones.RightFoot);
 
+        // 体の向き(水平だけ)
+        currentYaw = Quaternion.Euler(0f, player.GetRotation().eulerAngles.y, 0f);
+
+        // 大きさ: 脚の長さ(太ももの付け根→足首)を合わせる
+        float legLength = Vector3.Distance(leftUpperLeg, leftFoot);
+        if (restLegLength > 0.01f && legLength > 0.05f)
+        {
+            float k = Mathf.Clamp(legLength / restLegLength, 0.1f, 3f);
+            transform.localScale = baseScale * k;
+        }
+
         if (armature != null)
         {
+            armature.rotation = currentYaw * armatureRestRot;
             armature.position = hips;
         }
 
@@ -185,6 +215,15 @@ public class MannequinProxyRig : UdonSharpBehaviour
         Aim(rightHip, rightHipRestDir, rightHipRestRot, rightLegDir);
         Aim(rightLeg, rightLegRestDir, rightLegRestRot, rightLegDir);
         Aim(rightCalf, rightCalfRestDir, rightCalfRestRot, (rightFoot - rightLowerLeg).normalized);
+
+        // 位置: マネキンの armature の原点は足元にあるので、hips に置くだけだと腰が上にずれる。
+        // 両脚の付け根の中点を、プレイヤーの両脚の付け根の中点に重ねる(足が床に付く)。
+        if (armature != null && leftLeg != null && rightLeg != null)
+        {
+            Vector3 modelHip = (leftLeg.position + rightLeg.position) * 0.5f;
+            Vector3 playerHip = (leftUpperLeg + rightUpperLeg) * 0.5f;
+            armature.position += playerHip - modelHip;
+        }
     }
 
     // restDir(静止姿勢での向き)からdesiredDir(今のプレイヤーの向き)への回転差分を、
@@ -195,7 +234,8 @@ public class MannequinProxyRig : UdonSharpBehaviour
         if (bone == null) return;
         if (desiredDir.sqrMagnitude < 0.0001f) return;
 
-        Quaternion delta = Quaternion.FromToRotation(restDir, desiredDir);
-        bone.rotation = delta * restRot;
+        // 静止姿勢を体の向き(currentYaw)に回してから、手足の向きの差分を掛ける
+        Quaternion delta = Quaternion.FromToRotation(currentYaw * restDir, desiredDir);
+        bone.rotation = delta * currentYaw * restRot;
     }
 }
