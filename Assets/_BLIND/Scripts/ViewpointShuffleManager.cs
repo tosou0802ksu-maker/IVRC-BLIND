@@ -18,6 +18,13 @@ using VRC.Udon;
 // シャッフルの入口は2つ。
 //   ShuffleForColor(colorId) … セーブポイントのボタン(ColorSignalButton)から。各色の初回だけ。
 //   ShuffleRoles()           … ShuffleSequenceManager から(現在シーンにボタンが無く未使用)。
+//   手元の操作(下記)         … 1〜2人で遊ぶときだけ。いつでも何度でも切り替えられる。
+//
+// 1〜2人で遊ぶとき(体験会・審査用):
+//   デスクトップは switchKey(既定 Q)、VR は右スティックを上に倒すと視点が切り替わる。
+//   1人なら エコロケ→サーモ→過去の人 の順に1つずつ。
+//   2人なら +1 か +2 をランダムに選ぶ(2人とも必ず前と違う視点になる)。
+//   3人いるときは使えない(視点は3人で1つずつ持つのが本来の遊び方のため)。
 public class ViewpointShuffleManager : UdonSharpBehaviour
 {
     [Header("このクライアントのローカル視点コントローラ")]
@@ -28,6 +35,14 @@ public class ViewpointShuffleManager : UdonSharpBehaviour
              "1人だと役割が固定されてしまうため、テスト時だけオンにする。")]
     [SerializeField] private bool enableDebugRoleSwitch;
     [SerializeField] private KeyCode debugRoleSwitchKey = KeyCode.R;
+
+    [Header("1〜2人で遊ぶときの手元の切り替え")]
+    [Tooltip("この人数以下のときだけ、手元の操作で視点を切り替えられる")]
+    [SerializeField] private int freeSwitchMaxPlayers = 2;
+    [Tooltip("デスクトップのキー。VRChat が使っていないキーにすること(WASD/Space/Shift/C/Z/R/V/T などは不可)")]
+    [SerializeField] private KeyCode switchKey = KeyCode.Q;
+    [Tooltip("連打しても壊れないよう、次に切り替えられるまでの秒数")]
+    [SerializeField] private float switchCooldown = 0.5f;
 
     [UdonSynced] public int roleOffset;
 
@@ -41,6 +56,9 @@ public class ViewpointShuffleManager : UdonSharpBehaviour
     // GetPlayers 用の使い回し配列(呼ぶたびに new しないため)。足りなくなったら作り直す。
     private VRCPlayerApi[] playersBuffer = new VRCPlayerApi[16];
 
+    private float switchCooldownTimer;
+    private bool stickNeutral = true;
+
     void Start()
     {
         ApplyRoleForLocalPlayer();
@@ -48,6 +66,13 @@ public class ViewpointShuffleManager : UdonSharpBehaviour
 
     void Update()
     {
+        if (switchCooldownTimer > 0f) switchCooldownTimer -= Time.deltaTime;
+
+        if (Input.GetKeyDown(switchKey))
+        {
+            _FreeSwitch();
+        }
+
         if (!enableDebugRoleSwitch)
         {
             return;
@@ -67,6 +92,53 @@ public class ViewpointShuffleManager : UdonSharpBehaviour
 
     public override void OnDeserialization()
     {
+        ApplyRoleForLocalPlayer();
+    }
+
+    // VR: 右スティックを上に倒す(一度倒したら、真ん中に戻すまで次は来ない)
+    public override void InputLookVertical(float value, VRC.Udon.Common.UdonInputEventArgs args)
+    {
+        VRCPlayerApi local = Networking.LocalPlayer;
+        if (local == null || !local.IsUserInVR()) return;
+
+        if (value < 0.3f)
+        {
+            stickNeutral = true;
+            return;
+        }
+        if (value > 0.8f && stickNeutral)
+        {
+            stickNeutral = false;
+            _FreeSwitch();
+        }
+    }
+
+    // 1〜2人のときだけ、手元の操作で視点を切り替える。
+    // 名前を _ で始めているのは、ネットワークイベントで他人から呼ばれないようにするため
+    // (public なのは、エディタでの動作確認で SendCustomEvent から呼べるようにするため)。
+    public void _FreeSwitch()
+    {
+        if (switchCooldownTimer > 0f) return;
+        int count = VRCPlayerApi.GetPlayerCount();
+        if (count > freeSwitchMaxPlayers) return;
+
+        switchCooldownTimer = switchCooldown;
+
+        if (!Networking.IsOwner(gameObject))
+        {
+            Networking.SetOwner(Networking.LocalPlayer, gameObject);
+        }
+
+        if (count <= 1)
+        {
+            roleOffset = (roleOffset + 1) % 3;   // 1人: 順番に1つずつ
+        }
+        else
+        {
+            AdvanceRoleOffset();                 // 2人: 2人とも必ず変わる
+        }
+        RequestSerialization();
+
         ApplyRoleForLocalPlayer();
     }
 

@@ -64,9 +64,10 @@ namespace BLIND.EditorTools
             root.transform.SetParent(system.transform, false);
 
             // --- 動画プレイヤー ---
-            var vpGo = new GameObject("TitleVideoPlayer");
-            vpGo.transform.SetParent(root.transform, false);
-            var vp = AddVrc(vpGo, "VRC.SDK3.Video.Components.VRCUnityVideoPlayer");
+            // TitleScreen と同じ GameObject に付ける。動画の「始まった」「エラー」の知らせ
+            // (OnVideoStart / OnVideoError)は、動画プレイヤーと同じ GameObject の Udon にしか届かないため
+            // (別の子に付けていたときは、TitleScreen に一度も届かなかった)。
+            var vp = AddVrc(root, "VRC.SDK3.Video.Components.VRCUnityVideoPlayer");
             if (vp == null) return "VRCUnityVideoPlayer が付けられない";
             var vso = new SerializedObject(vp);
             vso.FindProperty("autoPlay").boolValue = false;   // TitleScreen が入室時に再生する
@@ -130,8 +131,8 @@ namespace BLIND.EditorTools
             var label = MakeText(face.transform, "Label", "スタート", 40, new Vector2(296f, 76f), Vector2.zero, Color.white, overlay);
 
             // 操作の説明
-            MakeText(panel.transform, "Hint", "スティック（W / S）で選んで、トリガー（左クリック）で決定", 22,
-                     new Vector2(1200f, 40f), new Vector2(0f, -230f), new Color(1f, 1f, 1f, 0.75f), overlay);
+            MakeText(panel.transform, "Hint", "スティック（W / S）で選んで、トリガー（左クリック）で決定\n1〜2人で遊ぶときは、Q キー（VR は右スティックを上）で視点を切り替え", 22,
+                     new Vector2(1200f, 80f), new Vector2(0f, -245f), new Color(1f, 1f, 1f, 0.75f), overlay);
 
             panel.SetActive(false);   // TitleScreen が入室時に表示する
 

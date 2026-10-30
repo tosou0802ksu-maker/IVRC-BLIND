@@ -19,6 +19,8 @@ using VRC.SDK3.Video.Components.Base;
 // ・選んでいるボタンは、影の位置まで沈み込んで枠の色が変わる。決定するとさらに沈んでから消える。
 // ・タイトル中は歩けないようにする(Immobilize)。
 // ・動画は VRChat の仕様で URL からしか流せない(YouTube など)。URL が空なら背景は黒のまま。
+// ・動画プレイヤーはこのスクリプトと同じ GameObject に付けること。OnVideoStart/OnVideoError は
+//   同じ GameObject の Udon にしか届かない。動画が始まるまで(と、エラーのとき)は動画の板を隠して黒にする。
 // ・動画の大きさは、デスクトップなら視野ぴったり、VR なら視野が広いので大きくする。
 // ・作り直しは メニュー「BLIND/タイトル画面/作り直す」(TitleScreenBuilder)。
 [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
@@ -93,6 +95,8 @@ public class TitleScreen : UdonSharpBehaviour
         if (videoRect != null)
         {
             videoRect.sizeDelta = local.IsUserInVR() ? vrVideoSize : desktopVideoSize;
+            // 動画が始まるまでは隠す(動画を映す RenderTexture は、最初は灰色のため)
+            videoRect.gameObject.SetActive(false);
         }
 
         if (videoPlayer != null && videoUrl != null && videoUrl.Get().Length > 0)
@@ -175,6 +179,11 @@ public class TitleScreen : UdonSharpBehaviour
         if (local != null) local.Immobilize(false);
 
         if (videoPlayer != null) videoPlayer.Stop();
+    }
+
+    public override void OnVideoStart()
+    {
+        if (showing && videoRect != null) videoRect.gameObject.SetActive(true);
     }
 
     public override void OnVideoError(VideoError videoError)
