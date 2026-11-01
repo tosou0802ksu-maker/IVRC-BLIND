@@ -18,6 +18,13 @@ namespace BLIND.EditorTools
     /// ・room11（だるま）用の台本を持つ: だるまが背を向けている間だけ前に歩き、見張りの間は止まる。
     ///   catchOnWatch 回目の見張りでは、わざと動いて見つかる。
     /// ・掛け声・振り向き・名指し・死亡の時刻を events.txt に書き出す（音は後で元のファイルを重ねる）。
+    /// ・カメラは人が遊んでいるように動かす（Humanize）。まっすぐ等速・正面固定だと機械的に見えたため。
+    ///   - 首の小さな揺れ（VR の頭は止まっていても少し動く）と、歩くときの上下・左右の揺れ。
+    ///   - 歩き出し・止まりは加速と減速をつける。止まった瞬間は勢いで少し前に傾く。
+    ///   - 穴: 歩きながら左右を見渡し、床が抜けたら下を向く。
+    ///   - だるま: 掛け声を聞いてから少し遅れて走り出し、言い終わる前に止まる。
+    ///     見つかる回は、まだ見張られているのに我慢できずに歩き出してしまう（フライング）。
+    ///     名指しされたら、のけぞって一歩下がる。
     ///
     /// 使い方（再生中に execute_code などから）:
     ///   BlindPlayCapture.StartDaruma("…/out", 2, 30f);
@@ -43,12 +50,25 @@ namespace BLIND.EditorTools
         // "daruma" … だるまの台本 / "walk" … walkDir へ歩き続ける（穴に落ちる場面など）
         public string mode = "daruma";
         public Vector3 walkDir = Vector3.forward;
-        public float lookDown = 0.02f;
+        // 穴などで歩きながら見渡す予定: (秒, 進む向きからの左右の角度, 下向きの角度)
+        public Vector3[] lookKeys =
+        {
+            new Vector3(0.0f, 0f, 6f), new Vector3(0.7f, -38f, 4f), new Vector3(1.6f, -8f, 9f),
+            new Vector3(2.2f, 34f, 3f), new Vector3(3.0f, 4f, 12f), new Vector3(3.9f, -6f, 8f),
+        };
+        public int seed = 1;
+        public float runSpeedMin = 1.7f, runSpeedMax = 2.2f;
 
         Camera cam; Light beam; RenderTexture rt; Texture2D tex;
         UdonBehaviour dw; GameObject deathHud;
         int frame; int lastPhase = -1; int watchCount; float deathTime = -1f;
         Vector3 pos; bool done;
+
+        // 人らしい動き（Humanize）
+        System.Random rng;
+        float yaw, pitch, roll, yawVel, pitchVel, rollVel;
+        float speed, prevSpeed, bob, phaseStart, roundSpeed, react, startHeadY, fallTime = -1f;
+        float noiseSeed;
         readonly List<string> events = new List<string>();
         static BlindPlayCapture current;
 
@@ -65,13 +85,13 @@ namespace BLIND.EditorTools
         }
 
         // 決めた方向へ歩き続ける。位置を瞬間移動させると落ちないので、歩く速さを与えて歩かせる。
-        public static string StartWalk(string outDir, Vector3 start, Vector3 dir, float speed, float lookDown, float maxSeconds)
+        public static string StartWalk(string outDir, Vector3 start, Vector3 dir, float speed, float maxSeconds)
         {
             if (!EditorApplication.isPlaying) return "再生中でない";
             if (current != null) current.Finish();
             var c = new BlindPlayCapture();
             c.outDir = outDir; c.mode = "walk"; c.startPos = start; c.walkDir = dir.normalized;
-            c.walkSpeed = speed; c.lookDown = lookDown; c.maxSeconds = maxSeconds;
+            c.walkSpeed = speed; c.maxSeconds = maxSeconds;
             current = c;
             c.Start();
             Hook(true);
@@ -138,6 +158,11 @@ namespace BLIND.EditorTools
 
             pos = startPos;
             Networking.LocalPlayer.TeleportTo(pos, Quaternion.LookRotation(mode == "walk" ? walkDir : Vector3.forward));
+            rng = new System.Random(seed);
+            noiseSeed = (float)rng.NextDouble() * 100f;
+            Vector3 f0 = mode == "walk" ? walkDir : Vector3.forward;
+            yaw = Mathf.Atan2(f0.x, f0.z) * Mathf.Rad2Deg;
+            pitch = mode == "walk" ? lookKeys[0].z : 2f;
             Time.captureFramerate = fps;
             events.Add("start");
         }
@@ -158,6 +183,12 @@ namespace BLIND.EditorTools
                     extra += " awayLength=" + ((float)dw.GetProgramVariable("phaseLength")).ToString("F2");
                 }
                 if (phase == 2) watchCount++;
+                phaseStart = t;
+                if (phase == 0)
+                {
+                    roundSpeed = Mathf.Lerp(runSpeedMin, runSpeedMax, (float)rng.NextDouble());
+                    react = 0.22f + (float)rng.NextDouble() * 0.15f;   // 掛け声を聞いてから動き出すまで
+                }
                 events.Add(t.ToString("F3") + " phase=" + phase + extra + (phase == 2 ? " watch#" + watchCount : ""));
                 lastPhase = phase;
             }
@@ -168,42 +199,108 @@ namespace BLIND.EditorTools
             }
 
             var lp = Networking.LocalPlayer;
+            float dt = 1f / fps;
+            float local = t - phaseStart;
+            float wantYaw, wantPitch, wantRoll = 0f, smooth = 0.24f;
+            Vector3 head = lp.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position;
+            // 瞬間移動の直後は頭の位置がまだ前の場所なので、少し待ってから基準の高さを取る
+            if (t < 0.3f) startHeadY = head.y;
+
             if (mode == "walk")
             {
-                // 死ぬまで歩き続ける。縦の速さはそのまま（落ちるときは重力に任せる）
+                // 予定に沿って見渡しながら歩く。横を向いている間は少し歩みが遅くなる。
+                Vector3 key = lookKeys[0];
+                foreach (var k in lookKeys) if (t >= k.x) key = k;
+                float baseYaw = Mathf.Atan2(walkDir.x, walkDir.z) * Mathf.Rad2Deg;
+                wantYaw = baseYaw + key.y;
+                wantPitch = key.z;
+                float want = deathTime < 0f ? walkSpeed * (Mathf.Abs(key.y) > 25f ? 0.65f : 1f) : 0f;
+                speed = Mathf.MoveTowards(speed, want, (want > speed ? 3.5f : 6f) * dt);
+
+                // 床が抜けた: 反射的に足元を見る。首は速く動き、体が少し傾く。
+                if (fallTime < 0f && head.y < startHeadY - 0.2f) { fallTime = t; events.Add(t.ToString("F3") + " fall"); }
+                if (fallTime >= 0f)
+                {
+                    wantPitch = 58f; wantYaw = baseYaw + 8f; wantRoll = -7f; smooth = 0.17f;
+                }
                 if (deathTime < 0f)
                 {
                     Vector3 v = lp.GetVelocity();
-                    lp.SetVelocity(new Vector3(walkDir.x * walkSpeed, v.y, walkDir.z * walkSpeed));
+                    float s = fallTime >= 0f ? speed * 0.5f : speed;
+                    lp.SetVelocity(new Vector3(walkDir.x * s, v.y, walkDir.z * s));
                 }
             }
-            else if (deathTime < 0f)
+            else
             {
-                // 台本: 背を向けている間だけ前に歩く。
-                // catchOnWatch 回目の見張りでは後ろに下がる（＝見つかる）。
-                // 横に動くと棚に入り込んで画面がふさがった。後ろなら、だるまが画面の真ん中に残る。
-                if (phase == 0 && pos.z < stopZ)
+                // だるまの方を見る
+                Vector3 to = (dw != null ? ((Transform)dw.GetProgramVariable("daruma")).position : pos + Vector3.forward * 10f) - head;
+                wantYaw = Mathf.Atan2(to.x, to.z) * Mathf.Rad2Deg;
+                wantPitch = 1.5f;
+                float want = 0f;
+                if (deathTime < 0f)
                 {
-                    pos.z += walkSpeed / fps;
-                    lp.TeleportTo(pos, Quaternion.identity);
+                    float len = dw != null ? (float)dw.GetProgramVariable("phaseLength") : 3f;
+                    if (phase == 0)
+                    {
+                        // 掛け声が聞こえてから走り出し、言い終わる少し前に止まる
+                        if (local > react && len - local > 0.3f && pos.z < stopZ) want = roundSpeed;
+                        // 1回目は走りながら横の棚をちらっと見る
+                        if (watchCount == 0 && local > 0.7f && local < 1.3f) wantYaw += 26f;
+                    }
+                    else if (phase == 2 && watchCount == catchOnWatch && local > 1.3f)
+                    {
+                        // 見張りがもう終わると思って歩き出してしまう
+                        want = 0.9f;
+                        wantPitch = 3f;
+                    }
+                    else if (phase == 3 && local < 0.4f)
+                    {
+                        // 名指しされて、のけぞって一歩下がる
+                        want = -1.4f;
+                    }
+                    if (phase == 3) { wantPitch = -6f; smooth = 0.12f; wantRoll = 3f; }
                 }
-                else if (phase == 2 && watchCount == catchOnWatch)
+                float acc = Mathf.Abs(want) > Mathf.Abs(speed) ? 4.5f : 9f;
+                speed = Mathf.MoveTowards(speed, want, acc * dt);
+                if (Mathf.Abs(speed) > 0.001f && deathTime < 0f)
                 {
-                    pos.z -= walkSpeed / fps;
+                    pos.z += speed * dt;
+                    // 真っすぐではなく、少しふらつきながら進む（棚に入らない幅）
+                    pos.x = startPos.x + 0.14f * Mathf.Sin(pos.z * 0.9f + noiseSeed);
                     lp.TeleportTo(pos, Quaternion.identity);
                 }
             }
 
-            Render(Networking.LocalPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position);
+            // 止まる・走り出すときの勢いで、頭が前後に少し傾く
+            float accel = (speed - prevSpeed) / dt;
+            prevSpeed = speed;
+            wantPitch += Mathf.Clamp(-accel * 0.55f, -3f, 4f);
+
+            yaw = Mathf.SmoothDampAngle(yaw, wantYaw, ref yawVel, smooth, Mathf.Infinity, dt);
+            pitch = Mathf.SmoothDampAngle(pitch, wantPitch, ref pitchVel, smooth, Mathf.Infinity, dt);
+            roll = Mathf.SmoothDampAngle(roll, wantRoll, ref rollVel, 0.3f, Mathf.Infinity, dt);
+
+            // 歩くときの揺れ（1歩 約0.7m）と、止まっていても残る頭の小さな揺れ
+            float sp = Mathf.Clamp01(Mathf.Abs(speed) / 2f);
+            bob += Mathf.Abs(speed) * dt / 0.7f * Mathf.PI;
+            float n1 = Mathf.PerlinNoise(t * 0.35f, noiseSeed) - 0.5f;
+            float n2 = Mathf.PerlinNoise(t * 0.42f, noiseSeed + 7f) - 0.5f;
+            float n3 = Mathf.PerlinNoise(t * 0.3f, noiseSeed + 13f) - 0.5f;
+            float breathe = Mathf.Sin(t * 1.7f) * 0.004f;
+            var rot = Quaternion.Euler(pitch + n2 * 2.2f + Mathf.Abs(Mathf.Sin(bob)) * 0.8f * sp,
+                                       yaw + n1 * 3.0f,
+                                       roll + n3 * 1.6f + Mathf.Sin(bob) * 0.7f * sp);
+            Vector3 offset = rot * new Vector3(Mathf.Sin(bob) * 0.012f * sp, Mathf.Cos(2f * bob) * 0.011f * sp + breathe, 0f);
+
+            Render(head + offset, rot);
 
             frame++;
             if ((deathTime >= 0f && t > deathTime + tailAfterDeath) || t > maxSeconds) Finish();
         }
 
-        void Render(Vector3 head)
+        void Render(Vector3 head, Quaternion rot)
         {
-            Vector3 fwd = mode == "walk" ? walkDir : Vector3.forward;
-            cam.transform.SetPositionAndRotation(head, Quaternion.LookRotation(new Vector3(fwd.x, -lookDown, fwd.z)));
+            cam.transform.SetPositionAndRotation(head, rot);
 
             // 死亡時の文字の板は CheckpointManager が PostLateUpdate で頭の前へ動かすが、
             // この撮影処理の方が先に走ることがあり、板が前の場所に取り残されて写らない。
