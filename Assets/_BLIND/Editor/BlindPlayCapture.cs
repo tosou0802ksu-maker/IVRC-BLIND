@@ -48,6 +48,7 @@ namespace BLIND.EditorTools
         public float maxSeconds = 40f;
         public float tailAfterDeath = 2.6f;
         // "daruma" … だるまの台本 / "walk" … walkDir へ歩き続ける（穴に落ちる場面など）
+        // "path" … pathPos の地点を順に歩く。各区間では pathLook の点を見て、着いたら pathPause 秒止まる
         public string mode = "daruma";
         public Vector3 walkDir = Vector3.forward;
         // 穴などで歩きながら見渡す予定: (秒, 進む向きからの左右の角度, 下向きの角度)
@@ -56,6 +57,8 @@ namespace BLIND.EditorTools
             new Vector3(0.0f, 0f, 6f), new Vector3(0.7f, -38f, 4f), new Vector3(1.6f, -8f, 9f),
             new Vector3(2.2f, 34f, 3f), new Vector3(3.0f, 4f, 12f), new Vector3(3.9f, -6f, 8f),
         };
+        public Vector3[] pathPos, pathLook;
+        public float[] pathPause;
         public int seed = 1;
         public float runSpeedMin = 1.7f, runSpeedMax = 2.2f;
 
@@ -68,7 +71,8 @@ namespace BLIND.EditorTools
         System.Random rng;
         float yaw, pitch, roll, yawVel, pitchVel, rollVel;
         float speed, prevSpeed, bob, phaseStart, roundSpeed, react, startHeadY, fallTime = -1f;
-        float noiseSeed;
+        float noiseSeed, pauseLeft;
+        int seg;
         readonly List<string> events = new List<string>();
         static BlindPlayCapture current;
 
@@ -92,6 +96,22 @@ namespace BLIND.EditorTools
             var c = new BlindPlayCapture();
             c.outDir = outDir; c.mode = "walk"; c.startPos = start; c.walkDir = dir.normalized;
             c.walkSpeed = speed; c.maxSeconds = maxSeconds;
+            current = c;
+            c.Start();
+            Hook(true);
+            return "開始";
+        }
+
+        // 地点を順に歩く（瞬間移動で動かすので落ちない）。止まって助かる場面や、部屋を見て回る場面に使う
+        public static string StartPath(string outDir, Vector3 start, Vector3[] points, Vector3[] looks, float[] pauses, float speed, float maxSeconds)
+        {
+            if (!EditorApplication.isPlaying) return "再生中でない";
+            if (current != null) current.Finish();
+            var c = new BlindPlayCapture();
+            c.outDir = outDir; c.mode = "path"; c.startPos = start; c.pathPos = points; c.pathLook = looks; c.pathPause = pauses;
+            c.walkSpeed = speed; c.maxSeconds = maxSeconds;
+            Vector3 d = looks[0] - start; d.y = 0f;
+            c.walkDir = d.sqrMagnitude > 0.001f ? d.normalized : Vector3.forward;
             current = c;
             c.Start();
             Hook(true);
@@ -157,10 +177,10 @@ namespace BLIND.EditorTools
             if (deathHud == null) foreach (var t in Resources.FindObjectsOfTypeAll<Transform>()) if (t.name == "DeathHud" && t.gameObject.scene.IsValid()) deathHud = t.gameObject;
 
             pos = startPos;
-            Networking.LocalPlayer.TeleportTo(pos, Quaternion.LookRotation(mode == "walk" ? walkDir : Vector3.forward));
+            Networking.LocalPlayer.TeleportTo(pos, Quaternion.LookRotation(mode != "daruma" ? walkDir : Vector3.forward));
             rng = new System.Random(seed);
             noiseSeed = (float)rng.NextDouble() * 100f;
-            Vector3 f0 = mode == "walk" ? walkDir : Vector3.forward;
+            Vector3 f0 = mode != "daruma" ? walkDir : Vector3.forward;
             yaw = Mathf.Atan2(f0.x, f0.z) * Mathf.Rad2Deg;
             pitch = mode == "walk" ? lookKeys[0].z : 2f;
             Time.captureFramerate = fps;
@@ -206,7 +226,37 @@ namespace BLIND.EditorTools
             // 瞬間移動の直後は頭の位置がまだ前の場所なので、少し待ってから基準の高さを取る
             if (t < 0.3f) startHeadY = head.y;
 
-            if (mode == "walk")
+            if (mode == "path")
+            {
+                // いまの区間の目標地点へ歩き、着く手前で減速する。区間ごとに見る物を変える。
+                int n = pathPos.Length;
+                int k = Mathf.Min(seg, n - 1);
+                Vector3 to = pathLook[k] - head;
+                wantYaw = Mathf.Atan2(to.x, to.z) * Mathf.Rad2Deg;
+                wantPitch = -Mathf.Atan2(to.y, new Vector2(to.x, to.z).magnitude) * Mathf.Rad2Deg;
+                float want = 0f;
+                if (seg < n)
+                {
+                    Vector3 d = pathPos[seg] - pos; d.y = 0f;
+                    float dist = d.magnitude;
+                    if (dist > 0.03f)
+                    {
+                        want = walkSpeed * Mathf.Clamp(dist / 0.9f, 0.25f, 1f);
+                        speed = Mathf.MoveTowards(speed, want, (want > speed ? 3.5f : 7f) * dt);
+                        Vector3 step = d / dist * Mathf.Min(dist, speed * dt);
+                        pos += step;
+                        lp.TeleportTo(pos, BodyRotation());
+                    }
+                    else
+                    {
+                        speed = Mathf.MoveTowards(speed, 0f, 9f * dt);
+                        pauseLeft += dt;
+                        if (pauseLeft >= pathPause[seg]) { pauseLeft = 0f; seg++; events.Add(t.ToString("F3") + " point" + seg); }
+                    }
+                }
+                else speed = Mathf.MoveTowards(speed, 0f, 9f * dt);
+            }
+            else if (mode == "walk")
             {
                 // 予定に沿って見渡しながら歩く。横を向いている間は少し歩みが遅くなる。
                 Vector3 key = lookKeys[0];
@@ -267,7 +317,7 @@ namespace BLIND.EditorTools
                     pos.z += speed * dt;
                     // 真っすぐではなく、少しふらつきながら進む（棚に入らない幅）
                     pos.x = startPos.x + 0.14f * Mathf.Sin(pos.z * 0.9f + noiseSeed);
-                    lp.TeleportTo(pos, Quaternion.identity);
+                    lp.TeleportTo(pos, BodyRotation());
                 }
             }
 
@@ -296,6 +346,13 @@ namespace BLIND.EditorTools
 
             frame++;
             if ((deathTime >= 0f && t > deathTime + tailAfterDeath) || t > maxSeconds) Finish();
+        }
+
+        // 体の向き＝見ている向き（左右だけ）。エコロケのパルスは手の向きに出るので、
+        // 体を北向きのままにすると、パルスが後ろや横に出て何も光らなかった。
+        Quaternion BodyRotation()
+        {
+            return Quaternion.Euler(0f, yaw, 0f);
         }
 
         void Render(Vector3 head, Quaternion rot)
