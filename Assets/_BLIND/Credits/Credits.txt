@@ -44,6 +44,9 @@ Window Frame　kshsh　https://sketchfab.com/3d-models/window-frame-0ceb3436b588
 Hospital Trolley　creative_beast　https://sketchfab.com/3d-models/hospital-trolley-6fa14ba57e324d288b5a42632f19d97f
 Chair Hospital　Khafesus　https://sketchfab.com/3d-models/chair-hospital-baaa4ec5d6d34ad49004e4d151b43aa2
 Chess Set　esraaelsayed　https://sketchfab.com/3d-models/chess-set-15486320eaca45b18d00bf048273204b
+Daruma doll　Jan　https://sketchfab.com/3d-models/daruma-doll-55626deb94114053b9d47183a5181413
+Daruma　Adrian Crisandy　https://sketchfab.com/3d-models/daruma-76b5359e330440e8901d2e1a72ef5ebf
+neko-daruma　higan69　https://sketchfab.com/3d-models/neko-daruma-590562e23b3d465b93abf66135f41ea6
 # 【要確認】シーンで使っているが一覧に無い Sketchfab らしきモデル（フォルダ名）:
 #   voodoo-doll / camera-11 / metal-table / riminal5(roadblock, traffic cone, signs) /
 #   backheya910/woodybord(Sign) / backheya1/Antique chair / room19(Table 7, OldForniture, tourch_textured) /
@@ -60,16 +63,16 @@ Fire Hydrant　Poly Haven　https://polyhaven.com (CC0)
 Wooden Bookshelf Worn　Poly Haven　https://polyhaven.com (CC0)
 Flashlight　RRFreelance　Unity Asset Store
 Particle Pack　Unity Technologies　Unity Asset Store
+Free Doll　RamsterZ　Unity Asset Store
+Mix Furniture Pack　ZNS3D　Unity Asset Store
+Modular Sewer Props　Ata Khani　Unity Asset Store
+CRT Monitor　Pekdata　Unity Asset Store
+Industrial Pipeline　Erochin Sam　Unity Asset Store
+Blue Garage　Meshy AI　https://www.meshy.ai
 # 【要確認】Asset Store などから入れたらしいパック（作者・入手先を確かめて # を外す）:
 # Locker HQ　【作者】　Unity Asset Store
-# Free Doll　RamsterZ　Unity Asset Store
-# Mix Furniture Pack　ZNS3D　Unity Asset Store
-# Modular Sewer Props　Ata Khani　Unity Asset Store
-# CRT Monitor　Pekdata　Unity Asset Store
 # Mannequin　【作者】　【入手先】
-# Industrial Pipeline　【作者】　【入手先】
 # Udon Clock　【作者】　【入手先】
-# Blue Garage　Meshy AI（無料プランで生成したなら CC BY 4.0 で「Meshy」の表記が必要）
 
 [Textures]
 ambientCG　https://ambientcg.com (CC0)
